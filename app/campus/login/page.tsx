@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import Modal from "../../../components/Modal/modal"; // Adjust the import path as necessary
+import Modal from "../../../components/common/modal"; // Adjust the import path as necessary
 
 const LoginPage: React.FC = () => {
   const router = useRouter();
