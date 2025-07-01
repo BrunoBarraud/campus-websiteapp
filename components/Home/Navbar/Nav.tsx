@@ -29,12 +29,12 @@ const Nav = () => {
           {/* Estilo especial para "Campus Virtual" */}
           <div className="flex items-center space-x-1">
             <span
-              className="text-xl md:text-2xl text-rose-950 uppercase font-bold bg-yellow-400 px-2 py-0.5 rounded-lg shadow-sm transition hover:bg-yellow-500"
+              className="text-xl md:text-2xl text-rose-950 uppercase font-bold bg-yellow-400 px-2 py-0.5 rounded-lg shadow-sm transition"
             >
               Campus
             </span>
             <span
-              className="text-xl md:text-2xl text-yellow-400 uppercase font-bold bg-rose-950 px-2 py-0.5 rounded-lg shadow-sm transition hover:bg-rose-800"
+              className="text-xl md:text-2xl text-yellow-400 uppercase font-bold bg-rose-950 px-2 py-0.5 rounded-lg shadow-sm transition"
             >
               Virtual
             </span>
