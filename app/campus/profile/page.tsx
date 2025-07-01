@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from "react";
-import DashboardLayout from "@/components/dashboard/DashboardLayout";
+import DashboardLayout from "../../../components/dashboard/DashboardLayout";
 
 const ProfilePage = () => {
   // Estado local para simular datos de usuario

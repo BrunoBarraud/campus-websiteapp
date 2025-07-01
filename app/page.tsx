@@ -16,7 +16,7 @@ const HomePage = () => {
           </p>
           <div className="mt-10 flex justify-center gap-4">
             <Link
-              href="/campus/login"
+              href="/campus/auth/login"
               className="bg-blue-600 text-white px-6 py-3 rounded-md shadow hover:bg-blue-700 transition"
             >
               Iniciar Sesión

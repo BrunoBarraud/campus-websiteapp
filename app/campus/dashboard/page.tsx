@@ -1,6 +1,6 @@
 import React from "react";
-import DashboardLayout from "@/components/dashboard/DashboardLayout";
-import CourseCard from "@/components/dashboard/CourseCard";
+import DashboardLayout from "../../../components/dashboard/DashboardLayout";
+import CourseCard from "../../../components/dashboard/CourseCard";
 
 const DashboardPage = () => {
   const cursos = [

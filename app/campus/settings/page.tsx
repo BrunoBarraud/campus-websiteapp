@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from "react";
-import DashboardLayout from "@/components/dashboard/DashboardLayout";
+import DashboardLayout from "../../../components/dashboard/DashboardLayout";
 
 const SettingsPage = () => {
   const [darkMode, setDarkMode] = useState(false);
