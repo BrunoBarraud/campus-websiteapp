@@ -22,7 +22,7 @@ const HomePage = () => {
               Iniciar Sesión
             </Link>
             <Link
-              href="/campus/register"
+              href="/campus/auth/register"
               className="bg-indigo-600 text-white px-6 py-3 rounded-md shadow hover:bg-indigo-700 transition"
             >
               Regístrate
