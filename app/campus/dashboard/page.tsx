@@ -25,8 +25,6 @@ const DashboardPage = () => {
       <div className="bg-gray-50 min-h-screen container mx-auto px-4 py-8">
         {/* Header */}
         <header className="mb-12 text-center fade-in">
-          <h1 className="text-4xl md:text-5xl font-bold text-indigo-900 mb-3">Virtual Campus</h1>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">Explore your subjects and connect with teachers in our interactive learning environment</p>
           <div className="mt-6 flex justify-center space-x-4">
             <button className="px-6 py-2 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 transition-all shadow-md">
               <i className="fas fa-book mr-2"></i> My Subjects

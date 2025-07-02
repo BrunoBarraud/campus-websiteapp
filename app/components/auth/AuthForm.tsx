@@ -1,4 +1,3 @@
-// components/auth/AuthForm.tsx
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -9,6 +8,7 @@ export default function AuthForm({ mode }: { mode: 'login' | 'register' }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -27,24 +27,32 @@ export default function AuthForm({ mode }: { mode: 'login' | 'register' }) {
   };
   
 
-  const handleRegister = async () => {
+const handleRegister = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setError('');
+  setIsLoading(true);
+  try {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-
-    //Llamo directo a mi api route
-
-    const res = await fetch('/api/sync-user', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      uid: userCredential.user.uid,
-      email: userCredential.user.email
-    })
-  });
-  
-  if (res.ok) {
+    
+    const res = await fetch('../../api/sync-user', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        uid: userCredential.user.uid, 
+        email: userCredential.user.email 
+      })
+    });
+    
+    if (!res.ok) throw new Error('Error al sincronizar con Supabase');
+    
     router.push('/campus/dashboard');
+  } catch (err: any) {
+    setError(err.message || 'Error en el registro');
+  } finally {
+    setIsLoading(false);
   }
-}
+};
+
 
 
   return (
@@ -64,9 +72,15 @@ export default function AuthForm({ mode }: { mode: 'login' | 'register' }) {
         required
       />
       {error && <p className="text-red-500">{error}</p>}
-      <button type="submit">
-        {mode === 'login' ? 'Iniciar sesión' : 'Registrarse'}
+      <button type="submit" disabled={isLoading}>
+        {isLoading
+          ? (mode === 'login' ? 'Iniciando...' : 'Registrando...')
+          : (mode === 'login' ? 'Iniciar sesión' : 'Registrarse')}
       </button>
     </form>
   );
 }
+function setIsLoading(arg0: boolean) {
+  throw new Error('Function not implemented.');
+}
+

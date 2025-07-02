@@ -2,7 +2,7 @@ import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDpU5XSekhsf5LfwfK4qqGlpeJXFkVZ9LQ",
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   authDomain: "campus-virtual-velez.firebaseapp.com",
   projectId: "campus-virtual-velez",
   storageBucket: "campus-virtual-velez.firebasestorage.app",
