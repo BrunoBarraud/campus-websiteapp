@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../../lib/firebaseConfig';
 
@@ -11,9 +12,9 @@ export default function AuthForm({ mode }: { mode: 'login' | 'register' }) {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
-const toggleMode = () => {
-  router.push(mode === 'login' ? '/campus/auth/register' : '/campus/auth/login');
-};
+  const toggleMode = () => {
+    router.push(mode === 'login' ? '/campus/auth/register' : '/campus/auth/login');
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,8 +28,12 @@ const toggleMode = () => {
         await signInWithEmailAndPassword(auth, email, password);
       }
       router.push('/campus/dashboard');
-    } catch (err: any) {
-      setError(err.message || 'Ocurrió un error al procesar tu solicitud.');
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('Ocurrió un error al procesar tu solicitud.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -44,10 +49,12 @@ const toggleMode = () => {
         <div className="px-10 py-12">
           {/* Logo local */}
           <div className="flex justify-center mb-8">
-            <img
+            <Image
               src="/images/ipdvs-logo.png"
               alt="Logo del Campus - IPDVS"
-              className="w-20 h-20 rounded-full bg-yellow-300 p-2 object-contain"
+              width={80}
+              height={80}
+              className="rounded-full bg-yellow-300 p-2 object-contain"
             />
           </div>
 
