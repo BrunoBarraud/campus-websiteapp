@@ -37,6 +37,11 @@ const authOptions = {
           .eq('email', email)
           .single();
 
+        // Manejar errores de consulta
+        if (findError && findError.code !== 'PGRST116') {
+          throw new Error("Error al buscar usuario");
+        }
+
         // Registro automático si es nuevo
         if (!user && name) {
           const hashedPassword = await bcrypt.hash(password as string, 10);
