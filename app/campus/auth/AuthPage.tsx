@@ -1,106 +1,156 @@
-"use client";
-import React, { useState } from "react";
-import Link from "next/link";
-import Modal from "../../../components/common/modal"; // Ajusta la ruta de importación según sea necesario
+'use client';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '../../lib/firebaseConfig';
 
-const AuthPage: React.FC = () => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isLogin, setIsLogin] = useState(true); // Estado para controlar qué formulario mostrar
+export default function AuthForm({ mode }: { mode: 'login' | 'register' }) {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
 
-  const handleLoginSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const email = e.currentTarget.email.value;
-    const password = e.currentTarget.password.value;
-
-    if(!email || !password) {
-      alert("Por favor, completa todos los campos.");
-      return;
-    }
-    console.log("Iniciar sesión");
+  const toggleMode = () => {
+    router.push(mode === 'login' ? '/auth/register' : '/auth/login');
   };
 
-  const handleRegisterSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Aquí puedes manejar la lógica de registro
-    console.log("Registrarse");
+    setError('');
+    setIsLoading(true);
+
+    try {
+      if (mode === 'register') {
+        await createUserWithEmailAndPassword(auth, email, password);
+      } else {
+        await signInWithEmailAndPassword(auth, email, password);
+      }
+      router.push('/campus/dashboard');
+    } catch (err: any) {
+      setError(err.message || 'Ocurrió un error al procesar tu solicitud.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-white px-4">
-      <button
-        onClick={() => {
-          setIsLogin(true);
-          setIsModalOpen(true);
-        }}
-        className="mb-2 text-xl md:text-2xl text-rose-950 uppercase font-bold bg-yellow-400 px-2 py-0.5 rounded-lg shadow-sm transition hover:bg-yellow-500"
-      >
-        ¡Inicia Sesión!
-      </button>
+    <div className="bg-gradient-to-br from-rose-100 to-gray-100 min-h-screen flex items-center justify-center p-4">
+      <div className="w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-200">
+        
+        {/* Decoración superior */}
+        <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-yellow-300 to-yellow-400"></div>
 
-      <button
-        onClick={() => {
-          setIsLogin(false);
-          setIsModalOpen(true);
-        }}
-        className="mb-2 text-xl md:text-2xl text-rose-950 uppercase font-bold bg-yellow-400 px-2 py-0.5 rounded-lg shadow-sm transition hover:bg-yellow-500"
-      >
-        ¡Regístrate!
-      </button>
+        <div className="px-10 py-12">
+          {/* Logo local */}
+          <div className="flex justify-center mb-8">
+            <img
+              src="/images/ipdvs-logo.png"
+              alt="Logo del Campus - IPDVS"
+              className="w-20 h-20 rounded-full bg-yellow-300 p-2 object-contain"
+            />
+          </div>
 
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
-        {isLogin ? (
-          <form onSubmit={handleLoginSubmit} className="bg-rose-950 p-6 rounded-lg shadow-md w-full space-y-4 border border-amber-300">
-            <input
-              type="email"
-              placeholder="Correo electrónico"
-              className="w-full px-4 py-2 border border-yellow-400 rounded-md bg-white text-black placeholder-gray-700 focus:outline-none focus:ring-2 focus:ring-black"
-            />
-            <input
-              type="password"
-              placeholder="Contraseña"
-              className="w-full px-4 py-2 border border-yellow-400 rounded-md bg-white text-black placeholder-gray-700 focus:outline-none focus:ring-2 focus:ring-black"
-            />
+          {/* Título */}
+          <h2 className="text-center mb-8">
+            <span className="inline-block text-3xl font-bold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-yellow-500 to-rose-500">
+              {mode === 'login' ? 'Iniciar sesión' : 'Registrarse'}
+            </span>
+            <span className="block mt-2 h-1 w-20 mx-auto bg-gradient-to-r from-yellow-300 to-rose-400 rounded-full"></span>
+          </h2>
+
+          {/* Formulario */}
+          <form onSubmit={handleSubmit} className="space-y-6 backdrop-blur-sm bg-white/80 p-8 rounded-xl shadow-md">
+            {/* Campo Email */}
+            <div className="floating-input relative group">
+              <input
+                type="email"
+                id="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder=" "
+                required
+                className="w-full px-4 py-3 rounded-md border border-gray-300 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-300 outline-none peer transition-all"
+              />
+              <label
+                htmlFor="email"
+                className="absolute left-3 top-3 text-gray-400 peer-focus:text-yellow-500 peer-focus:-translate-y-6 peer-focus:scale-90 peer-focus:bg-white peer-focus:px-2 transition-all peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100"
+              >
+                Correo electrónico
+              </label>
+            </div>
+
+            {/* Campo Contraseña */}
+            <div className="floating-input relative group">
+              <input
+                type="password"
+                id="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder=" "
+                required
+                className="w-full px-4 py-3 rounded-md border border-gray-300 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-300 outline-none peer transition-all"
+              />
+              <label
+                htmlFor="password"
+                className="absolute left-3 top-3 text-gray-400 peer-focus:text-yellow-500 peer-focus:-translate-y-6 peer-focus:scale-90 peer-focus:bg-white peer-focus:px-2 transition-all peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100"
+              >
+                Contraseña
+              </label>
+            </div>
+
+            {/* Mensaje de error */}
+            {error && <p className="text-red-500 text-center text-sm">{error}</p>}
+
+            {/* Botón Submit */}
             <button
               type="submit"
-              className="w-full bg-yellow-400 text-rose-950 py-2 rounded-md hover:bg-yellow-500 transition"
+              disabled={isLoading}
+              className="w-full py-3 bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-white font-semibold rounded-md shadow-md transition-transform transform hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-yellow-300 disabled:opacity-70 disabled:cursor-not-allowed"
             >
-              Iniciar Sesión
+              {isLoading
+                ? mode === 'login'
+                  ? 'Accediendo...'
+                  : 'Creando cuenta...'
+                : mode === 'login'
+                ? 'Acceder ahora'
+                : 'Crear cuenta'}
             </button>
-            <p className="text-sm text-center text-white">
-              ¿No tenés cuenta? <Link href="#" onClick={() => { setIsLogin(false); }} className="text-yellow-400 hover:underline">Registrate</Link>
-            </p>
           </form>
-        ) : (
-          <form onSubmit={handleRegisterSubmit} className="bg-rose-950 p-6 rounded-lg shadow-md w-full space-y-4">
-            <input
-              type="text"
-              placeholder="Nombre completo"
-              className="w-full px-4 py-2 border border-yellow-400 rounded-md bg-white text-black placeholder-gray-700 focus:outline-none focus:ring-2 focus:ring-black"
-            />
-            <input
-              type="email"
-              placeholder="Correo electrónico"
-              className="w-full px-4 py-2 border border-yellow-400 rounded-md bg-white text-black placeholder-gray-700 focus:outline-none focus:ring-2 focus:ring-black"
-            />
-            <input
-              type="password"
-              placeholder="Contraseña"
-              className="w-full px-4 py-2 border border-yellow-400 rounded-md bg-white text-black placeholder-gray-700 focus:outline-none focus:ring-2 focus:ring-black"
-            />
-            <button
-              type="submit"
-              className="w-full bg-yellow-400 text-rose-950 py-2 rounded-md hover:bg-yellow-500 transition"
-            >
-              Registrarse
-            </button>
-            <p className="text-sm text-center text-white">
-              ¿Ya tenés cuenta? <Link href="#" onClick={() => { setIsLogin(true); }} className="text-yellow-400 hover:underline">Iniciá sesión</Link>
-            </p>
-          </form>
-        )}
-      </Modal>
+
+          {/* Cambiar modo */}
+          <div className="text-center text-sm text-gray-500 mt-6">
+            {mode === 'login' ? (
+              <>
+                ¿No tienes cuenta?{' '}
+                <button
+                  type="button"
+                  onClick={toggleMode}
+                  className="text-yellow-500 hover:text-yellow-600 font-medium"
+                >
+                  Regístrate
+                </button>
+              </>
+            ) : (
+              <>
+                ¿Ya tienes cuenta?{' '}
+                <button
+                  type="button"
+                  onClick={toggleMode}
+                  className="text-yellow-500 hover:text-yellow-600 font-medium"
+                >
+                  Inicia sesión
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Pie de formulario */}
+        <div className="bg-gray-50 px-8 py-4 text-center text-xs text-gray-500">
+          © 2025 IPDVS. Todos los derechos reservados.
+        </div>
+      </div>
     </div>
   );
-};
-
-export default AuthPage;
+}
