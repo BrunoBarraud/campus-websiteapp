@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import {Poppins} from "next/font/google";
 import "./globals.css";
 import ResponsiveNav from "@/components/Home/Navbar/ResponsiveNav";
+import { NextAuthProvider } from "../app/components/auth/AuthProvider";
 
 const font =  Poppins({
   variable: "--font-poppins",
@@ -21,11 +22,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className = {`${font.className} antialiased`}
-      >
-        <ResponsiveNav />
-        {children}
+      <body className={`${font.className} antialiased`}>
+        <NextAuthProvider>
+          <ResponsiveNav />
+          {children}
+        </NextAuthProvider>
       </body>
     </html>
   );

@@ -1,16 +1,17 @@
-// middleware.ts
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import { withAuth } from "next-auth/middleware";
 
-export async function middleware(request: NextRequest) {
-  const session = request.cookies.get('session')?.value;
-  
-  // Verificar autenticación para rutas protegidas
-  if (request.nextUrl.pathname.startsWith('/campus')) {
-    if (!session) {
-      return NextResponse.redirect(new URL('/auth/login', request.url));
-    }
+export default withAuth({
+  callbacks: {
+    authorized: ({ token, req }) => {
+      // Permitir acceso si hay token o si no es ruta protegida
+      if (req.nextUrl.pathname.startsWith('/campus')) {
+        return !!token;
+      }
+      return true;
+    },
   }
+});
 
-  return NextResponse.next();
-}
+export const config = {
+  matcher: ['/campus/:path*']
+};
