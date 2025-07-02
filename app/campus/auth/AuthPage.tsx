@@ -11,9 +11,9 @@ export default function AuthForm({ mode }: { mode: 'login' | 'register' }) {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
-  const toggleMode = () => {
-    router.push(mode === 'login' ? '/auth/register' : '/auth/login');
-  };
+const toggleMode = () => {
+  router.push(mode === 'login' ? '/campus/auth/register' : '/campus/auth/login');
+};
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

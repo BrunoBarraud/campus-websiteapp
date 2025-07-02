@@ -12,7 +12,7 @@ export default function AuthForm({ mode }: { mode: 'login' | 'register' }) {
   const router = useRouter();
 
   const toggleMode = () => {
-    router.push(mode === 'login' ? '/auth/register' : '/auth/login');
+    router.push(mode === 'login' ? '/campus/auth/register' : '/campus/auth/login');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
