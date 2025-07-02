@@ -16,7 +16,7 @@ export async function POST(request: Request) {
     if (error) throw error;
 
     return NextResponse.json({ success: true });
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: 'Error al sincronizar usuario' },
       { status: 500 }

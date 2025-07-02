@@ -1,4 +1,5 @@
 import React from "react";
+import Image from "next/image";
 
 interface Course {
   image: string;
@@ -15,7 +16,13 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, delay }) => {
   return (
     <div className={`bg-white rounded-xl overflow-hidden shadow-md transition-all duration-300 card-hover fade-in delay-${delay}`}>
       <div className="overflow-hidden">
-        <img src={course.image} alt={course.title} className="w-full subject-image" />
+        <Image 
+          src={course.image} 
+          alt={course.title} 
+          width={400} 
+          height={200} 
+          className="w-full subject-image" 
+        />
       </div>
       <div className="p-5">
         <div className="flex justify-between items-start mb-2">

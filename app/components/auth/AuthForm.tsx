@@ -13,6 +13,7 @@ export default function AuthForm({ mode }: { mode: 'login' | 'register' }) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
     try {
       if (mode === 'register') {
         await createUserWithEmailAndPassword(auth, email, password);
@@ -21,39 +22,12 @@ export default function AuthForm({ mode }: { mode: 'login' | 'register' }) {
         await signInWithEmailAndPassword(auth, email, password);
       }
       router.push('/campus/dashboard');
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error desconocido');
+    } finally {
+      setIsLoading(false);
     }
   };
-  
-
-const handleRegister = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setError('');
-  setIsLoading(true);
-  try {
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    
-    const res = await fetch('../../api/sync-user', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        uid: userCredential.user.uid, 
-        email: userCredential.user.email 
-      })
-    });
-    
-    if (!res.ok) throw new Error('Error al sincronizar con Supabase');
-    
-    router.push('/campus/dashboard');
-  } catch (err: any) {
-    setError(err.message || 'Error en el registro');
-  } finally {
-    setIsLoading(false);
-  }
-};
-
-
 
   return (
     <form onSubmit={handleSubmit} className="max-w-md mx-auto">
@@ -79,8 +53,5 @@ const handleRegister = async (e: React.FormEvent) => {
       </button>
     </form>
   );
-}
-function setIsLoading(arg0: boolean) {
-  throw new Error('Function not implemented.');
 }
 

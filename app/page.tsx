@@ -1,5 +1,4 @@
 import React from "react";
-import ResponsiveNav from "@/components/Home/Navbar/ResponsiveNav";
 import Link from "next/link";
 import Footer from "@/components/Home/Footer/Footer";
 
