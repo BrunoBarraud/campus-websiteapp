@@ -1,7 +1,7 @@
 import NextAuth, { User, Session, DefaultSession } from "next-auth";
 import { JWT } from "next-auth/jwt";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { PrismaClient } from "@prisma/client";
+import { supabase } from "@/app/lib/supabaseClient";
 import bcrypt from "bcryptjs";
 
 declare module "next-auth" {
@@ -14,8 +14,6 @@ declare module "next-auth" {
     } & DefaultSession["user"];
   }
 }
-
-const prisma = new PrismaClient();
 
 const authOptions = {
   providers: [
@@ -32,21 +30,35 @@ const authOptions = {
         }
         const { email, password, name } = credentials;
 
-        // Registro automático si es nuevo
-        let user = await prisma.user.findUnique({
-          where: { email: email as string },
-        });
+        // Buscar usuario existente
+        const { data: user, error: findError } = await supabase
+          .from('users')
+          .select('*')
+          .eq('email', email)
+          .single();
 
+        // Registro automático si es nuevo
         if (!user && name) {
           const hashedPassword = await bcrypt.hash(password as string, 10);
-          user = await prisma.user.create({
-            data: {
+          const { data: newUser, error: createError } = await supabase
+            .from('users')
+            .insert({
               email: email as string,
               name: name as string,
               password: hashedPassword,
               role: "ESTUDIANTE",
-            },
-          });
+            })
+            .select()
+            .single();
+
+          if (createError) throw new Error("Error al crear usuario");
+          
+          return {
+            id: newUser.id.toString(),
+            email: newUser.email,
+            name: newUser.name,
+            role: newUser.role,
+          };
         }
 
         if (!user || !user.password) {
