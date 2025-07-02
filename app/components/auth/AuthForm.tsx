@@ -40,7 +40,7 @@ export default function AuthForm({ mode }: { mode: 'login' | 'register' }) {
   };
 
   return (
-    <div className="bg-gradient-to-br from-rose-100 to-gray-100 min-h-screen flex items-center justify-center p-4">
+    <div className="bg-gradient-to-br from-rose-950 to-yellow-500 min-h-screen flex items-center justify-center p-4">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-200">
         
         {/* Decoración superior */}
@@ -54,7 +54,7 @@ export default function AuthForm({ mode }: { mode: 'login' | 'register' }) {
               alt="Logo del Campus - IPDVS"
               width={80}
               height={80}
-              className="rounded-full bg-yellow-300 p-2 object-contain"
+              className="p-2 object-contain"
             />
           </div>
 
@@ -77,7 +77,7 @@ export default function AuthForm({ mode }: { mode: 'login' | 'register' }) {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder=" "
                 required
-                className="w-full px-4 py-3 rounded-md border border-gray-300 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-300 outline-none peer transition-all"
+                className="text-black w-full px-4 py-3 rounded-md border border-gray-300 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-300 outline-none peer transition-all"
               />
               <label
                 htmlFor="email"
@@ -96,7 +96,7 @@ export default function AuthForm({ mode }: { mode: 'login' | 'register' }) {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder=" "
                 required
-                className="w-full px-4 py-3 rounded-md border border-gray-300 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-300 outline-none peer transition-all"
+                className="text-black w-full px-4 py-3 rounded-md border border-gray-300 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-300 outline-none peer transition-all"
               />
               <label
                 htmlFor="password"
