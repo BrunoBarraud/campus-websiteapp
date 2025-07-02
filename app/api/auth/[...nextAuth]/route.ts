@@ -3,6 +3,7 @@ import { JWT } from "next-auth/jwt";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { supabase } from "@/app/lib/supabaseClient";
 import bcrypt from "bcryptjs";
+import crypto from "crypto";
 
 declare module "next-auth" {
   interface User {
@@ -52,13 +53,17 @@ const authOptions: AuthOptions = {
           // Registro automático si es nuevo
           if (!user && name) {
             const hashedPassword = await bcrypt.hash(password as string, 10);
+            // Generar UUID para el nuevo usuario
+            const uuid = crypto.randomUUID();
+            
             const { data: newUser, error: createError } = await supabase
               .from('users')
               .insert({
+                id: uuid,
                 email: email as string,
                 name: name as string,
                 password: hashedPassword,
-                role: "ESTUDIANTE",
+                role: "student",
               })
               .select()
               .single();

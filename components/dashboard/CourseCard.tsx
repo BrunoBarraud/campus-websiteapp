@@ -1,4 +1,8 @@
-import React from "react";
+ciu'use client'
+
+"use client";
+
+import React, { useState } from "react";
 import Image from "next/image";
 
 interface Course {
@@ -13,15 +17,21 @@ interface CourseCardProps {
 }
 
 const CourseCard: React.FC<CourseCardProps> = ({ course, delay }) => {
+  const [imageError, setImageError] = useState(false);
+  const fallbackImage = "/images/ipdvs-logo.png"; // Using your existing logo as fallback
+
   return (
     <div className={`bg-white rounded-xl overflow-hidden shadow-md transition-all duration-300 card-hover fade-in delay-${delay}`}>
-      <div className="overflow-hidden">
+      <div className="overflow-hidden relative aspect-video">
         <Image 
-          src={course.image} 
+          src={imageError ? fallbackImage : course.image} 
           alt={course.title} 
-          width={400} 
-          height={200} 
-          className="w-full subject-image" 
+          fill
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+          className="w-full h-full object-cover transition-transform duration-300 hover:scale-105 subject-image" 
+          priority
+          onError={() => setImageError(true)}
+          loading="eager"
         />
       </div>
       <div className="p-5">
