@@ -12,7 +12,7 @@ const font =  Poppins({
 
 export const metadata: Metadata = {
   title: "Campus Virtual | Instituto Privado Dalmacio Vélez Sarsfield",
-  description: "Travel Landing Page built with Next.js and Tailwind CSS",
+  description: "Campus Virtual del Instituto Privado Dalmacio Vélez Sarsfield - Accede a tus cursos, recursos académicos y más",
 };
 
 export default function RootLayout({

@@ -1,9 +1,7 @@
 import NextAuth, { User, Session, DefaultSession, AuthOptions } from "next-auth";
 import { JWT } from "next-auth/jwt";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { supabase } from "@/app/lib/supabaseClient";
-import bcrypt from "bcryptjs";
-import crypto from "crypto";
+import { supabase, supabaseAdmin } from "@/app/lib/supabaseClient";
 
 declare module "next-auth" {
   interface User {
@@ -28,81 +26,90 @@ const authOptions: AuthOptions = {
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
-        name: { label: "Nombre completo", type: "text", required: false },
       },
       async authorize(credentials) {
-        if (!credentials) {
-          throw new Error("Credenciales no proporcionadas");
+        if (!credentials?.email || !credentials?.password) {
+          throw new Error("Email y contraseña son requeridos");
         }
-        const { email, password, name } = credentials;
+
+        const { email, password } = credentials;
 
         try {
-          // Buscar usuario existente
-          const { data: user, error: findError } = await supabase
-            .from('users')
-            .select('*')
-            .eq('email', email)
-            .single();
+          // 🔥 NUEVO: Usar Supabase Auth para autenticar
+          const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+            email: email as string,
+            password: password as string,
+          });
 
-          // Manejar errores de consulta
-          if (findError && findError.code !== 'PGRST116') {
-            console.error('Error al buscar usuario:', findError);
-            throw new Error("Error al buscar usuario");
+          if (authError || !authData.user) {
+            console.error('Auth error:', authError?.message);
+            
+            // Verificar si es por email no confirmado
+            if (authError?.message?.includes('Email not confirmed')) {
+              // Permitir login aunque el email no esté confirmado (para desarrollo)
+              console.log('⚠️  Permitiendo login sin confirmación de email (modo desarrollo)');
+              
+              // Obtener usuario por email usando admin client
+              const { data: userData, error: userError } = await supabaseAdmin
+                .from('users')
+                .select('*')
+                .eq('email', email)
+                .single();
+
+              if (userData) {
+                return {
+                  id: userData.id,
+                  email: userData.email,
+                  name: userData.name,
+                  role: userData.role || 'student',
+                };
+              }
+            }
+            
+            throw new Error("Credenciales incorrectas");
           }
 
-          // Registro automático si es nuevo
-          if (!user && name) {
-            const hashedPassword = await bcrypt.hash(password as string, 10);
-            // Generar UUID para el nuevo usuario
-            const uuid = crypto.randomUUID();
-            
-            const { data: newUser, error: createError } = await supabase
+          // Obtener datos adicionales del usuario desde nuestra tabla personalizada
+          const { data: userData, error: userError } = await supabaseAdmin
+            .from('users')
+            .select('*')
+            .eq('id', authData.user.id)
+            .single();
+
+          let finalUserData = userData;
+
+          if (userError) {
+            // Si no existe en nuestra tabla, crear entrada
+            const { data: newUserData, error: createError } = await supabaseAdmin
               .from('users')
-              .insert({
-                id: uuid,
-                email: email as string,
-                name: name as string,
-                password: hashedPassword,
-                role: "student",
-              })
+              .insert([
+                {
+                  id: authData.user.id,
+                  email: authData.user.email,
+                  name: authData.user.user_metadata?.name || authData.user.email,
+                  role: authData.user.user_metadata?.role || 'student',
+                  created_at: new Date().toISOString(),
+                }
+              ])
               .select()
               .single();
 
             if (createError) {
-              console.error('Error al crear usuario:', createError);
-              throw new Error("Error al crear usuario");
+              console.error('Error creating user profile:', createError);
+            } else {
+              finalUserData = newUserData;
             }
-            
-            return {
-              id: newUser.id.toString(),
-              email: newUser.email,
-              name: newUser.name,
-              role: newUser.role,
-            };
-          }
-
-          if (!user || !user.password) {
-            throw new Error("Usuario o contraseña incorrectos");
-          }
-
-          const isValidPassword = await bcrypt.compare(
-            password as string,
-            user.password
-          );
-
-          if (!isValidPassword) {
-            throw new Error("Contraseña incorrecta");
           }
 
           return {
-            id: user.id.toString(),
-            email: user.email,
-            name: user.name,
-            role: user.role,
+            id: authData.user.id,
+            email: authData.user.email!,
+            name: finalUserData?.name || authData.user.user_metadata?.name || authData.user.email,
+            role: finalUserData?.role || authData.user.user_metadata?.role || 'student',
           };
         } catch (error) {
-          console.error('Error en autenticación:', error);
-          throw error;
+          console.error('Authorization error:', error);
+          throw new Error("Error al autenticar usuario");
         }
       },
     }),

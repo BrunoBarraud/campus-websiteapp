@@ -10,11 +10,11 @@ const Nav = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <nav className="sticky top-0 bg-rose-950 transition-all duration-200 h-[12vh] z-[1000] shadow-md">
+    <nav className="sticky top-0 bg-rose-950 transition-all duration-200 h-[12vh] z-[60] shadow-md">
       <div className="flex items-center h-full justify-between w-[90%] xl:w-[80%] mx-auto">
         {/* Logo and Title */}
         <div className="flex items-center space-x-2">
-          <Link href="/" className="flex items-center">
+          <Link href="/campus/dashboard" className="flex items-center">
             <div className="w-20 h-20 flex justify-center items-center">
               <Image
                 src="/images/ipdvs-logo.png"
@@ -81,24 +81,27 @@ const Nav = () => {
                 <ul className="py-1 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="user-menu-button">
                   <li>
                     <Link
-                      href="../../../app/campus/profile"
+                      href="/campus/profile"
                       className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700"
+                      onClick={() => setDropdownOpen(false)}
                     >
                       👤 Perfil
                     </Link>
                   </li>
                   <li>
                     <Link
-                      href="../../../app/campus/settings"
+                      href="/campus/settings"
                       className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700"
+                      onClick={() => setDropdownOpen(false)}
                     >
                       ⚙️ Configuración
                     </Link>
                   </li>
                   <li>
                     <Link
-                      href="../../../app/campus/logout"
+                      href="/campus/logout"
                       className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-red-600 dark:text-red-400"
+                      onClick={() => setDropdownOpen(false)}
                     >
                       🔐 Cerrar Sesión
                     </Link>
@@ -147,25 +150,31 @@ const Nav = () => {
               <ul className="space-y-2">
                 <li>
                   <Link
-                    href="/profile"
+                    href="/campus/profile"
                     className="flex items-center gap-2 text-white hover:text-amber-400 transition"
-                  />
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
                     👤 Perfil
-                  </li>
+                  </Link>
+                </li>
                 <li>
                   <Link
-                    href="/settings"
+                    href="/campus/settings"
                     className="flex items-center gap-2 text-white hover:text-amber-400 transition"
-                  />
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
                     ⚙️ Configuración
-                  </li>
+                  </Link>
+                </li>
                 <li>
                   <Link
-                    href="/logout"
+                    href="/campus/logout"
                     className="flex items-center gap-2 text-red-400 hover:text-red-300 transition"
-                  />
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
                     🔐 Cerrar Sesión
-                  </li>
+                  </Link>
+                </li>
               </ul>
             </li>
           </ul>

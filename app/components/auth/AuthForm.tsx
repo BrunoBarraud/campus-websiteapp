@@ -2,12 +2,13 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '../../lib/firebaseConfig';
+import { signIn } from 'next-auth/react';
 
 export default function AuthForm({ mode }: { mode: 'login' | 'register' }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
+  const [year, setYear] = useState<number | ''>('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
@@ -23,10 +24,69 @@ export default function AuthForm({ mode }: { mode: 'login' | 'register' }) {
 
     try {
       if (mode === 'register') {
-        await createUserWithEmailAndPassword(auth, email, password);
+        // Registro usando la API de NextAuth que maneja Supabase
+        const response = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password, name, year: year || null }),
+        });
+
+        if (!response.ok) {
+          const data = await response.json();
+          
+          // Manejar errores específicos del servidor
+          if (response.status === 503) {
+            throw new Error(data.details || 'El servicio está temporalmente no disponible. Por favor, intenta nuevamente en unos minutos.');
+          }
+          
+          throw new Error(data.error || 'Error en el registro');
+        }
+
+        const registrationData = await response.json();
+        
+        // Si el registro fue exitoso pero necesita verificación de email
+        if (registrationData.needsVerification) {
+          setError(''); // Limpiar errores
+          setIsLoading(false);
+          
+          // Mostrar mensaje de éxito y verificación
+          alert(`✅ Registro exitoso!\n\n📧 Hemos enviado un email de verificación a: ${email}\n\nPor favor, revisa tu bandeja de entrada (y spam) y haz clic en el enlace para verificar tu cuenta.\n\nDespués de verificar tu email, podrás iniciar sesión.`);
+          
+          // Redirigir al login
+          router.push('/campus/auth/login');
+          return;
+        }
+
+        // Si no necesita verificación, continuar con login automático
+        const result = await signIn('credentials', {
+          email,
+          password,
+          redirect: false,
+        });
+
+        if (result?.error) {
+          // Si el error es por email no confirmado, mostrar mensaje específico
+          if (result.error.includes('Email not confirmed') || result.error.includes('email_not_confirmed')) {
+            setError('Registro exitoso. Por favor, revisa tu email para confirmar tu cuenta antes de iniciar sesión.');
+          } else {
+            setError('Registro exitoso, pero hubo un error al iniciar sesión automáticamente. Puedes intentar hacer login manualmente.');
+          }
+          // No redirigir si hay error de login
+          return;
+        }
       } else {
-        await signInWithEmailAndPassword(auth, email, password);
+        // Login usando NextAuth
+        const result = await signIn('credentials', {
+          email,
+          password,
+          redirect: false,
+        });
+
+        if (result?.error) {
+          throw new Error('Credenciales inválidas');
+        }
       }
+      
       router.push('/campus/dashboard');
     } catch (err: unknown) {
       if (err instanceof Error) {
@@ -68,6 +128,52 @@ export default function AuthForm({ mode }: { mode: 'login' | 'register' }) {
 
           {/* Formulario */}
           <form onSubmit={handleSubmit} className="space-y-6 backdrop-blur-sm bg-white/80 p-8 rounded-xl shadow-md">
+            {/* Campo Nombre (solo para registro) */}
+            {mode === 'register' && (
+              <>
+                <div className="floating-input relative group">
+                  <input
+                    type="text"
+                    id="name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder=" "
+                    required
+                    className="text-black w-full px-4 py-3 rounded-md border border-gray-300 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-300 outline-none peer transition-all"
+                  />
+                  <label
+                    htmlFor="name"
+                    className="absolute left-3 top-3 text-gray-400 peer-focus:text-yellow-500 peer-focus:-translate-y-6 peer-focus:scale-90 peer-focus:bg-white peer-focus:px-2 transition-all peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100"
+                  >
+                    Nombre completo
+                  </label>
+                </div>
+
+                {/* Campo Año (solo para registro) */}
+                <div className="relative">
+                  <select
+                    id="year"
+                    value={year}
+                    onChange={(e) => setYear(e.target.value ? parseInt(e.target.value) : '')}
+                    className="text-black w-full px-4 py-3 rounded-md border border-gray-300 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-300 outline-none transition-all appearance-none bg-white"
+                  >
+                    <option value="">Selecciona tu año de estudio</option>
+                    <option value="1">1er Año</option>
+                    <option value="2">2do Año</option>
+                    <option value="3">3er Año</option>
+                    <option value="4">4to Año</option>
+                    <option value="5">5to Año</option>
+                    <option value="6">6to Año</option>
+                  </select>
+                  <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                    <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                </div>
+              </>
+            )}
+
             {/* Campo Email */}
             <div className="floating-input relative group">
               <input

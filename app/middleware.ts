@@ -1,17 +1,39 @@
 import { withAuth } from "next-auth/middleware";
+import { NextResponse } from "next/server";
 
 export default withAuth({
   callbacks: {
     authorized: ({ token, req }) => {
-      // Permitir acceso si hay token o si no es ruta protegida
-      if (req.nextUrl.pathname.startsWith('/campus')) {
+      const { pathname } = req.nextUrl;
+      
+      // Rutas públicas del campus (auth)
+      if (pathname.startsWith('/campus/auth/')) {
+        return true;
+      }
+      
+      // Rutas protegidas del campus requieren autenticación
+      if (pathname.startsWith('/campus')) {
         return !!token;
       }
+      
+      // Rutas admin requieren rol específico
+      if (pathname.startsWith('/admin')) {
+        return token?.role === 'admin';
+      }
+      
+      // Otras rutas son públicas
       return true;
     },
+  },
+  pages: {
+    signIn: '/campus/auth/login',
   }
 });
 
 export const config = {
-  matcher: ['/campus/:path*']
+  matcher: [
+    '/campus/:path*',
+    '/admin/:path*',
+    '/api/protected/:path*'
+  ]
 };

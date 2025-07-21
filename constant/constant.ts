@@ -1,23 +1,23 @@
 const navLinks = [
   {
     id: 1,
-    url: "#",
-    label: "Cursos",
+    url: "/campus/dashboard",
+    label: "Dashboard",
   },
   {
     id: 2,
-    url: "#",
+    url: "/campus/calendar",
     label: "Calendario",
   },
   {
     id: 3,
-    url: "#",
-    label: "Recursos",
+    url: "/campus/profile",
+    label: "Perfil",
   },
   {
     id: 4,
-    url: "#",
-    label: "Soporte",
+    url: "/campus/settings",
+    label: "Configuración",
   },
 ];
 
