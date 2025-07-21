@@ -39,7 +39,6 @@
     "@types/aria-query": "^5.0.4",
     "@types/firebase": "^2.4.32",
     "@types/jest": "^29.5.14",
-    "@types/next-auth": "^3.13.0",
     "@types/node": "^20",
     "@types/react": "^18.3.17",
     "@types/react-dom": "^18.3.5",

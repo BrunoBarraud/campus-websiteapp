@@ -19,9 +19,9 @@ declare module "next-auth" {
 const authOptions: AuthOptions = {
   pages: {
     signIn: '/campus/auth/login',
-    error: '/campus/auth/login', // Redirigir errores al login
+    error: '/campus/auth/login',
   },
-  debug: process.env.NODE_ENV === 'development', // Debug solo en desarrollo
+  secret: process.env.NEXTAUTH_SECRET,
   providers: [
     CredentialsProvider({
       name: "Credentials",
@@ -111,10 +111,6 @@ const authOptions: AuthOptions = {
           };
         } catch (error) {
           console.error('Authorization error:', error);
-          // Mejorar logging para producción
-          if (process.env.NODE_ENV === 'development') {
-            console.error('Full error details:', error);
-          }
           throw new Error("Error al autenticar usuario");
         }
       },
@@ -123,7 +119,6 @@ const authOptions: AuthOptions = {
   session: {
     strategy: "jwt" as const,
   },
-  secret: process.env.NEXTAUTH_SECRET,
   callbacks: {
     async jwt({ token, user }: { token: JWT; user: User | null }) {
       if (user) {
