@@ -681,7 +681,6 @@ export default function SubjectDetailPage() {
         onClose={() => setModal({ type: null })}
         onSave={handleSaveUnit}
         unit={modal.data}
-        subjectId={subjectId}
       />
 
       <ContentModal
