@@ -9,10 +9,9 @@ interface UnitModalProps {
   onClose: () => void;
   onSave: (unitData: Partial<SubjectUnit>) => void;
   unit?: SubjectUnit | null;
-  subjectId: string;
 }
 
-export function UnitModal({ isOpen, onClose, onSave, unit, subjectId }: UnitModalProps) {
+export function UnitModal({ isOpen, onClose, onSave, unit }: UnitModalProps) {
   const [formData, setFormData] = useState({
     unit_number: unit?.unit_number || 1,
     title: unit?.title || '',
@@ -260,10 +259,18 @@ export function ContentModal({ isOpen, onClose, onSave, subjectId, units }: Cont
   );
 }
 
+interface DocumentData {
+  title: string;
+  description: string;
+  file: File | null;
+  subject_id?: string;
+  unit_id?: string;
+}
+
 interface DocumentModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (documentData: any) => void;
+  onSave: (documentData: DocumentData) => void;
   subjectId: string;
   unitId?: string;
 }

@@ -116,3 +116,11 @@ function VerifyEmailContent() {
     </div>
   );
 }
+
+export default function VerifyEmailPage() {
+  return (
+    <Suspense fallback={<div>Cargando...</div>}>
+      <VerifyEmailContent />
+    </Suspense>
+  );
+}
