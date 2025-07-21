@@ -3,7 +3,7 @@ import { supabase, supabaseAdmin } from '@/app/lib/supabaseClient';
 
 export async function POST(request: Request) {
   try {
-    const { email, password, name, year } = await request.json();
+    const { email, password, name, year, division } = await request.json();
 
     // Validar datos
     if (!email || !password || !name) {
@@ -46,7 +46,8 @@ export async function POST(request: Request) {
         data: {
           name: name,
           role: 'student',
-          year: year || null
+          year: year || null,
+          division: division || null
         },
         emailRedirectTo: `${process.env.NEXTAUTH_URL}/campus/auth/verify-email`
       }
@@ -89,6 +90,7 @@ export async function POST(request: Request) {
               name: name,
               role: 'student',
               year: year || null,
+              division: division || null,
               is_active: true,
               created_at: new Date().toISOString(),
               updated_at: new Date().toISOString()
@@ -117,7 +119,8 @@ export async function POST(request: Request) {
           email: authData.user?.email,
           name: name,
           role: 'student',
-          year: year || null
+          year: year || null,
+          division: division || null
         },
         needsVerification: true
       },

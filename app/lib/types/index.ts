@@ -8,6 +8,7 @@ export interface User {
   name: string;
   role: UserRole;
   year?: number | null; // Solo para estudiantes
+  division?: string | null; // División del curso (A, B, C, etc.) - Solo para estudiantes
   phone?: string;
   bio?: string;
   avatar_url?: string;
@@ -138,6 +139,7 @@ export interface CreateUserForm {
   password: string;
   role: UserRole;
   year?: number;
+  division?: string; // División del curso (A, B, C, etc.)
   phone?: string;
   bio?: string;
 }

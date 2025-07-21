@@ -9,6 +9,7 @@ export default function AuthForm({ mode }: { mode: 'login' | 'register' }) {
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [year, setYear] = useState<number | ''>('');
+  const [division, setDivision] = useState<string>('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
@@ -28,7 +29,13 @@ export default function AuthForm({ mode }: { mode: 'login' | 'register' }) {
         const response = await fetch('/api/auth/register', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password, name, year: year || null }),
+          body: JSON.stringify({ 
+            email, 
+            password, 
+            name, 
+            year: year || null,
+            division: division || null 
+          }),
         });
 
         if (!response.ok) {
@@ -164,6 +171,25 @@ export default function AuthForm({ mode }: { mode: 'login' | 'register' }) {
                     <option value="4">4to Año</option>
                     <option value="5">5to Año</option>
                     <option value="6">6to Año</option>
+                  </select>
+                  <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                    <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                </div>
+
+                {/* Campo División (solo para registro) */}
+                <div className="relative">
+                  <select
+                    id="division"
+                    value={division}
+                    onChange={(e) => setDivision(e.target.value)}
+                    className="text-black w-full px-3 py-2 sm:px-4 sm:py-3 md:px-5 md:py-3 lg:px-6 lg:py-4 rounded-md border border-gray-300 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-300 outline-none transition-all appearance-none bg-white text-sm sm:text-base"
+                  >
+                    <option value="">Selecciona tu división</option>
+                    <option value="A">División A</option>
+                    <option value="B">División B</option>
                   </select>
                   <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
                     <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">

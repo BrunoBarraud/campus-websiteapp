@@ -111,50 +111,50 @@ const DashboardPage = () => {
 
   if (loading) {
     return (
-      <div className="bg-gray-50 min-h-screen container mx-auto px-4 py-8">
+      <div className="container mx-auto px-3 sm:px-4 py-6 sm:py-8">
         <div className="flex items-center justify-center h-64">
-          <div className="text-gray-500">Cargando dashboard...</div>
+          <div className="text-gray-500 text-sm sm:text-base">Cargando dashboard...</div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="bg-gray-50 min-h-screen container mx-auto px-4 py-8">
+    <div className="container mx-auto px-3 sm:px-4 py-6 sm:py-8">
         {/* Header */}
-        <header className="mb-12 text-center fade-in">
-          <h1 className="text-3xl font-bold text-gray-800 mb-4">
+        <header className="mb-8 sm:mb-12 text-center fade-in">
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-800 mb-4">
             {getWelcomeMessage()}
           </h1>
-          <p className="text-gray-600 mb-6">
+          <p className="text-gray-600 mb-4 sm:mb-6 text-sm sm:text-base">
             {getSubjectCountMessage()} ({subjects.length} materias disponibles)
           </p>
-          <div className="mt-6 flex justify-center space-x-4">
-            <button className="px-6 py-2 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 transition-all shadow-md">
+          <div className="mt-4 sm:mt-6 flex flex-col sm:flex-row justify-center space-y-2 sm:space-y-0 sm:space-x-4">
+            <button className="px-4 sm:px-6 py-2 bg-gradient-to-r from-indigo-500 to-indigo-600 text-white rounded-full hover:from-indigo-600 hover:to-indigo-700 transition-all shadow-md text-sm sm:text-base">
               <i className="fas fa-book mr-2"></i> Mis Materias
             </button>
-            <button className="px-6 py-2 border border-indigo-600 text-indigo-600 rounded-full hover:bg-indigo-50 transition-all">
+            <button className="px-4 sm:px-6 py-2 border border-indigo-600 text-indigo-600 rounded-full hover:bg-indigo-50 transition-all text-sm sm:text-base">
               <i className="fas fa-calendar mr-2"></i> Horarios
             </button>
           </div>
         </header>
 
         {/* Search and Filter */}
-        <div className="mb-8 fade-in delay-1">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <div className="relative w-full md:w-96">
+        <div className="mb-6 sm:mb-8 fade-in delay-1">
+          <div className="flex flex-col lg:flex-row justify-between items-center gap-4">
+            <div className="relative w-full lg:w-96">
               <input
                 type="text"
                 placeholder="Buscar materias..."
-                className="w-full pl-10 pr-4 py-2 rounded-full border border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-800"
+                className="w-full pl-10 pr-4 py-2 rounded-full border border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/90 backdrop-blur-sm text-gray-800 text-sm sm:text-base"
               />
-              <i className="fas fa-search absolute left-3 top-3 text-gray-600"></i>
+              <i className="fas fa-search absolute left-3 top-2.5 sm:top-3 text-gray-600 text-sm sm:text-base"></i>
             </div>
             {user?.role === 'admin' && (
-              <div className="flex space-x-2">
+              <div className="flex space-x-2 w-full lg:w-auto">
                 <a
                   href="/campus/settings/subjects"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-all shadow-md"
+                  className="flex-1 lg:flex-none px-3 sm:px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-full hover:from-blue-600 hover:to-blue-700 transition-all shadow-md text-center text-sm sm:text-base"
                 >
                   <i className="fas fa-plus mr-2"></i> Gestionar Materias
                 </a>
@@ -164,43 +164,43 @@ const DashboardPage = () => {
         </div>
 
         {/* Stats Section */}
-        <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-white p-6 rounded-xl shadow-md fade-in delay-2">
+        <div className="mt-8 sm:mt-16 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+            <div className="bg-white/90 backdrop-blur-sm p-4 sm:p-6 rounded-xl shadow-md fade-in delay-2">
                 <div className="flex items-center">
-                    <div className="p-3 rounded-full bg-indigo-100 text-indigo-600 mr-4">
-                        <i className="fas fa-book text-xl"></i>
+                    <div className="p-2 sm:p-3 rounded-full bg-indigo-100 text-indigo-600 mr-3 sm:mr-4">
+                        <i className="fas fa-book text-lg sm:text-xl"></i>
                     </div>
                     <div>
-                        <p className="text-gray-500">
+                        <p className="text-gray-500 text-xs sm:text-sm">
                           {user?.role === 'student' ? 'Mis Materias' : 'Total Materias'}
                         </p>
-                        <h3 className="text-2xl font-bold">{subjects.length}</h3>
+                        <h3 className="text-xl sm:text-2xl font-bold">{subjects.length}</h3>
                     </div>
                 </div>
             </div>
-            <div className="bg-white p-6 rounded-xl shadow-md fade-in delay-3">
+            <div className="bg-white/90 backdrop-blur-sm p-4 sm:p-6 rounded-xl shadow-md fade-in delay-3">
                 <div className="flex items-center">
-                    <div className="p-3 rounded-full bg-blue-100 text-blue-600 mr-4">
-                        <i className="fas fa-chalkboard-teacher text-xl"></i>
+                    <div className="p-2 sm:p-3 rounded-full bg-blue-100 text-blue-600 mr-3 sm:mr-4">
+                        <i className="fas fa-chalkboard-teacher text-lg sm:text-xl"></i>
                     </div>
                     <div>
-                        <p className="text-gray-500">Profesores Activos</p>
-                        <h3 className="text-2xl font-bold">
+                        <p className="text-gray-500 text-xs sm:text-sm">Profesores Activos</p>
+                        <h3 className="text-xl sm:text-2xl font-bold">
                           {[...new Set(subjects.map(s => s.teacher?.name).filter(Boolean))].length}
                         </h3>
                     </div>
                 </div>
             </div>
-            <div className="bg-white p-6 rounded-xl shadow-md fade-in delay-4">
+            <div className="bg-white/90 backdrop-blur-sm p-4 sm:p-6 rounded-xl shadow-md fade-in delay-4 sm:col-span-2 lg:col-span-1">
                 <div className="flex items-center">
-                    <div className="p-3 rounded-full bg-green-100 text-green-600 mr-4">
-                        <i className="fas fa-calendar-check text-xl"></i>
+                    <div className="p-2 sm:p-3 rounded-full bg-green-100 text-green-600 mr-3 sm:mr-4">
+                        <i className="fas fa-calendar-check text-lg sm:text-xl"></i>
                     </div>
                     <div>
-                        <p className="text-gray-500">
+                        <p className="text-gray-500 text-xs sm:text-sm">
                           {user?.role === 'student' ? `Año ${user.year}` : 'Próximas Clases'}
                         </p>
-                        <h3 className="text-2xl font-bold">
+                        <h3 className="text-xl sm:text-2xl font-bold">
                           {user?.role === 'student' ? user.year || '-' : '5'}
                         </h3>
                     </div>
@@ -210,12 +210,12 @@ const DashboardPage = () => {
 
         {/* Subjects Grid or Empty State */}
         {subjects.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-64 mt-16">
-            <i className="fas fa-book text-6xl text-gray-400 mb-4"></i>
-            <h3 className="text-xl font-medium text-gray-900 mb-2">
+          <div className="flex flex-col items-center justify-center h-64 mt-8 sm:mt-16 px-4">
+            <i className="fas fa-book text-4xl sm:text-6xl text-gray-400 mb-4"></i>
+            <h3 className="text-lg sm:text-xl font-medium text-gray-900 mb-2 text-center">
               {getEmptyStateMessage()}
             </h3>
-            <p className="text-gray-500 text-center max-w-md mb-4">
+            <p className="text-gray-500 text-center max-w-md mb-4 text-sm sm:text-base">
               {user?.role === 'admin' 
                 ? 'Comienza creando materias para el campus virtual'
                 : user?.role === 'teacher'
@@ -226,7 +226,7 @@ const DashboardPage = () => {
             {getEmptyStateAction() && (
               <a
                 href={getEmptyStateAction()!.href}
-                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                className="px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-colors text-sm sm:text-base"
               >
                 <i className="fas fa-plus mr-2"></i>
                 {getEmptyStateAction()!.text}
@@ -234,7 +234,7 @@ const DashboardPage = () => {
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mt-16">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 mt-8 sm:mt-16">
             {subjects.map((subject, index) => (
               <CourseCard 
                 key={subject.id} 

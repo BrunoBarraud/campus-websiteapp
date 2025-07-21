@@ -118,10 +118,10 @@ function EditSubjectModal({ isOpen, onClose, onSave, subject }: EditSubjectModal
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between p-6 border-b">
-          <h3 className="text-lg font-semibold">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4">
+      <div className="bg-white rounded-lg w-full max-w-xs sm:max-w-2xl max-h-[95vh] sm:max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between p-4 sm:p-6 border-b">
+          <h3 className="text-base sm:text-lg font-semibold">
             {subject ? 'Editar Materia' : 'Nueva Materia'}
           </h3>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
@@ -129,9 +129,9 @@ function EditSubjectModal({ isOpen, onClose, onSave, subject }: EditSubjectModal
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4 sm:space-y-6">
           {/* Información básica */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Nombre de la Materia *
@@ -141,7 +141,7 @@ function EditSubjectModal({ isOpen, onClose, onSave, subject }: EditSubjectModal
                 required
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
                 placeholder="ej: Matemática"
               />
             </div>
@@ -155,7 +155,7 @@ function EditSubjectModal({ isOpen, onClose, onSave, subject }: EditSubjectModal
                 required
                 value={formData.code}
                 onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
                 placeholder="ej: MAT1"
               />
             </div>
@@ -170,13 +170,13 @@ function EditSubjectModal({ isOpen, onClose, onSave, subject }: EditSubjectModal
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
               placeholder="Descripción de la materia..."
             />
           </div>
 
           {/* Información académica */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Año *
@@ -185,7 +185,7 @@ function EditSubjectModal({ isOpen, onClose, onSave, subject }: EditSubjectModal
                 required
                 value={formData.year}
                 onChange={(e) => setFormData({ ...formData, year: parseInt(e.target.value) })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
               >
                 <option value={1}>1° Año</option>
                 <option value={2}>2° Año</option>
@@ -203,7 +203,7 @@ function EditSubjectModal({ isOpen, onClose, onSave, subject }: EditSubjectModal
               <select
                 value={formData.semester}
                 onChange={(e) => setFormData({ ...formData, semester: parseInt(e.target.value) })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
               >
                 <option value={1}>1° Semestre</option>
                 <option value={2}>2° Semestre</option>
@@ -220,7 +220,7 @@ function EditSubjectModal({ isOpen, onClose, onSave, subject }: EditSubjectModal
                 max="10"
                 value={formData.credits}
                 onChange={(e) => setFormData({ ...formData, credits: parseInt(e.target.value) })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
               />
             </div>
           </div>
@@ -233,7 +233,7 @@ function EditSubjectModal({ isOpen, onClose, onSave, subject }: EditSubjectModal
             <select
               value={formData.teacher_id}
               onChange={(e) => setFormData({ ...formData, teacher_id: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
             >
               <option value="">Sin profesor asignado</option>
               {Array.isArray(teachers) && teachers.map(teacher => (
@@ -264,7 +264,7 @@ function EditSubjectModal({ isOpen, onClose, onSave, subject }: EditSubjectModal
             {/* Imágenes predefinidas */}
             <div className="mb-4">
               <p className="text-sm text-gray-600 mb-2">O elige una imagen predefinida:</p>
-              <div className="grid grid-cols-3 gap-2 max-h-40 overflow-y-auto">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-32 sm:max-h-40 overflow-y-auto">
                 {predefinedImages.map((img, index) => (
                   <button
                     key={index}
@@ -277,7 +277,7 @@ function EditSubjectModal({ isOpen, onClose, onSave, subject }: EditSubjectModal
                     <img
                       src={img.url}
                       alt={img.name}
-                      className="w-full h-16 object-cover rounded-md hover:opacity-80 transition-opacity"
+                      className="w-full h-12 sm:h-16 object-cover rounded-md hover:opacity-80 transition-opacity"
                     />
                     <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all rounded-md flex items-center justify-center">
                       <span className="text-white text-xs opacity-0 group-hover:opacity-100 transition-opacity text-center px-1">
@@ -296,7 +296,7 @@ function EditSubjectModal({ isOpen, onClose, onSave, subject }: EditSubjectModal
                 <img
                   src={formData.image_url}
                   alt="Preview"
-                  className="w-32 h-20 object-cover rounded-md border"
+                  className="w-24 h-16 sm:w-32 sm:h-20 object-cover rounded-md border"
                   onError={(e) => {
                     e.currentTarget.src = 'https://via.placeholder.com/800x400/f3f4f6/9ca3af?text=Sin+Imagen';
                   }}
@@ -306,17 +306,17 @@ function EditSubjectModal({ isOpen, onClose, onSave, subject }: EditSubjectModal
           </div>
 
           {/* Botones */}
-          <div className="flex justify-end space-x-3 pt-4 border-t">
+          <div className="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-3 pt-4 border-t">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+              className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors text-sm sm:text-base"
             >
               Cancelar
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+              className="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-md hover:from-blue-600 hover:to-blue-700 transition-colors text-sm sm:text-base"
             >
               {subject ? 'Actualizar' : 'Crear'} Materia
             </button>
@@ -450,65 +450,65 @@ export default function SubjectsManagementPage() {
   };
 
   return (
-    <div className="p-6">
+    <div className="p-3 sm:p-6">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">Gestión de Materias</h1>
-          <p className="text-gray-600 mt-2">
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Gestión de Materias</h1>
+          <p className="text-gray-600 mt-2 text-sm sm:text-base">
             Administra las materias del campus, asigna profesores y configura años académicos
           </p>
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white p-6 rounded-lg shadow">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-6 sm:mb-8">
+          <div className="bg-white/90 backdrop-blur-sm p-4 sm:p-6 rounded-lg shadow">
             <div className="flex items-center">
-              <div className="p-3 rounded-full bg-blue-100 text-blue-600 mr-4">
-                <FiBook className="w-6 h-6" />
+              <div className="p-2 sm:p-3 rounded-full bg-blue-100 text-blue-600 mr-2 sm:mr-4">
+                <FiBook className="w-4 h-4 sm:w-6 sm:h-6" />
               </div>
               <div>
-                <p className="text-sm text-gray-600">Total Materias</p>
-                <p className="text-2xl font-bold text-gray-900">{subjects.length}</p>
+                <p className="text-xs sm:text-sm text-gray-600">Total Materias</p>
+                <p className="text-lg sm:text-2xl font-bold text-gray-900">{subjects.length}</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white p-6 rounded-lg shadow">
+          <div className="bg-white/90 backdrop-blur-sm p-4 sm:p-6 rounded-lg shadow">
             <div className="flex items-center">
-              <div className="p-3 rounded-full bg-green-100 text-green-600 mr-4">
-                <FiUser className="w-6 h-6" />
+              <div className="p-2 sm:p-3 rounded-full bg-green-100 text-green-600 mr-2 sm:mr-4">
+                <FiUser className="w-4 h-4 sm:w-6 sm:h-6" />
               </div>
               <div>
-                <p className="text-sm text-gray-600">Con Profesor</p>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-xs sm:text-sm text-gray-600">Con Profesor</p>
+                <p className="text-lg sm:text-2xl font-bold text-gray-900">
                   {subjects.filter(s => s.teacher_id).length}
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white p-6 rounded-lg shadow">
+          <div className="bg-white/90 backdrop-blur-sm p-4 sm:p-6 rounded-lg shadow">
             <div className="flex items-center">
-              <div className="p-3 rounded-full bg-yellow-100 text-yellow-600 mr-4">
-                <FiCalendar className="w-6 h-6" />
+              <div className="p-2 sm:p-3 rounded-full bg-yellow-100 text-yellow-600 mr-2 sm:mr-4">
+                <FiCalendar className="w-4 h-4 sm:w-6 sm:h-6" />
               </div>
               <div>
-                <p className="text-sm text-gray-600">Años Activos</p>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-xs sm:text-sm text-gray-600">Años Activos</p>
+                <p className="text-lg sm:text-2xl font-bold text-gray-900">
                   {[...new Set(subjects.map(s => s.year))].length}
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white p-6 rounded-lg shadow">
+          <div className="bg-white/90 backdrop-blur-sm p-4 sm:p-6 rounded-lg shadow">
             <div className="flex items-center">
-              <div className="p-3 rounded-full bg-purple-100 text-purple-600 mr-4">
-                <FiBook className="w-6 h-6" />
+              <div className="p-2 sm:p-3 rounded-full bg-purple-100 text-purple-600 mr-2 sm:mr-4">
+                <FiBook className="w-4 h-4 sm:w-6 sm:h-6" />
               </div>
               <div>
-                <p className="text-sm text-gray-600">Sin Asignar</p>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-xs sm:text-sm text-gray-600">Sin Asignar</p>
+                <p className="text-lg sm:text-2xl font-bold text-gray-900">
                   {subjects.filter(s => !s.teacher_id).length}
                 </p>
               </div>
@@ -517,19 +517,19 @@ export default function SubjectsManagementPage() {
         </div>
 
         {/* Filters and Actions */}
-        <div className="bg-white rounded-lg shadow p-6 mb-6">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0">
-            <div className="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4 flex-1">
+        <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow p-4 sm:p-6 mb-4 sm:mb-6">
+          <div className="flex flex-col space-y-4 lg:flex-row lg:justify-between lg:items-center lg:space-y-0">
+            <div className="flex flex-col space-y-4 sm:flex-row sm:space-y-0 sm:space-x-4 flex-1">
               <div className="relative">
                 <input
                   type="text"
                   placeholder="Buscar materias..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 w-full md:w-80"
+                  className="pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-80 text-sm sm:text-base"
                 />
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <FiBook className="h-5 w-5 text-gray-400" />
+                  <FiBook className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400" />
                 </div>
               </div>
               
@@ -537,7 +537,7 @@ export default function SubjectsManagementPage() {
                 <select
                   value={yearFilter}
                   onChange={(e) => setYearFilter(e.target.value === 'all' ? 'all' : parseInt(e.target.value))}
-                  className="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="px-3 sm:px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-auto text-sm sm:text-base"
                 >
                   <option value="all">Todos los años</option>
                   <option value={1}>1° Año</option>
@@ -552,27 +552,28 @@ export default function SubjectsManagementPage() {
             
             <button
               onClick={handleCreateSubject}
-              className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 flex items-center space-x-2"
+              className="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-3 sm:px-4 py-2 rounded-md hover:from-blue-600 hover:to-blue-700 flex items-center justify-center space-x-2 transition-all text-sm sm:text-base"
             >
               <FiPlus className="w-4 h-4" />
-              <span>Nueva Materia</span>
+              <span className="hidden sm:inline">Nueva Materia</span>
+              <span className="sm:hidden">Nueva</span>
             </button>
           </div>
         </div>
 
         {/* Subjects Table */}
-        <div className="bg-white rounded-lg shadow overflow-hidden">
+        <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow overflow-hidden">
           {loading ? (
             <div className="flex items-center justify-center h-64">
-              <div className="text-gray-500">Cargando materias...</div>
+              <div className="text-gray-500 text-sm sm:text-base">Cargando materias...</div>
             </div>
           ) : filteredSubjects.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-64">
-              <FiBook className="w-12 h-12 text-gray-400 mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
+            <div className="flex flex-col items-center justify-center h-64 p-4">
+              <FiBook className="w-8 h-8 sm:w-12 sm:h-12 text-gray-400 mb-4" />
+              <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2 text-center">
                 {subjects.length === 0 ? 'No hay materias creadas' : 'No se encontraron materias'}
               </h3>
-              <p className="text-gray-500 text-center max-w-md">
+              <p className="text-gray-500 text-center max-w-md text-sm sm:text-base">
                 {subjects.length === 0 
                   ? 'Comienza creando tu primera materia para el campus virtual'
                   : 'Intenta ajustar los filtros de búsqueda'
@@ -581,7 +582,7 @@ export default function SubjectsManagementPage() {
               {subjects.length === 0 && (
                 <button
                   onClick={handleCreateSubject}
-                  className="mt-4 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 flex items-center space-x-2"
+                  className="mt-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-2 rounded-md hover:from-blue-600 hover:to-blue-700 flex items-center space-x-2 text-sm sm:text-base"
                 >
                   <FiPlus className="w-4 h-4" />
                   <span>Crear Primera Materia</span>
@@ -591,82 +592,85 @@ export default function SubjectsManagementPage() {
           ) : (
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+                <thead className="bg-gray-50/80">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Materia
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
                       Código
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Año
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
                       Profesor
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">
                       Créditos
                     </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-3 sm:px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Acciones
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-white/50 divide-y divide-gray-200">
                   {filteredSubjects.map((subject) => (
-                    <tr key={subject.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
+                    <tr key={subject.id} className="hover:bg-gray-50/50">
+                      <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           {subject.image_url && (
                             <img
                               src={subject.image_url}
                               alt={subject.name}
-                              className="w-10 h-10 rounded-md object-cover mr-3"
+                              className="w-8 h-8 sm:w-10 sm:h-10 rounded-md object-cover mr-2 sm:mr-3"
                               onError={(e) => {
                                 e.currentTarget.src = 'https://via.placeholder.com/40x40/f3f4f6/9ca3af?text=?';
                               }}
                             />
                           )}
                           <div>
-                            <div className="text-sm font-medium text-gray-900">{subject.name}</div>
+                            <div className="text-xs sm:text-sm font-medium text-gray-900">{subject.name}</div>
                             {subject.description && (
-                              <div className="text-sm text-gray-500 truncate max-w-xs">
+                              <div className="text-xs text-gray-500 truncate max-w-xs sm:hidden">
                                 {subject.description}
                               </div>
                             )}
+                            <div className="text-xs text-gray-500 sm:hidden">
+                              {subject.code}
+                            </div>
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900 hidden sm:table-cell">
                         {subject.code}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-                          {subject.year}° Año
+                      <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
+                        <span className="inline-flex px-1 sm:px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                          {subject.year}°
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900 hidden md:table-cell">
                         {subject.teacher?.name || (
                           <span className="text-gray-400 italic">Sin asignar</span>
                         )}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900 hidden lg:table-cell">
                         {subject.credits}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <div className="flex justify-end space-x-2">
+                      <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <div className="flex justify-end space-x-1 sm:space-x-2">
                           <button
                             onClick={() => handleEditSubject(subject)}
-                            className="text-blue-600 hover:text-blue-900"
+                            className="text-blue-600 hover:text-blue-900 p-1"
                           >
-                            <FiEdit className="w-4 h-4" />
+                            <FiEdit className="w-3 h-3 sm:w-4 sm:h-4" />
                           </button>
                           <button
                             onClick={() => handleDeleteSubject(subject.id)}
-                            className="text-red-600 hover:text-red-900"
+                            className="text-red-600 hover:text-red-900 p-1"
                           >
-                            <FiTrash2 className="w-4 h-4" />
+                            <FiTrash2 className="w-3 h-3 sm:w-4 sm:h-4" />
                           </button>
                         </div>
                       </td>
