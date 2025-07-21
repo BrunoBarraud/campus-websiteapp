@@ -21,7 +21,7 @@ const authOptions: AuthOptions = {
     signIn: '/campus/auth/login',
     error: '/campus/auth/login', // Redirigir errores al login
   },
-  debug: process.env.NODE_ENV === 'development',
+  debug: process.env.NODE_ENV === 'development', // Debug solo en desarrollo
   providers: [
     CredentialsProvider({
       name: "Credentials",
