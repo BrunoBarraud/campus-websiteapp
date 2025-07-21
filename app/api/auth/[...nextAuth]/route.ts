@@ -22,6 +22,19 @@ const authOptions: AuthOptions = {
     error: '/campus/auth/login',
   },
   secret: process.env.NEXTAUTH_SECRET,
+  // Configuración específica para App Router en producción
+  useSecureCookies: process.env.NODE_ENV === 'production',
+  cookies: {
+    sessionToken: {
+      name: `next-auth.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+      },
+    },
+  },
   providers: [
     CredentialsProvider({
       name: "Credentials",
@@ -139,4 +152,8 @@ const authOptions: AuthOptions = {
 
 const handler = NextAuth(authOptions);
 
+// Configuración específica para App Router y Vercel
 export { handler as GET, handler as POST };
+
+// También exportar como default para mayor compatibilidad
+export default handler;

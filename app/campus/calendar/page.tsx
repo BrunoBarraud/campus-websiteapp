@@ -1,3 +1,6 @@
+// Forzar rendering dinámico para evitar errores de SSR
+export const dynamic = 'force-dynamic';
+
 import React from 'react';
 import Calendar from '../../../components/dashboard/Calendar';
 

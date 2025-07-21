@@ -1,5 +1,8 @@
 'use client';
 
+// Forzar rendering dinámico para evitar errores de SSR
+export const dynamic = 'force-dynamic';
+
 import { useState, useEffect } from 'react';
 import { User, UserRole } from '@/app/lib/types';
 import { FiSearch, FiEdit, FiTrash2, FiPlus, FiUsers, FiShield, FiX, FiBook } from 'react-icons/fi';

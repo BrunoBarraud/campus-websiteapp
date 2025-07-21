@@ -1,5 +1,8 @@
 'use client'
 
+// Forzar rendering dinámico para evitar errores de SSR
+export const dynamic = 'force-dynamic';
+
 import React, { useState, useEffect } from 'react';
 import { User, Subject, UserRole, CreateUserForm, CreateSubjectForm } from '@/app/lib/types';
 

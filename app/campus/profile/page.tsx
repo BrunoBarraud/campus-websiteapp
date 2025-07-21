@@ -1,4 +1,8 @@
 "use client";
+
+// Forzar rendering dinámico para evitar errores de SSR
+export const dynamic = 'force-dynamic';
+
 import React, { useState } from "react";
 import { useSession } from 'next-auth/react';
 
