@@ -167,6 +167,7 @@ export interface CreateDocumentForm {
   description?: string;
   file: File;
   subject_id?: string;
+  unit_id?: string;
   year?: number;
   is_public: boolean;
 }

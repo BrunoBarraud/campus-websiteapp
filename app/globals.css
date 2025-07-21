@@ -12,17 +12,39 @@
   --font-mono: var(--font-geist-mono);
 }
 
+/* Forzar modo claro para evitar problemas con el dark mode del sistema */
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #ffffff;
+    --foreground: #171717;
+  }
+  
+  * {
+    color-scheme: light !important;
   }
 }
 
+/* Asegurar que todos los elementos tengan un fondo y texto adecuados */
+* {
+  color-scheme: light;
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--background) !important;
+  color: var(--foreground) !important;
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Forzar colores claros en inputs y selects */
+input, select, textarea {
+  background-color: white !important;
+  color: #171717 !important;
+  border-color: #d1d5db !important;
+}
+
+input:focus, select:focus, textarea:focus {
+  background-color: white !important;
+  color: #171717 !important;
 }
 
 @keyframes fadeIn {

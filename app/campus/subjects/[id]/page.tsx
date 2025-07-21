@@ -120,13 +120,98 @@ export default function SubjectDetailPage() {
   const router = useRouter();
   const subjectId = params.id as string;
 
-  const [subject, setSubject] = useState<Subject>(mockSubject);
-  const [units, setUnits] = useState<SubjectUnit[]>(mockUnits);
-  const [content, setContent] = useState<SubjectContent[]>(mockContent);
-  const [currentUser, setCurrentUser] = useState<User>(mockCurrentUser);
-  const [loading, setLoading] = useState(false);
+  const [subject, setSubject] = useState<Subject | null>(null);
+  const [units, setUnits] = useState<SubjectUnit[]>([]);
+  const [content, setContent] = useState<SubjectContent[]>([]);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'overview' | 'units' | 'content'>('overview');
   const [modal, setModal] = useState<Modal>({ type: null });
+
+  // Función para recargar datos
+  const refreshData = async () => {
+    try {
+      setLoading(true);
+      
+      // Obtener unidades de la materia
+      const unitsResponse = await fetch(`/api/subjects/${subjectId}/units`);
+      if (unitsResponse.ok) {
+        const unitsData = await unitsResponse.json();
+        
+        // Obtener documentos de las unidades
+        const documentsResponse = await fetch(`/api/debug-documents?subjectId=${subjectId}`);
+        if (documentsResponse.ok) {
+          const documentsData = await documentsResponse.json();
+          const unitDocuments = documentsData.unit_documents || [];
+          
+          // Asociar documentos a las unidades
+          const unitsWithDocuments = unitsData.map((unit: SubjectUnit) => ({
+            ...unit,
+            documents: unitDocuments.filter((doc: any) => doc.unit_id === unit.id)
+          }));
+          
+          setUnits(unitsWithDocuments);
+          console.log('Units with documents loaded:', unitsWithDocuments);
+        } else {
+          // Si falla la carga de documentos, usar unidades sin documentos
+          setUnits(unitsData);
+          console.log('Units loaded (without documents):', unitsData);
+        }
+      } else {
+        console.error('Error loading units:', await unitsResponse.text());
+      }
+
+      // Obtener contenido de la materia
+      const contentResponse = await fetch(`/api/subjects/${subjectId}/content`);
+      if (contentResponse.ok) {
+        const contentData = await contentResponse.json();
+        setContent(contentData);
+        console.log('Content loaded:', contentData); // Debug log
+      } else {
+        console.error('Error loading content:', await contentResponse.text());
+      }
+
+    } catch (error) {
+      console.error('Error refreshing data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Cargar datos de la materia, unidades y contenido
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        
+        // Obtener datos del usuario actual
+        const userResponse = await fetch('/api/user/me');
+        if (userResponse.ok) {
+          const userData = await userResponse.json();
+          setCurrentUser(userData);
+        }
+
+        // Obtener datos de la materia
+        const subjectResponse = await fetch(`/api/admin/subjects/${subjectId}`);
+        if (subjectResponse.ok) {
+          const subjectData = await subjectResponse.json();
+          setSubject(subjectData);
+        }
+
+        // Usar refreshData para cargar unidades y contenido
+        await refreshData();
+
+      } catch (error) {
+        console.error('Error loading subject data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (subjectId) {
+      fetchData();
+    }
+  }, [subjectId]);
 
   // Verificar permisos
   const canEdit = currentUser?.role === 'admin' || 
@@ -148,22 +233,106 @@ export default function SubjectDetailPage() {
     setModal({ type: 'document', data: { unitId } });
   };
 
-  const handleSaveUnit = (unitData: Partial<SubjectUnit>) => {
-    console.log('Guardando unidad:', unitData);
-    // Aquí integraremos con el servicio real
-    alert('Unidad guardada correctamente');
+  const handleSaveUnit = async (unitData: Partial<SubjectUnit>) => {
+    try {
+      const url = unitData.id 
+        ? `/api/subjects/${subjectId}/units/${unitData.id}`
+        : `/api/subjects/${subjectId}/units`;
+      
+      const method = unitData.id ? 'PUT' : 'POST';
+      
+      const response = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(unitData),
+      });
+
+      if (response.ok) {
+        const savedUnit = await response.json();
+        console.log('Unit saved:', savedUnit); // Debug log
+        
+        // Refrescar todos los datos para asegurar consistencia
+        await refreshData();
+        
+        setModal({ type: null });
+        alert('Unidad guardada correctamente');
+      } else {
+        const error = await response.json();
+        console.error('Error response:', error);
+        alert(`Error al guardar la unidad: ${error.error}`);
+      }
+    } catch (error) {
+      console.error('Error saving unit:', error);
+      alert('Error al guardar la unidad');
+    }
   };
 
-  const handleSaveContent = (contentData: Partial<SubjectContent>) => {
-    console.log('Guardando contenido:', contentData);
-    // Aquí integraremos con el servicio real
-    alert('Contenido guardado correctamente');
+  const handleSaveContent = async (contentData: Partial<SubjectContent>) => {
+    try {
+      const url = contentData.id 
+        ? `/api/subjects/${subjectId}/content/${contentData.id}`
+        : `/api/subjects/${subjectId}/content`;
+      
+      const method = contentData.id ? 'PUT' : 'POST';
+      
+      const response = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(contentData),
+      });
+
+      if (response.ok) {
+        await refreshData();
+        setModal({ type: null });
+        alert('Contenido guardado correctamente');
+      } else {
+        const error = await response.json();
+        alert(`Error al guardar el contenido: ${error.error}`);
+      }
+    } catch (error) {
+      console.error('Error saving content:', error);
+      alert('Error al guardar el contenido');
+    }
   };
 
-  const handleSaveDocument = (documentData: any) => {
-    console.log('Guardando documento:', documentData);
-    // Aquí integraremos con el servicio real
-    alert('Documento subido correctamente');
+  const handleSaveDocument = async (documentData: any) => {
+    try {
+      console.log('Guardando documento:', documentData);
+      
+      if (!documentData.file) {
+        alert('No se ha seleccionado ningún archivo');
+        return;
+      }
+
+      // Crear FormData para enviar el archivo
+      const formData = new FormData();
+      formData.append('title', documentData.title);
+      formData.append('description', documentData.description || '');
+      formData.append('file', documentData.file);
+      formData.append('unit_id', documentData.unit_id);
+      formData.append('subject_id', documentData.subject_id);
+      formData.append('is_public', 'true');
+
+      const response = await fetch('/api/upload-document', {
+        method: 'POST',
+        body: formData
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Error al subir el documento');
+      }
+
+      const result = await response.json();
+      console.log('Documento guardado exitosamente:', result);
+      
+      await refreshData();
+      setModal({ type: null });
+      alert('Documento subido correctamente');
+    } catch (error) {
+      console.error('Error saving document:', error);
+      alert(`Error al subir el documento: ${error instanceof Error ? error.message : 'Error desconocido'}`);
+    }
   };
 
   const getContentTypeIcon = (type: string) => {
@@ -183,6 +352,34 @@ export default function SubjectDetailPage() {
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 mt-[12vh] flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Cargando materia...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!subject) {
+    return (
+      <div className="min-h-screen bg-gray-50 mt-[12vh] flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold text-gray-900">Materia no encontrada</h2>
+          <p className="text-gray-600 mt-2">La materia que buscas no existe o no tienes permisos para verla.</p>
+          <button
+            onClick={() => router.back()}
+            className="mt-4 text-blue-600 hover:text-blue-800"
+          >
+            Volver
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -214,24 +411,36 @@ export default function SubjectDetailPage() {
                 </div>
               </div>
               
-              {canEdit && (
-                <div className="flex space-x-2">
-                  <button
-                    onClick={handleCreateUnit}
-                    className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 flex items-center"
-                  >
-                    <FiPlus className="w-4 h-4 mr-2" />
-                    Nueva Unidad
-                  </button>
-                  <button
-                    onClick={handleCreateContent}
-                    className="bg-green-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-green-700 flex items-center"
-                  >
-                    <FiPlus className="w-4 h-4 mr-2" />
-                    Nuevo Contenido
-                  </button>
-                </div>
-              )}
+              <div className="flex items-center space-x-3">
+                <button
+                  onClick={() => refreshData()}
+                  disabled={loading}
+                  className="flex items-center px-4 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                  title="Refrescar datos"
+                >
+                  <FiFolder className="w-4 h-4 mr-2" />
+                  {loading ? 'Cargando...' : 'Refrescar'}
+                </button>
+                
+                {canEdit && (
+                  <>
+                    <button
+                      onClick={handleCreateUnit}
+                      className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 flex items-center"
+                    >
+                      <FiPlus className="w-4 h-4 mr-2" />
+                      Nueva Unidad
+                    </button>
+                    <button
+                      onClick={handleCreateContent}
+                      className="bg-green-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-green-700 flex items-center"
+                    >
+                      <FiPlus className="w-4 h-4 mr-2" />
+                      Nuevo Contenido
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
           </div>
         </div>

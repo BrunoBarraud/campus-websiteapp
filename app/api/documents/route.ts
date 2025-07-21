@@ -68,6 +68,7 @@ export async function POST(request: Request) {
     const description = formData.get('description') as string;
     const file = formData.get('file') as File;
     const subjectId = formData.get('subject_id') as string;
+    const unitId = formData.get('unit_id') as string;
     const year = formData.get('year') as string;
     const isPublic = formData.get('is_public') === 'true';
 
@@ -113,6 +114,7 @@ export async function POST(request: Request) {
       description,
       file,
       subject_id: subjectId || undefined,
+      unit_id: unitId || undefined,
       year: year ? parseInt(year) : undefined,
       is_public: isPublic
     };

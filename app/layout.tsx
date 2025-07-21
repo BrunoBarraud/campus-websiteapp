@@ -13,7 +13,14 @@ const font =  Poppins({
 export const metadata: Metadata = {
   title: "Campus Virtual | Instituto Privado Dalmacio Vélez Sarsfield",
   description: "Campus Virtual del Instituto Privado Dalmacio Vélez Sarsfield - Accede a tus cursos, recursos académicos y más",
-  viewport: "width=device-width, initial-scale=1",
+  other: {
+    'color-scheme': 'light only',
+  },
+};
+
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
 };
 
 export default function RootLayout({
@@ -22,8 +29,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={`${font.className} antialiased`}>
+    <html lang="en" className="light">
+      <body className={`${font.className} antialiased bg-white text-gray-900 dark:bg-white dark:text-gray-900`}>
         <NextAuthProvider>
           <ConditionalNav />
           {children}

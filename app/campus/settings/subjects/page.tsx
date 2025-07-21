@@ -57,11 +57,21 @@ function EditSubjectModal({ isOpen, onClose, onSave, subject }: EditSubjectModal
       try {
         const response = await fetch('/api/admin/users?role=teacher');
         if (response.ok) {
-          const teachersData = await response.json();
-          setTeachers(teachersData);
+          const result = await response.json();
+          // La API devuelve { success: true, data: users }
+          if (result.success && Array.isArray(result.data)) {
+            setTeachers(result.data);
+          } else {
+            console.warn('Respuesta inesperada de la API:', result);
+            setTeachers([]);
+          }
+        } else {
+          console.error('Error response from API:', response.status);
+          setTeachers([]);
         }
       } catch (error) {
         console.error('Error loading teachers:', error);
+        setTeachers([]);
       }
     };
 
@@ -226,7 +236,7 @@ function EditSubjectModal({ isOpen, onClose, onSave, subject }: EditSubjectModal
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">Sin profesor asignado</option>
-              {teachers.map(teacher => (
+              {Array.isArray(teachers) && teachers.map(teacher => (
                 <option key={teacher.id} value={teacher.id}>
                   {teacher.name} ({teacher.email})
                 </option>

@@ -434,15 +434,12 @@ export const documentService = {
         file_type: documentData.file.type,
         file_size: documentData.file.size,
         subject_id: documentData.subject_id,
+        unit_id: documentData.unit_id,
         year: documentData.year,
         is_public: documentData.is_public,
         uploaded_by: userId
       })
-      .select(`
-        *,
-        subject:subjects(id, name, code, year),
-        uploader:users!uploaded_by(id, name)
-      `)
+      .select('*')
       .single();
 
     if (error) {
@@ -475,13 +472,7 @@ export const unitService = {
   async getSubjectUnits(subjectId: string): Promise<SubjectUnit[]> {
     const { data, error } = await supabase
       .from('subject_units')
-      .select(`
-        *,
-        documents:documents(
-          id, title, description, file_name, file_url, 
-          file_type, file_size, is_public, created_at
-        )
-      `)
+      .select('*')
       .eq('subject_id', subjectId)
       .eq('is_active', true)
       .order('order_index');

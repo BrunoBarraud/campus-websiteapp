@@ -12,17 +12,19 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children }) => {
 
   return (
     <div
-      className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50"
+      className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md"
+        className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md dark:bg-white"
         onClick={(e) => e.stopPropagation()} // Evitar cerrar al hacer clic dentro del modal
       >
-        <button className="absolute top-2 right-2 text-gray-600" onClick={onClose}>
+        <button className="absolute top-2 right-2 text-gray-600 dark:text-gray-600 hover:text-gray-800 dark:hover:text-gray-800" onClick={onClose}>
           &times;
         </button>
-        {children}
+        <div className="text-gray-900 dark:text-gray-900">
+          {children}
+        </div>
       </div>
     </div>
   );

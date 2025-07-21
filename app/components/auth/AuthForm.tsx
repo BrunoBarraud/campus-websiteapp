@@ -100,34 +100,34 @@ export default function AuthForm({ mode }: { mode: 'login' | 'register' }) {
   };
 
   return (
-    <div className="bg-gradient-to-br from-rose-950 to-yellow-500 min-h-screen flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-200">
+    <div className="bg-gradient-to-br from-rose-950 to-yellow-500 min-h-screen w-full flex items-center justify-center p-2 sm:p-4 lg:p-6 dark:bg-gradient-to-br dark:from-rose-950 dark:to-yellow-500">
+      <div className="w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-200 relative dark:bg-white dark:border-gray-200">
         
         {/* Decoración superior */}
         <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-yellow-300 to-yellow-400"></div>
 
-        <div className="px-10 py-12"> 
+        <div className="px-4 sm:px-6 md:px-8 lg:px-10 py-8 sm:py-10 lg:py-12"> 
           {/* Logo local */}
-          <div className="flex justify-center mb-8">
+          <div className="flex justify-center mb-6 sm:mb-8">
             <Image
               src="/images/ipdvs-logo.png"
               alt="Logo del Campus - IPDVS"
-              width={80}
-              height={80}
-              className="p-2 object-contain"
+              width={60}
+              height={60}
+              className="sm:w-20 sm:h-20 p-2 object-contain"
             />
           </div>
 
           {/* Título */}
-          <h2 className="text-center mb-8">
-            <span className="inline-block text-3xl font-bold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-yellow-500 to-rose-500">
+          <h2 className="text-center mb-6 sm:mb-8">
+            <span className="inline-block text-2xl sm:text-3xl font-bold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-yellow-500 to-rose-500">
               {mode === 'login' ? 'Iniciar sesión' : 'Registrarse'}
             </span>
-            <span className="block mt-2 h-1 w-20 mx-auto bg-gradient-to-r from-yellow-300 to-rose-400 rounded-full"></span>
+            <span className="block mt-2 h-1 w-16 sm:w-20 mx-auto bg-gradient-to-r from-yellow-300 to-rose-400 rounded-full"></span>
           </h2>
 
           {/* Formulario */}
-          <form onSubmit={handleSubmit} className="space-y-6 backdrop-blur-sm bg-white/80 p-8 rounded-xl shadow-md">
+          <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6 backdrop-blur-sm bg-white/80 p-4 sm:p-6 lg:p-8 rounded-xl shadow-md">
             {/* Campo Nombre (solo para registro) */}
             {mode === 'register' && (
               <>
@@ -139,11 +139,11 @@ export default function AuthForm({ mode }: { mode: 'login' | 'register' }) {
                     onChange={(e) => setName(e.target.value)}
                     placeholder=" "
                     required
-                    className="text-black w-full px-4 py-3 rounded-md border border-gray-300 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-300 outline-none peer transition-all"
+                    className="text-black w-full px-3 py-2 sm:px-4 sm:py-3 md:px-5 md:py-3 lg:px-6 lg:py-4 rounded-md border border-gray-300 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-300 outline-none peer transition-all text-sm sm:text-base"
                   />
                   <label
                     htmlFor="name"
-                    className="absolute left-3 top-3 text-gray-400 peer-focus:text-yellow-500 peer-focus:-translate-y-6 peer-focus:scale-90 peer-focus:bg-white peer-focus:px-2 transition-all peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100"
+                    className="absolute left-2 sm:left-3 top-2 sm:top-3 text-gray-400 peer-focus:text-yellow-500 peer-focus:-translate-y-6 peer-focus:scale-90 peer-focus:bg-white peer-focus:px-2 transition-all peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100 text-sm sm:text-base"
                   >
                     Nombre completo
                   </label>
@@ -155,7 +155,7 @@ export default function AuthForm({ mode }: { mode: 'login' | 'register' }) {
                     id="year"
                     value={year}
                     onChange={(e) => setYear(e.target.value ? parseInt(e.target.value) : '')}
-                    className="text-black w-full px-4 py-3 rounded-md border border-gray-300 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-300 outline-none transition-all appearance-none bg-white"
+                    className="text-black w-full px-3 py-2 sm:px-4 sm:py-3 md:px-5 md:py-3 lg:px-6 lg:py-4 rounded-md border border-gray-300 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-300 outline-none transition-all appearance-none bg-white text-sm sm:text-base"
                   >
                     <option value="">Selecciona tu año de estudio</option>
                     <option value="1">1er Año</option>
@@ -183,11 +183,11 @@ export default function AuthForm({ mode }: { mode: 'login' | 'register' }) {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder=" "
                 required
-                className="text-black w-full px-4 py-3 rounded-md border border-gray-300 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-300 outline-none peer transition-all"
+                className="text-black w-full px-3 py-2 sm:px-4 sm:py-3 md:px-5 md:py-3 lg:px-6 lg:py-4 rounded-md border border-gray-300 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-300 outline-none peer transition-all text-sm sm:text-base"
               />
               <label
                 htmlFor="email"
-                className="absolute left-3 top-3 text-gray-400 peer-focus:text-yellow-500 peer-focus:-translate-y-6 peer-focus:scale-90 peer-focus:bg-white peer-focus:px-2 transition-all peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100"
+                className="absolute left-2 sm:left-3 top-2 sm:top-3 text-gray-400 peer-focus:text-yellow-500 peer-focus:-translate-y-6 peer-focus:scale-90 peer-focus:bg-white peer-focus:px-2 transition-all peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100 text-sm sm:text-base"
               >
                 Correo electrónico
               </label>
@@ -202,24 +202,24 @@ export default function AuthForm({ mode }: { mode: 'login' | 'register' }) {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder=" "
                 required
-                className="text-black w-full px-4 py-3 rounded-md border border-gray-300 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-300 outline-none peer transition-all"
+                className="text-black w-full px-3 py-2 sm:px-4 sm:py-3 md:px-5 md:py-3 lg:px-6 lg:py-4 rounded-md border border-gray-300 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-300 outline-none peer transition-all text-sm sm:text-base"
               />
               <label
                 htmlFor="password"
-                className="absolute left-3 top-3 text-gray-400 peer-focus:text-yellow-500 peer-focus:-translate-y-6 peer-focus:scale-90 peer-focus:bg-white peer-focus:px-2 transition-all peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100"
+                className="absolute left-2 sm:left-3 top-2 sm:top-3 text-gray-400 peer-focus:text-yellow-500 peer-focus:-translate-y-6 peer-focus:scale-90 peer-focus:bg-white peer-focus:px-2 transition-all peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100 text-sm sm:text-base"
               >
                 Contraseña
               </label>
             </div>
 
             {/* Mensaje de error */}
-            {error && <p className="text-red-500 text-center text-sm">{error}</p>}
+            {error && <p className="text-red-500 text-center text-xs sm:text-sm">{error}</p>}
 
             {/* Botón Submit */}
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-3 bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-white font-semibold rounded-md shadow-md transition-transform transform hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-yellow-300 disabled:opacity-70 disabled:cursor-not-allowed"
+              className="w-full py-2 sm:py-3 md:py-4 bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-white font-semibold rounded-md shadow-md transition-transform transform hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-yellow-300 disabled:opacity-70 disabled:cursor-not-allowed text-sm sm:text-base md:text-lg"
             >
               {isLoading
                 ? mode === 'login'
@@ -232,7 +232,7 @@ export default function AuthForm({ mode }: { mode: 'login' | 'register' }) {
           </form>
 
           {/* Cambiar modo */}
-          <div className="text-center text-sm text-gray-500 mt-6">
+          <div className="text-center text-xs sm:text-sm text-gray-500 mt-4 sm:mt-6">
             {mode === 'login' ? (
               <>
                 ¿No tienes cuenta?{' '}
@@ -260,7 +260,7 @@ export default function AuthForm({ mode }: { mode: 'login' | 'register' }) {
         </div>
 
         {/* Pie de formulario */}
-        <div className="bg-gray-50 px-8 py-4 text-center text-xs text-gray-500">
+        <div className="bg-gray-50 px-4 sm:px-6 md:px-8 py-3 sm:py-4 text-center text-xs text-gray-500">
           © 2025 IPDVS. Todos los derechos reservados.
         </div>
       </div>

@@ -1,0 +1,20 @@
+name,code,description,year,teacher_name,teacher_email
+Matemática I,MAT1,Introducción a las matemáticas para primer año,1,Prof. Juan Pérez,juan.perez@ipdvs.edu.ar
+Lengua y Literatura I,LEN1,Comprensión y producción de textos,1,Prof. María García,maria.garcia@ipdvs.edu.ar
+Historia I,HIS1,Historia Argentina y Mundial,1,Prof. Carlos López,carlos.lopez@ipdvs.edu.ar
+Geografía I,GEO1,Geografía física y humana,1,Prof. Ana Martínez,ana.martinez@ipdvs.edu.ar
+Inglés I,ING1,Inglés básico nivel 1,1,Prof. Laura Wilson,laura.wilson@ipdvs.edu.ar
+Educación Física I,EDF1,Actividad física y deportes,1,Prof. Roberto Silva,roberto.silva@ipdvs.edu.ar
+Matemática II,MAT2,Álgebra y geometría,2,Prof. Juan Pérez,juan.perez@ipdvs.edu.ar
+Lengua y Literatura II,LEN2,Literatura argentina y universal,2,Prof. María García,maria.garcia@ipdvs.edu.ar
+Historia II,HIS2,Historia contemporánea,2,Prof. Carlos López,carlos.lopez@ipdvs.edu.ar
+Geografía II,GEO2,Geografía económica,2,Prof. Ana Martínez,ana.martinez@ipdvs.edu.ar
+Inglés II,ING2,Inglés intermedio nivel 1,2,Prof. Laura Wilson,laura.wilson@ipdvs.edu.ar
+Biología I,BIO1,Introducción a la biología,2,Prof. Elena Torres,elena.torres@ipdvs.edu.ar
+Matemática III,MAT3,Trigonometría y estadística,3,Prof. Diego Ruiz,diego.ruiz@ipdvs.edu.ar
+Lengua y Literatura III,LEN3,Análisis literario avanzado,3,Prof. Sofía Mendoza,sofia.mendoza@ipdvs.edu.ar
+Historia III,HIS3,Historia argentina siglo XX,3,Prof. Pablo Fernández,pablo.fernandez@ipdvs.edu.ar
+Geografía III,GEO3,Geografía regional argentina,3,Prof. Carla Vega,carla.vega@ipdvs.edu.ar
+Inglés III,ING3,Inglés intermedio nivel 2,3,Prof. Michael Johnson,michael.johnson@ipdvs.edu.ar
+Biología II,BIO2,Biología celular y molecular,3,Prof. Elena Torres,elena.torres@ipdvs.edu.ar
+Química I,QUI1,Química general e inorgánica,3,Prof. Andrés Morales,andres.morales@ipdvs.edu.ar
