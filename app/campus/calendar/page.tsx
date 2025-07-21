@@ -1,11 +1,9 @@
 import React from 'react';
-import DashboardLayout from '../../../components/dashboard/DashboardLayout';
 import Calendar from '../../../components/dashboard/Calendar';
 
 const CalendarPage = () => {
   return (
-    <DashboardLayout>
-      <div className="bg-gray-50 min-h-screen container mx-auto px-4 py-8">
+    <div className="bg-gray-50 min-h-screen container mx-auto px-4 py-8">
         {/* Header */}
         <header className="mb-8">
           <h1 className="text-3xl font-bold text-gray-800 mb-4">Calendario Académico</h1>
@@ -70,7 +68,6 @@ const CalendarPage = () => {
           </div>
         </div>
       </div>
-    </DashboardLayout>
   );
 };
 

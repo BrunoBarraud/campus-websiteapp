@@ -1,24 +1,12 @@
-const navLinks = [
-  {
-    id: 1,
-    url: "/campus/dashboard",
-    label: "Dashboard",
-  },
-  {
-    id: 2,
-    url: "/campus/calendar",
-    label: "Calendario",
-  },
-  {
-    id: 3,
-    url: "/campus/profile",
-    label: "Perfil",
-  },
-  {
-    id: 4,
-    url: "/campus/settings",
-    label: "Configuración",
-  },
+interface NavLink {
+  id: number;
+  url: string;
+  label: string;
+}
+
+const navLinks: NavLink[] = [
+  // Links eliminados: Dashboard, Calendario, Perfil y Configuración
+  // ya están disponibles en el menú lateral izquierdo
 ];
 
 export default navLinks;

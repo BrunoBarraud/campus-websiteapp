@@ -1,6 +1,5 @@
 "use client";
 import React, { useState } from "react";
-import DashboardLayout from "../../../components/dashboard/DashboardLayout";
 
 const SettingsPage = () => {
   const [settings, setSettings] = useState({
@@ -27,8 +26,7 @@ const SettingsPage = () => {
   };
 
   return (
-    <DashboardLayout>
-      <div className="bg-gray-50 min-h-screen container mx-auto px-4 py-8">
+    <div className="bg-gray-50 min-h-screen container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-3xl font-bold text-gray-800 mb-8">Configuración</h1>
           
@@ -215,7 +213,6 @@ const SettingsPage = () => {
           </div>
         </div>
       </div>
-    </DashboardLayout>
   );
 };
 

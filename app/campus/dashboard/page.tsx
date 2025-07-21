@@ -1,7 +1,6 @@
 'use client';
 import React, { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
-import DashboardLayout from "../../../components/dashboard/DashboardLayout";
 import CourseCard from "../../../components/dashboard/CourseCard";
 import { User, Subject } from "@/app/lib/types";
 
@@ -112,19 +111,16 @@ const DashboardPage = () => {
 
   if (loading) {
     return (
-      <DashboardLayout>
-        <div className="bg-gray-50 min-h-screen container mx-auto px-4 py-8">
-          <div className="flex items-center justify-center h-64">
-            <div className="text-gray-500">Cargando dashboard...</div>
-          </div>
+      <div className="bg-gray-50 min-h-screen container mx-auto px-4 py-8">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-gray-500">Cargando dashboard...</div>
         </div>
-      </DashboardLayout>
+      </div>
     );
   }
 
   return (
-    <DashboardLayout>
-      <div className="bg-gray-50 min-h-screen container mx-auto px-4 py-8">
+    <div className="bg-gray-50 min-h-screen container mx-auto px-4 py-8">
         {/* Header */}
         <header className="mb-12 text-center fade-in">
           <h1 className="text-3xl font-bold text-gray-800 mb-4">
@@ -256,7 +252,6 @@ const DashboardPage = () => {
           </div>
         )}
       </div>
-    </DashboardLayout>
   );
 };
 

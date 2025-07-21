@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from 'react';
 import { FiPlus, FiEdit, FiTrash2, FiBook, FiUser, FiCalendar, FiX, FiUpload } from 'react-icons/fi';
 import { User, Subject } from '@/app/lib/types';
-import DashboardLayout from '../../../../components/dashboard/DashboardLayout';
 
 interface SubjectFormData {
   name: string;
@@ -441,8 +440,7 @@ export default function SubjectsManagementPage() {
   };
 
   return (
-    <DashboardLayout>
-      <div className="p-6">
+    <div className="p-6">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-gray-900">Gestión de Materias</h1>
@@ -678,6 +676,5 @@ export default function SubjectsManagementPage() {
           subject={editingSubject}
         />
       </div>
-    </DashboardLayout>
   );
 }

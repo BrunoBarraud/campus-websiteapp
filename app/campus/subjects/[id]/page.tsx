@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Subject, SubjectUnit, SubjectContent, User, UserRole } from '@/app/lib/types';
 import { UnitModal, ContentModal, DocumentModal } from '@/components/modals/SubjectModals';
-import Nav from '@/components/Home/Navbar/Nav';
 import { FiPlus, FiEdit, FiTrash2, FiFile, FiBookOpen, FiCalendar, FiUsers, FiArrowLeft, FiUpload, FiFolder } from 'react-icons/fi';
 import { BsPinFill } from 'react-icons/bs';
 
@@ -187,7 +186,6 @@ export default function SubjectDetailPage() {
 
   return (
     <>
-      <Nav />
       <div className="min-h-screen bg-gray-50 mt-[12vh]">
       {/* Header */}
       <div className="bg-white shadow-sm border-b">

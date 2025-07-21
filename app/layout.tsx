@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import {Poppins} from "next/font/google";
 import "./globals.css";
-import ResponsiveNav from "@/components/Home/Navbar/ResponsiveNav";
 import { NextAuthProvider } from "../app/components/auth/AuthProvider";
+import ConditionalNav from "@/app/ConditionalNav";
 
 const font =  Poppins({
   variable: "--font-poppins",
@@ -13,6 +13,7 @@ const font =  Poppins({
 export const metadata: Metadata = {
   title: "Campus Virtual | Instituto Privado Dalmacio Vélez Sarsfield",
   description: "Campus Virtual del Instituto Privado Dalmacio Vélez Sarsfield - Accede a tus cursos, recursos académicos y más",
+  viewport: "width=device-width, initial-scale=1",
 };
 
 export default function RootLayout({
@@ -24,7 +25,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${font.className} antialiased`}>
         <NextAuthProvider>
-          <ResponsiveNav />
+          <ConditionalNav />
           {children}
         </NextAuthProvider>
       </body>

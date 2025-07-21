@@ -1,7 +1,6 @@
 "use client";
 import React, { useState } from "react";
 import { useSession } from 'next-auth/react';
-import DashboardLayout from "../../../components/dashboard/DashboardLayout";
 
 const ProfilePage = () => {
   const { data: session, update } = useSession();
@@ -45,8 +44,7 @@ const ProfilePage = () => {
   };
 
   return (
-    <DashboardLayout>
-      <div className="bg-gray-50 min-h-screen container mx-auto px-4 py-8">
+    <div className="bg-gray-50 min-h-screen container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
           {/* Header del perfil */}
           <div className="bg-white rounded-lg shadow-md p-6 mb-6">
@@ -207,7 +205,6 @@ const ProfilePage = () => {
           </div>
         </div>
       </div>
-    </DashboardLayout>
   );
 };
 

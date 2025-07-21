@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import DashboardLayout from '../../../../components/dashboard/DashboardLayout';
 import { User, UserRole } from '@/app/lib/types';
 import { FiSearch, FiEdit, FiTrash2, FiPlus, FiUsers, FiShield, FiX, FiBook } from 'react-icons/fi';
 
@@ -309,8 +308,7 @@ export default function UserManagementPage() {
   };
 
   return (
-    <DashboardLayout>
-      <div className="bg-gray-50 min-h-screen">
+    <div className="bg-gray-50 min-h-screen">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Header */}
           <div className="mb-8">
@@ -499,7 +497,6 @@ export default function UserManagementPage() {
             </div>
           )}
         </div>
-      </div>
 
       {/* Modal */}
       <EditUserModal
@@ -508,6 +505,6 @@ export default function UserManagementPage() {
         onSave={handleSaveUser}
         user={editingUser}
       />
-    </DashboardLayout>
+    </div>
   );
 }
