@@ -68,3 +68,154 @@ export async function GET(
     );
   }
 }
+
+// PUT - Actualizar materia (temporal sin restricciones para testing)
+export async function PUT(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    console.log(`🔄 PUT: Actualizando materia con ID: ${id}`);
+    
+    const {
+      name,
+      code,
+      description,
+      year,
+      semester,
+      teacher_id,
+      image_url
+    } = await request.json();
+
+    console.log('📝 Datos para actualizar:', { name, code, description, year, semester });
+
+    // Validaciones básicas
+    if (!name || !code || !year) {
+      return NextResponse.json(
+        { error: 'Nombre, código y año son requeridos' },
+        { status: 400 }
+      );
+    }
+
+    if (year < 1 || year > 6) {
+      return NextResponse.json(
+        { error: 'El año debe estar entre 1 y 6' },
+        { status: 400 }
+      );
+    }
+
+    // Verificar que el código no exista en otra materia
+    const { data: existingSubject } = await supabaseAdmin
+      .from('subjects')
+      .select('id')
+      .eq('code', code)
+      .neq('id', id)
+      .single();
+
+    if (existingSubject) {
+      return NextResponse.json(
+        { error: 'Ya existe otra materia con ese código' },
+        { status: 400 }
+      );
+    }
+
+    // Actualizar la materia
+    const { data, error } = await supabaseAdmin
+      .from('subjects')
+      .update({
+        name,
+        code,
+        description,
+        year,
+        semester: semester || 1,
+        teacher_id: teacher_id || null,
+        image_url: image_url || null,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', id)
+      .select(`
+        *,
+        teacher:users!subjects_teacher_id_fkey(id, name, email)
+      `)
+      .single();
+
+    if (error) {
+      console.error('❌ Error updating subject:', error);
+      return NextResponse.json(
+        { error: 'Error al actualizar la materia' },
+        { status: 500 }
+      );
+    }
+
+    if (!data) {
+      return NextResponse.json(
+        { error: 'Materia no encontrada' },
+        { status: 404 }
+      );
+    }
+
+    console.log('✅ Materia actualizada exitosamente:', data);
+    return NextResponse.json({
+      success: true,
+      data
+    });
+
+  } catch (error: any) {
+    console.error('💥 Error in PUT /api/subjects/[id]:', error);
+    return NextResponse.json(
+      { error: error.message || 'Error interno del servidor' },
+      { status: 500 }
+    );
+  }
+}
+
+// DELETE - Eliminar materia (temporal sin restricciones para testing)
+export async function DELETE(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    console.log(`🗑️ DELETE: Eliminando materia con ID: ${id}`);
+    
+    // Marcar como inactiva en lugar de eliminar
+    const { data, error } = await supabaseAdmin
+      .from('subjects')
+      .update({
+        is_active: false,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('❌ Error deleting subject:', error);
+      return NextResponse.json(
+        { error: 'Error al eliminar la materia' },
+        { status: 500 }
+      );
+    }
+
+    if (!data) {
+      return NextResponse.json(
+        { error: 'Materia no encontrada' },
+        { status: 404 }
+      );
+    }
+
+    console.log('✅ Materia eliminada exitosamente:', data);
+    return NextResponse.json({
+      success: true,
+      message: 'Materia eliminada exitosamente'
+    });
+
+  } catch (error: any) {
+    console.error('💥 Error in DELETE /api/subjects/[id]:', error);
+    return NextResponse.json(
+      { error: error.message || 'Error interno del servidor' },
+      { status: 500 }
+    );
+  }
+}

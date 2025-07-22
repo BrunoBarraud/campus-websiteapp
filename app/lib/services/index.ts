@@ -23,22 +23,40 @@ import {
 export const userService = {
   // Obtener usuario actual con su rol y permisos
   async getCurrentUser(): Promise<User | null> {
-    const { data: { user: authUser } } = await supabase.auth.getUser();
-    
-    if (!authUser) return null;
+    try {
+      // Intentar obtener el usuario autenticado
+      const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
+      
+      if (authError) {
+        console.error('Error getting auth user:', authError);
+        return null;
+      }
+      
+      if (!authUser) {
+        console.log('No authenticated user found');
+        return null;
+      }
 
-    const { data, error } = await supabase
-      .from('users')
-      .select('*')
-      .eq('id', authUser.id)
-      .single();
+      console.log('Auth user found:', authUser.id, authUser.email);
 
-    if (error) {
-      console.error('Error getting current user:', error);
+      // Obtener datos completos del usuario desde la base de datos
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', authUser.id)
+        .single();
+
+      if (error) {
+        console.error('Error getting user data:', error);
+        return null;
+      }
+
+      console.log('User data:', data);
+      return data;
+    } catch (error) {
+      console.error('Error in getCurrentUser:', error);
       return null;
     }
-
-    return data;
   },
 
   // Obtener todos los usuarios (solo admins)
