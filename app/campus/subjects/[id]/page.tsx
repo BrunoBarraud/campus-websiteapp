@@ -192,7 +192,7 @@ export default function SubjectDetailPage() {
         }
 
         // Obtener datos de la materia
-        const subjectResponse = await fetch(`/api/admin/subjects/${subjectId}`);
+        const subjectResponse = await fetch(`/api/subjects/${subjectId}`);
         if (subjectResponse.ok) {
           const subjectData = await subjectResponse.json();
           setSubject(subjectData);

@@ -134,8 +134,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
 
   const handleCreateSubject = async () => {
     try {
-      const response = await fetch('/api/admin/subjects', {
-        method: 'POST',
+      const url = editingSubject 
+        ? `/api/admin/subjects/${editingSubject.id}`
+        : '/api/admin/subjects';
+      
+      const method = editingSubject ? 'PUT' : 'POST';
+      
+      const response = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(subjectForm)
       });
@@ -143,7 +149,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
       const data = await response.json();
       
       if (data.success) {
-        alert('Materia creada exitosamente');
+        alert(editingSubject ? 'Materia actualizada exitosamente' : 'Materia creada exitosamente');
         setShowSubjectModal(false);
         resetSubjectForm();
         loadSubjects();
@@ -151,8 +157,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
         alert(`Error: ${data.error}`);
       }
     } catch (error) {
-      console.error('Error creating subject:', error);
-      alert('Error al crear materia');
+      console.error('Error saving subject:', error);
+      alert('Error al guardar materia');
     }
   };
 
@@ -175,6 +181,42 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
     } catch (error) {
       console.error('Error assigning teacher:', error);
       alert('Error al asignar profesor');
+    }
+  };
+
+  const handleEditSubject = (subject: Subject) => {
+    setEditingSubject(subject);
+    setSubjectForm({
+      name: subject.name,
+      code: subject.code,
+      description: subject.description || '',
+      year: subject.year,
+      semester: subject.semester,
+      credits: subject.credits,
+      teacher_id: subject.teacher_id || ''
+    });
+    setShowSubjectModal(true);
+  };
+
+  const handleDeleteSubject = async (subjectId: string) => {
+    if (confirm('¿Estás seguro de que quieres eliminar esta materia?')) {
+      try {
+        const response = await fetch(`/api/admin/subjects/${subjectId}`, {
+          method: 'DELETE'
+        });
+
+        const data = await response.json();
+        
+        if (data.success) {
+          alert('Materia eliminada exitosamente');
+          loadSubjects();
+        } else {
+          alert(`Error: ${data.error}`);
+        }
+      } catch (error) {
+        console.error('Error deleting subject:', error);
+        alert('Error al eliminar materia');
+      }
     }
   };
 
@@ -441,7 +483,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
                       )}
 
                       <div className="border-t pt-4">
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between mb-3">
                           <div>
                             <p className="text-xs text-gray-500">Profesor asignado:</p>
                             <p className="text-sm font-medium">
@@ -462,6 +504,22 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
                               ))}
                             </select>
                           </div>
+                        </div>
+                        
+                        {/* Botones de acción */}
+                        <div className="flex space-x-2 pt-2 border-t">
+                          <button
+                            onClick={() => handleEditSubject(subject)}
+                            className="flex-1 px-3 py-2 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 transition-colors"
+                          >
+                            ✏️ Editar
+                          </button>
+                          <button
+                            onClick={() => handleDeleteSubject(subject.id)}
+                            className="flex-1 px-3 py-2 bg-red-600 text-white text-xs rounded hover:bg-red-700 transition-colors"
+                          >
+                            🗑️ Eliminar
+                          </button>
                         </div>
                       </div>
                     </div>

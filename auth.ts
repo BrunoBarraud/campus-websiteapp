@@ -1,39 +1,11 @@
-import NextAuth, { User, Session, DefaultSession, AuthOptions } from "next-auth";
-import { JWT } from "next-auth/jwt";
-import CredentialsProvider from "next-auth/providers/credentials";
-import { supabase, supabaseAdmin } from "@/app/lib/supabaseClient";
+import NextAuth from "next-auth"
+import CredentialsProvider from "next-auth/providers/credentials"
+import { supabase, supabaseAdmin } from "@/app/lib/supabaseClient"
 
-declare module "next-auth" {
-  interface User {
-    id: string;
-    role?: string;
-  }
-  interface Session {
-    user?: {
-      id: string;
-      role?: string;
-    } & DefaultSession["user"];
-  }
-}
-
-const authOptions: AuthOptions = {
+export const { handlers, signIn, signOut, auth } = NextAuth({
   pages: {
     signIn: '/campus/auth/login',
     error: '/campus/auth/login',
-  },
-  secret: process.env.NEXTAUTH_SECRET,
-  // Configuración específica para App Router en producción
-  useSecureCookies: process.env.NODE_ENV === 'production',
-  cookies: {
-    sessionToken: {
-      name: `next-auth.session-token`,
-      options: {
-        httpOnly: true,
-        sameSite: 'lax',
-        path: '/',
-        secure: process.env.NODE_ENV === 'production',
-      },
-    },
   },
   providers: [
     CredentialsProvider({
@@ -124,6 +96,10 @@ const authOptions: AuthOptions = {
           };
         } catch (error) {
           console.error('Authorization error:', error);
+          // Mejorar logging para producción
+          if (process.env.NODE_ENV === 'development') {
+            console.error('Full error details:', error);
+          }
           throw new Error("Error al autenticar usuario");
         }
       },
@@ -132,15 +108,16 @@ const authOptions: AuthOptions = {
   session: {
     strategy: "jwt" as const,
   },
+  secret: process.env.NEXTAUTH_SECRET,
   callbacks: {
-    async jwt({ token, user }: { token: JWT; user: User | null }) {
+    async jwt({ token, user }) {
       if (user) {
         token.role = user.role;
         token.id = user.id;
       }
       return token;
     },
-    async session({ session, token }: { session: Session; token: JWT }) {
+    async session({ session, token }) {
       if (session?.user) {
         session.user.role = token.role as string | undefined;
         session.user.id = token.id as string;
@@ -148,9 +125,4 @@ const authOptions: AuthOptions = {
       return session;
     },
   },
-};
-
-const handler = NextAuth(authOptions);
-
-// Configuración específica para App Router y Vercel
-export { handler as GET, handler as POST };
+})

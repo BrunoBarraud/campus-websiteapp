@@ -128,7 +128,7 @@ const DashboardPage = () => {
     if (!confirm('¿Estás seguro de que quieres eliminar esta materia?')) return;
     
     try {
-      const response = await fetch(`/api/admin/subjects/${subjectId}`, {
+      const response = await fetch(`/api/subjects/${subjectId}`, {
         method: 'DELETE',
       });
 
