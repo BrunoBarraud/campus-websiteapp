@@ -124,20 +124,21 @@ const DashboardPage = () => {
   }
 
   return (
-    <div className="container mx-auto px-3 sm:px-4 py-6 sm:py-8">
+    <div className="bg-gradient-to-br from-yellow-50 via-white to-rose-50 min-h-screen">
+      <div className="container mx-auto px-3 sm:px-4 py-6 sm:py-8">
         {/* Header */}
         <header className="mb-8 sm:mb-12 text-center fade-in">
-          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-800 mb-4">
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-4 bg-gradient-to-r from-yellow-600 to-rose-600 bg-clip-text text-transparent">
             {getWelcomeMessage()}
           </h1>
           <p className="text-gray-600 mb-4 sm:mb-6 text-sm sm:text-base">
             {getSubjectCountMessage()} ({subjects.length} materias disponibles)
           </p>
           <div className="mt-4 sm:mt-6 flex flex-col sm:flex-row justify-center space-y-2 sm:space-y-0 sm:space-x-4">
-            <button className="px-4 sm:px-6 py-2 bg-gradient-to-r from-indigo-500 to-indigo-600 text-white rounded-full hover:from-indigo-600 hover:to-indigo-700 transition-all shadow-md text-sm sm:text-base">
+            <button className="px-4 sm:px-6 py-2 bg-gradient-to-r from-yellow-500 to-rose-500 text-white rounded-full hover:from-yellow-600 hover:to-rose-600 transition-all shadow-lg hover:shadow-xl transform hover:scale-105 text-sm sm:text-base">
               <i className="fas fa-book mr-2"></i> Mis Materias
             </button>
-            <button className="px-4 sm:px-6 py-2 border border-indigo-600 text-indigo-600 rounded-full hover:bg-indigo-50 transition-all text-sm sm:text-base">
+            <button className="px-4 sm:px-6 py-2 border-2 border-yellow-400 text-yellow-600 hover:text-rose-600 hover:border-rose-400 rounded-full hover:bg-gradient-to-r hover:from-yellow-50 hover:to-rose-50 transition-all text-sm sm:text-base">
               <i className="fas fa-calendar mr-2"></i> Horarios
             </button>
           </div>
@@ -150,15 +151,15 @@ const DashboardPage = () => {
               <input
                 type="text"
                 placeholder="Buscar materias..."
-                className="w-full pl-10 pr-4 py-2 rounded-full border border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/90 backdrop-blur-sm text-gray-800 text-sm sm:text-base"
+                className="w-full pl-10 pr-4 py-2 rounded-full border-2 border-yellow-200 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 bg-white/90 backdrop-blur-sm text-gray-800 text-sm sm:text-base hover:border-rose-300 transition-colors"
               />
-              <i className="fas fa-search absolute left-3 top-2.5 sm:top-3 text-gray-600 text-sm sm:text-base"></i>
+              <i className="fas fa-search absolute left-3 top-2.5 sm:top-3 text-yellow-600 text-sm sm:text-base"></i>
             </div>
             {user?.role === 'admin' && (
               <div className="flex space-x-2 w-full lg:w-auto">
                 <a
                   href="/campus/settings/subjects"
-                  className="flex-1 lg:flex-none px-3 sm:px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-full hover:from-blue-600 hover:to-blue-700 transition-all shadow-md text-center text-sm sm:text-base"
+                  className="flex-1 lg:flex-none px-3 sm:px-4 py-2 bg-gradient-to-r from-yellow-500 to-rose-500 text-white rounded-full hover:from-yellow-600 hover:to-rose-600 transition-all shadow-lg hover:shadow-xl transform hover:scale-105 text-center text-sm sm:text-base"
                 >
                   <i className="fas fa-plus mr-2"></i> Gestionar Materias
                 </a>
@@ -169,42 +170,42 @@ const DashboardPage = () => {
 
         {/* Stats Section */}
         <div className="mt-8 sm:mt-16 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-            <div className="bg-white/90 backdrop-blur-sm p-4 sm:p-6 rounded-xl shadow-md fade-in delay-2">
+            <div className="bg-white/80 backdrop-blur-sm p-4 sm:p-6 rounded-xl shadow-lg border border-yellow-200 hover:shadow-xl hover:scale-105 transition-all duration-300 fade-in delay-2">
                 <div className="flex items-center">
-                    <div className="p-2 sm:p-3 rounded-full bg-indigo-100 text-indigo-600 mr-3 sm:mr-4">
+                    <div className="p-2 sm:p-3 rounded-full bg-gradient-to-r from-yellow-100 to-rose-100 text-yellow-600 mr-3 sm:mr-4">
                         <i className="fas fa-book text-lg sm:text-xl"></i>
                     </div>
                     <div>
-                        <p className="text-gray-500 text-xs sm:text-sm">
+                        <p className="text-gray-500 text-xs sm:text-sm font-medium">
                           {user?.role === 'student' ? 'Mis Materias' : 'Total Materias'}
                         </p>
-                        <h3 className="text-xl sm:text-2xl font-bold">{subjects.length}</h3>
+                        <h3 className="text-xl sm:text-2xl font-bold text-gray-800">{subjects.length}</h3>
                     </div>
                 </div>
             </div>
-            <div className="bg-white/90 backdrop-blur-sm p-4 sm:p-6 rounded-xl shadow-md fade-in delay-3">
+            <div className="bg-white/80 backdrop-blur-sm p-4 sm:p-6 rounded-xl shadow-lg border border-blue-200 hover:shadow-xl hover:scale-105 transition-all duration-300 fade-in delay-3">
                 <div className="flex items-center">
-                    <div className="p-2 sm:p-3 rounded-full bg-blue-100 text-blue-600 mr-3 sm:mr-4">
+                    <div className="p-2 sm:p-3 rounded-full bg-gradient-to-r from-blue-100 to-purple-100 text-blue-600 mr-3 sm:mr-4">
                         <i className="fas fa-chalkboard-teacher text-lg sm:text-xl"></i>
                     </div>
                     <div>
-                        <p className="text-gray-500 text-xs sm:text-sm">Profesores Activos</p>
-                        <h3 className="text-xl sm:text-2xl font-bold">
+                        <p className="text-gray-500 text-xs sm:text-sm font-medium">Profesores Activos</p>
+                        <h3 className="text-xl sm:text-2xl font-bold text-gray-800">
                           {[...new Set(subjects.map(s => s.teacher?.name).filter(Boolean))].length}
                         </h3>
                     </div>
                 </div>
             </div>
-            <div className="bg-white/90 backdrop-blur-sm p-4 sm:p-6 rounded-xl shadow-md fade-in delay-4 sm:col-span-2 lg:col-span-1">
+            <div className="bg-white/80 backdrop-blur-sm p-4 sm:p-6 rounded-xl shadow-lg border border-green-200 hover:shadow-xl hover:scale-105 transition-all duration-300 fade-in delay-4 sm:col-span-2 lg:col-span-1">
                 <div className="flex items-center">
-                    <div className="p-2 sm:p-3 rounded-full bg-green-100 text-green-600 mr-3 sm:mr-4">
+                    <div className="p-2 sm:p-3 rounded-full bg-gradient-to-r from-green-100 to-teal-100 text-green-600 mr-3 sm:mr-4">
                         <i className="fas fa-calendar-check text-lg sm:text-xl"></i>
                     </div>
                     <div>
-                        <p className="text-gray-500 text-xs sm:text-sm">
+                        <p className="text-gray-500 text-xs sm:text-sm font-medium">
                           {user?.role === 'student' ? `Año ${user.year}` : 'Próximas Clases'}
                         </p>
-                        <h3 className="text-xl sm:text-2xl font-bold">
+                        <h3 className="text-xl sm:text-2xl font-bold text-gray-800">
                           {user?.role === 'student' ? user.year || '-' : '5'}
                         </h3>
                     </div>
@@ -215,7 +216,9 @@ const DashboardPage = () => {
         {/* Subjects Grid or Empty State */}
         {subjects.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-64 mt-8 sm:mt-16 px-4">
-            <i className="fas fa-book text-4xl sm:text-6xl text-gray-400 mb-4"></i>
+            <div className="p-6 bg-gradient-to-r from-yellow-100 to-rose-100 rounded-full mb-6">
+              <i className="fas fa-book text-4xl sm:text-6xl text-yellow-600 mb-4"></i>
+            </div>
             <h3 className="text-lg sm:text-xl font-medium text-gray-900 mb-2 text-center">
               {getEmptyStateMessage()}
             </h3>
@@ -230,7 +233,7 @@ const DashboardPage = () => {
             {getEmptyStateAction() && (
               <a
                 href={getEmptyStateAction()!.href}
-                className="px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-colors text-sm sm:text-base"
+                className="px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-yellow-500 to-rose-500 text-white rounded-lg hover:from-yellow-600 hover:to-rose-600 transition-all shadow-lg hover:shadow-xl transform hover:scale-105 text-sm sm:text-base"
               >
                 <i className="fas fa-plus mr-2"></i>
                 {getEmptyStateAction()!.text}
@@ -256,6 +259,7 @@ const DashboardPage = () => {
           </div>
         )}
       </div>
+    </div>
   );
 };
 

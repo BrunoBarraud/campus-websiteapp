@@ -1,79 +1,38 @@
-'use client';
+"use client";
 
-// Forzar rendering dinámico para evitar errores de SSR
 export const dynamic = 'force-dynamic';
 
-import { useState, useEffect } from 'react';
-import { User, UserRole } from '@/app/lib/types';
-import { FiSearch, FiEdit, FiTrash2, FiPlus, FiUsers, FiShield, FiX, FiBook } from 'react-icons/fi';
+import React, { useState, useEffect } from "react";
+import { FiUsers, FiPlus, FiEdit2, FiTrash2, FiSearch, FiFilter, FiX } from 'react-icons/fi';
 
-// Mock data para desarrollo
-const mockUsers: User[] = [
-  {
-    id: '1',
-    email: 'brunobarraud13@gmail.com',
-    name: 'Bruno Barraud',
-    role: 'admin',
-    year: null,
-    is_active: true,
-    created_at: '2024-01-01',
-    updated_at: '2024-01-01'
-  },
-  {
-    id: '2',
-    email: 'prof.martinez@ipdvs.edu.ar',
-    name: 'Prof. María Martínez',
-    role: 'teacher',
-    year: null,
-    is_active: true,
-    created_at: '2024-01-15',
-    updated_at: '2024-01-15'
-  },
-  {
-    id: '3',
-    email: 'estudiante1@alumno.ipdvs.edu.ar',
-    name: 'Juan Pérez',
-    role: 'student',
-    year: 1,
-    is_active: true,
-    created_at: '2024-02-01',
-    updated_at: '2024-02-01'
-  },
-  {
-    id: '4',
-    email: 'estudiante2@alumno.ipdvs.edu.ar',
-    name: 'María García',
-    role: 'student',
-    year: 2,
-    is_active: true,
-    created_at: '2024-02-05',
-    updated_at: '2024-02-05'
-  },
-  {
-    id: '5',
-    email: 'prof.rodriguez@ipdvs.edu.ar',
-    name: 'Prof. Carlos Rodríguez',
-    role: 'teacher',
-    year: null,
-    is_active: true,
-    created_at: '2024-01-20',
-    updated_at: '2024-01-20'
-  }
-];
-
-interface EditUserModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSave: (userData: Partial<User>) => void;
-  user: User | null;
+// Definir tipos
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: 'admin' | 'teacher' | 'student';
+  year?: number;
+  is_active: boolean;
+  created_at: string;
 }
 
-function EditUserModal({ isOpen, onClose, onSave, user }: EditUserModalProps) {
+// Modal para editar/crear usuario
+function EditUserModal({ 
+  user, 
+  isOpen, 
+  onClose, 
+  onSave 
+}: { 
+  user: User | null; 
+  isOpen: boolean; 
+  onClose: () => void; 
+  onSave: (userData: Partial<User>) => void; 
+}) {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    role: 'student' as UserRole,
-    year: null as number | null,
+    role: 'student' as 'admin' | 'teacher' | 'student',
+    year: undefined as number | undefined,
     is_active: true
   });
 
@@ -83,131 +42,208 @@ function EditUserModal({ isOpen, onClose, onSave, user }: EditUserModalProps) {
         name: user.name,
         email: user.email,
         role: user.role,
-        year: user.year || null,
+        year: user.year,
         is_active: user.is_active
+      });
+    } else {
+      setFormData({
+        name: '',
+        email: '',
+        role: 'student',
+        year: undefined,
+        is_active: true
       });
     }
   }, [user]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSave({
-      id: user?.id,
-      ...formData,
-      year: formData.role === 'student' ? (formData.year || 1) : null
-    });
-    onClose();
+    onSave(formData);
   };
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg w-full max-w-md mx-4">
-        <div className="flex items-center justify-between p-6 border-b">
-          <h3 className="text-lg font-semibold">
-            {user ? 'Editar Usuario' : 'Nuevo Usuario'}
-          </h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
-            <FiX className="w-5 h-5" />
+    <div 
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 1000,
+        padding: '1rem'
+      }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div 
+        style={{
+          backgroundColor: 'white',
+          borderRadius: '0.75rem',
+          padding: '1.5rem',
+          width: '100%',
+          maxWidth: '28rem',
+          maxHeight: '90vh',
+          overflow: 'auto',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
+        }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+          <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#1f2937' }}>
+            {user ? 'Editar Usuario' : 'Crear Usuario'}
+          </h2>
+          <button 
+            onClick={onClose}
+            style={{
+              padding: '0.5rem',
+              backgroundColor: '#f3f4f6',
+              border: 'none',
+              borderRadius: '0.5rem',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+          >
+            <FiX size={20} />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Nombre Completo
+        <form onSubmit={handleSubmit}>
+          <div style={{ marginBottom: '1rem' }}>
+            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: '#374151', marginBottom: '0.5rem' }}>
+              Nombre completo
             </label>
             <input
               type="text"
               value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
               required
+              style={{
+                width: '100%',
+                padding: '0.5rem',
+                border: '1px solid #d1d5db',
+                borderRadius: '0.5rem',
+                fontSize: '1rem'
+              }}
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+          <div style={{ marginBottom: '1rem' }}>
+            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: '#374151', marginBottom: '0.5rem' }}>
               Email
             </label>
             <input
               type="email"
               value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
               required
+              style={{
+                width: '100%',
+                padding: '0.5rem',
+                border: '1px solid #d1d5db',
+                borderRadius: '0.5rem',
+                fontSize: '1rem'
+              }}
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+          <div style={{ marginBottom: '1rem' }}>
+            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: '#374151', marginBottom: '0.5rem' }}>
               Rol
             </label>
             <select
               value={formData.role}
-              onChange={(e) => {
-                const newRole = e.target.value as UserRole;
-                setFormData({ 
-                  ...formData, 
-                  role: newRole,
-                  year: newRole === 'student' ? (formData.year || 1) : null
-                });
+              onChange={(e) => setFormData(prev => ({ 
+                ...prev, 
+                role: e.target.value as 'admin' | 'teacher' | 'student',
+                year: e.target.value === 'student' ? prev.year : undefined
+              }))}
+              style={{
+                width: '100%',
+                padding: '0.5rem',
+                border: '1px solid #d1d5db',
+                borderRadius: '0.5rem',
+                fontSize: '1rem'
               }}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="student">👨‍🎓 Estudiante</option>
-              <option value="teacher">👨‍🏫 Profesor</option>
-              <option value="admin">👑 Administrador</option>
+              <option value="student">Estudiante</option>
+              <option value="teacher">Profesor</option>
+              <option value="admin">Administrador</option>
             </select>
           </div>
 
           {formData.role === 'student' && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Año de Cursado
+            <div style={{ marginBottom: '1rem' }}>
+              <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: '#374151', marginBottom: '0.5rem' }}>
+                Año académico
               </label>
               <select
-                value={formData.year || 1}
-                onChange={(e) => setFormData({ ...formData, year: parseInt(e.target.value) })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                value={formData.year || ''}
+                onChange={(e) => setFormData(prev => ({ ...prev, year: e.target.value ? parseInt(e.target.value) : undefined }))}
+                style={{
+                  width: '100%',
+                  padding: '0.5rem',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '0.5rem',
+                  fontSize: '1rem'
+                }}
               >
-                <option value={1}>1° Año</option>
-                <option value={2}>2° Año</option>
-                <option value={3}>3° Año</option>
-                <option value={4}>4° Año</option>
-                <option value={5}>5° Año</option>
-                <option value={6}>6° Año</option>
+                <option value="">Seleccionar año</option>
+                {[1, 2, 3, 4, 5, 6].map(year => (
+                  <option key={year} value={year}>{year}° Año</option>
+                ))}
               </select>
             </div>
           )}
 
-          <div className="flex items-center">
-            <input
-              type="checkbox"
-              id="is_active"
-              checked={formData.is_active}
-              onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
-              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-            />
-            <label htmlFor="is_active" className="ml-2 text-sm text-gray-700">
+          <div style={{ marginBottom: '1.5rem' }}>
+            <label style={{ display: 'flex', alignItems: 'center', fontSize: '0.875rem', fontWeight: '500', color: '#374151' }}>
+              <input
+                type="checkbox"
+                checked={formData.is_active}
+                onChange={(e) => setFormData(prev => ({ ...prev, is_active: e.target.checked }))}
+                style={{ marginRight: '0.5rem' }}
+              />
               Usuario activo
             </label>
           </div>
 
-          <div className="flex justify-end space-x-3 pt-4">
+          <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300"
+              style={{
+                padding: '0.5rem 1rem',
+                backgroundColor: '#f3f4f6',
+                color: '#374151',
+                border: 'none',
+                borderRadius: '0.5rem',
+                cursor: 'pointer',
+                fontWeight: '500'
+              }}
             >
               Cancelar
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+              style={{
+                padding: '0.5rem 1rem',
+                background: 'linear-gradient(to right, #f59e0b, #881337)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '0.5rem',
+                cursor: 'pointer',
+                fontWeight: '500'
+              }}
             >
-              {user ? 'Actualizar' : 'Crear'} Usuario
+              {user ? 'Actualizar' : 'Crear'}
             </button>
           </div>
         </form>
@@ -216,298 +252,321 @@ function EditUserModal({ isOpen, onClose, onSave, user }: EditUserModalProps) {
   );
 }
 
-export default function UserManagementPage() {
-  const [users, setUsers] = useState<User[]>(mockUsers);
-  const [filteredUsers, setFilteredUsers] = useState<User[]>(mockUsers);
+export default function UsersPage() {
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [roleFilter, setRoleFilter] = useState<UserRole | 'all'>('all');
+  const [filterRole, setFilterRole] = useState<string>('all');
   const [editingUser, setEditingUser] = useState<User | null>(null);
-  const [showModal, setShowModal] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Filtrar usuarios
+  // Fetch users
   useEffect(() => {
-    let filtered = users;
+    const fetchUsers = async () => {
+      try {
+        const response = await fetch('/api/users');
+        if (response.ok) {
+          const result = await response.json();
+          // La API devuelve { success: true, data: [...] }
+          setUsers(result.data || []);
+        } else {
+          console.error('Error fetching users');
+          setUsers([]);
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        setUsers([]);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    if (searchTerm) {
-      filtered = filtered.filter(user =>
-        user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.email.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
+    fetchUsers();
+  }, []);
 
-    if (roleFilter !== 'all') {
-      filtered = filtered.filter(user => user.role === roleFilter);
-    }
+  // Filter users
+  const filteredUsers = users.filter(user => {
+    const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         user.email.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesRole = filterRole === 'all' || user.role === filterRole;
+    return matchesSearch && matchesRole;
+  });
 
-    setFilteredUsers(filtered);
-  }, [users, searchTerm, roleFilter]);
+  // Handle save user
+  const handleSaveUser = async (userData: Partial<User>) => {
+    try {
+      const url = editingUser ? `/api/users/${editingUser.id}` : '/api/users';
+      const method = editingUser ? 'PUT' : 'POST';
+      
+      const response = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(userData)
+      });
 
-  const handleEditUser = (user: User) => {
-    setEditingUser(user);
-    setShowModal(true);
-  };
-
-  const handleCreateUser = () => {
-    setEditingUser(null);
-    setShowModal(true);
-  };
-
-  const handleSaveUser = (userData: Partial<User>) => {
-    if (editingUser) {
-      // Actualizar usuario existente
-      setUsers(users.map(user =>
-        user.id === editingUser.id
-          ? { ...user, ...userData, updated_at: new Date().toISOString() }
-          : user
-      ));
-      console.log('Actualizando usuario:', userData);
-    } else {
-      // Crear nuevo usuario
-      const newUser: User = {
-        id: Date.now().toString(),
-        ...userData,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      } as User;
-      setUsers([...users, newUser]);
-      console.log('Creando usuario:', newUser);
-    }
-    alert(`Usuario ${editingUser ? 'actualizado' : 'creado'} correctamente`);
-  };
-
-  const handleDeleteUser = (userId: string) => {
-    if (confirm('¿Estás seguro de que quieres eliminar este usuario?')) {
-      setUsers(users.filter(user => user.id !== userId));
-      console.log('Eliminando usuario:', userId);
-      alert('Usuario eliminado correctamente');
-    }
-  };
-
-  const getRoleIcon = (role: UserRole) => {
-    switch (role) {
-      case 'admin': return <FiShield className="w-4 h-4 text-red-600" />;
-      case 'teacher': return <FiUsers className="w-4 h-4 text-blue-600" />;
-      case 'student': return <FiBook className="w-4 h-4 text-green-600" />;
-      default: return <FiUsers className="w-4 h-4 text-gray-600" />;
+      if (response.ok) {
+        const result = await response.json();
+        const savedUser = result.data || result; // Manejar ambos formatos de respuesta
+        
+        if (editingUser) {
+          setUsers(prev => prev.map(u => u.id === editingUser.id ? savedUser : u));
+        } else {
+          setUsers(prev => [...prev, savedUser]);
+        }
+        
+        setIsModalOpen(false);
+        setEditingUser(null);
+      } else {
+        const error = await response.json();
+        alert(`Error: ${error.error}`);
+      }
+    } catch (error) {
+      console.error('Error saving user:', error);
+      alert('Error al guardar usuario');
     }
   };
 
-  const getRoleText = (role: UserRole) => {
-    switch (role) {
-      case 'admin': return 'Administrador';
-      case 'teacher': return 'Profesor';
-      case 'student': return 'Estudiante';
-      default: return role;
+  // Handle delete user
+  const handleDeleteUser = async (userId: string) => {
+    if (!confirm('¿Estás seguro de que quieres eliminar este usuario?')) return;
+
+    try {
+      const response = await fetch(`/api/users/${userId}`, { method: 'DELETE' });
+      if (response.ok) {
+        setUsers(prev => prev.filter(u => u.id !== userId));
+      } else {
+        alert('Error al eliminar usuario');
+      }
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      alert('Error al eliminar usuario');
     }
   };
 
-  const getRoleBadgeColor = (role: UserRole) => {
-    switch (role) {
-      case 'admin': return 'bg-red-100 text-red-800';
-      case 'teacher': return 'bg-blue-100 text-blue-800';
-      case 'student': return 'bg-green-100 text-green-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
+  const getRoleBadge = (role: string) => {
+    const colors = {
+      admin: { background: '#881337', color: 'white' },
+      teacher: { background: '#f59e0b', color: 'white' },
+      student: { background: '#10b981', color: 'white' }
+    };
+    const labels = {
+      admin: 'Administrador',
+      teacher: 'Profesor',
+      student: 'Estudiante'
+    };
+    return { style: colors[role as keyof typeof colors], label: labels[role as keyof typeof labels] };
   };
+
+  if (loading) {
+    return (
+      <div style={{ padding: '2rem', display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
+        <div style={{ color: '#6b7280' }}>Cargando usuarios...</div>
+      </div>
+    );
+  }
 
   return (
-    <div className="bg-gray-50 min-h-screen">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {/* Header */}
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900">Gestión de Usuarios</h1>
-            <p className="text-gray-600 mt-2">Administra los roles y permisos de los usuarios del campus virtual</p>
-          </div>
+    <div style={{ background: 'linear-gradient(135deg, #fef3c7, #ffffff, #fdf2f8)', minHeight: '100vh', padding: '2rem' }}>
+      <div style={{ maxWidth: '80rem', margin: '0 auto' }}>
+        {/* Header */}
+        <div style={{ marginBottom: '2rem' }}>
+          <h1 style={{ fontSize: '2rem', fontWeight: 'bold', color: '#1f2937', marginBottom: '0.5rem' }}>
+            <span style={{ background: '#f59e0b', color: '#881337', padding: '0.5rem 1rem', borderRadius: '0.5rem', marginRight: '0.5rem' }}>
+              Gestión
+            </span>
+            <span style={{ background: '#881337', color: '#f59e0b', padding: '0.5rem 1rem', borderRadius: '0.5rem' }}>
+              Usuarios
+            </span>
+          </h1>
+          <p style={{ color: '#6b7280' }}>Administra profesores, estudiantes y administradores del campus</p>
+        </div>
 
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <div className="bg-white p-6 rounded-lg shadow">
-              <div className="flex items-center">
-                <div className="p-3 rounded-full bg-gray-100 text-gray-600 mr-4">
-                  <FiUsers className="w-6 h-6" />
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Total Usuarios</p>
-                  <p className="text-2xl font-bold text-gray-900">{users.length}</p>
-                </div>
+        {/* Controls */}
+        <div style={{ 
+          background: 'rgba(255, 255, 255, 0.8)', 
+          borderRadius: '0.75rem', 
+          padding: '1.5rem', 
+          marginBottom: '1.5rem',
+          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+        }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flex: 1 }}>
+              <div style={{ position: 'relative', minWidth: '20rem' }}>
+                <FiSearch style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: '#6b7280' }} />
+                <input
+                  type="text"
+                  placeholder="Buscar por nombre o email..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  style={{
+                    width: '100%',
+                    paddingLeft: '2.5rem',
+                    padding: '0.5rem',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '0.5rem'
+                  }}
+                />
               </div>
-            </div>
-            <div className="bg-white p-6 rounded-lg shadow">
-              <div className="flex items-center">
-                <div className="p-3 rounded-full bg-red-100 text-red-600 mr-4">
-                  <FiShield className="w-6 h-6" />
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Administradores</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {users.filter(u => u.role === 'admin').length}
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="bg-white p-6 rounded-lg shadow">
-              <div className="flex items-center">
-                <div className="p-3 rounded-full bg-blue-100 text-blue-600 mr-4">
-                  <FiUsers className="w-6 h-6" />
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Profesores</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {users.filter(u => u.role === 'teacher').length}
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="bg-white p-6 rounded-lg shadow">
-              <div className="flex items-center">
-                <div className="p-3 rounded-full bg-green-100 text-green-600 mr-4">
-                  <FiBook className="w-6 h-6" />
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Estudiantes</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {users.filter(u => u.role === 'student').length}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Filters and Search */}
-          <div className="bg-white p-6 rounded-lg shadow mb-6">
-            <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-              <div className="flex items-center space-x-4 w-full md:w-auto">
-                <div className="relative flex-1 md:w-80">
-                  <FiSearch className="absolute left-3 top-3 text-gray-400 w-4 h-4" />
-                  <input
-                    type="text"
-                    placeholder="Buscar por nombre o email..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <select
-                  value={roleFilter}
-                  onChange={(e) => setRoleFilter(e.target.value as UserRole | 'all')}
-                  className="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="all">Todos los roles</option>
-                  <option value="admin">Administradores</option>
-                  <option value="teacher">Profesores</option>
-                  <option value="student">Estudiantes</option>
-                </select>
-              </div>
-              <button
-                onClick={handleCreateUser}
-                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 flex items-center space-x-2"
+              
+              <select
+                value={filterRole}
+                onChange={(e) => setFilterRole(e.target.value)}
+                style={{
+                  padding: '0.5rem',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '0.5rem',
+                  minWidth: '8rem'
+                }}
               >
-                <FiPlus className="w-4 h-4" />
-                <span>Nuevo Usuario</span>
-              </button>
+                <option value="all">Todos los roles</option>
+                <option value="student">Estudiantes</option>
+                <option value="teacher">Profesores</option>
+                <option value="admin">Administradores</option>
+              </select>
             </div>
-          </div>
 
-          {/* Users Table */}
-          <div className="bg-white rounded-lg shadow overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Usuario
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Rol
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Año
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Estado
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Fecha Registro
-                    </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Acciones
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredUsers.map((user) => (
-                    <tr key={user.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-semibold">
-                            {user.name.charAt(0).toUpperCase()}
-                          </div>
-                          <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">{user.name}</div>
-                            <div className="text-sm text-gray-500">{user.email}</div>
-                          </div>
+            <button
+              onClick={() => {
+                setEditingUser(null);
+                setIsModalOpen(true);
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                padding: '0.5rem 1rem',
+                background: 'linear-gradient(to right, #f59e0b, #881337)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '0.5rem',
+                cursor: 'pointer',
+                fontWeight: '500'
+              }}
+            >
+              <FiPlus size={16} />
+              Agregar Usuario
+            </button>
+          </div>
+        </div>
+
+        {/* Users Table */}
+        <div style={{ 
+          background: 'rgba(255, 255, 255, 0.8)', 
+          borderRadius: '0.75rem', 
+          overflow: 'hidden',
+          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+        }}>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead style={{ background: '#f9fafb' }}>
+                <tr>
+                  <th style={{ textAlign: 'left', padding: '0.75rem', fontWeight: '600', color: '#374151' }}>Usuario</th>
+                  <th style={{ textAlign: 'left', padding: '0.75rem', fontWeight: '600', color: '#374151' }}>Rol</th>
+                  <th style={{ textAlign: 'left', padding: '0.75rem', fontWeight: '600', color: '#374151' }}>Año</th>
+                  <th style={{ textAlign: 'left', padding: '0.75rem', fontWeight: '600', color: '#374151' }}>Estado</th>
+                  <th style={{ textAlign: 'center', padding: '0.75rem', fontWeight: '600', color: '#374151' }}>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredUsers.map((user) => {
+                  const roleBadge = getRoleBadge(user.role);
+                  return (
+                    <tr key={user.id} style={{ borderTop: '1px solid #e5e7eb' }}>
+                      <td style={{ padding: '0.75rem' }}>
+                        <div>
+                          <div style={{ fontWeight: '500', color: '#1f2937' }}>{user.name}</div>
+                          <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>{user.email}</div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getRoleBadgeColor(user.role)}`}>
-                          {getRoleIcon(user.role)}
-                          <span className="ml-1">{getRoleText(user.role)}</span>
+                      <td style={{ padding: '0.75rem' }}>
+                        <span style={{ 
+                          ...roleBadge.style, 
+                          padding: '0.25rem 0.5rem', 
+                          borderRadius: '0.375rem', 
+                          fontSize: '0.75rem',
+                          fontWeight: '500'
+                        }}>
+                          {roleBadge.label}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {user.role === 'student' ? `${user.year}° Año` : '-'}
+                      <td style={{ padding: '0.75rem', color: '#6b7280' }}>
+                        {user.year ? `${user.year}° Año` : '-'}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                          user.is_active 
-                            ? 'bg-green-100 text-green-800' 
-                            : 'bg-red-100 text-red-800'
-                        }`}>
+                      <td style={{ padding: '0.75rem' }}>
+                        <span style={{ 
+                          padding: '0.25rem 0.5rem', 
+                          borderRadius: '0.375rem', 
+                          fontSize: '0.75rem',
+                          fontWeight: '500',
+                          ...(user.is_active ? 
+                            { background: '#dcfce7', color: '#166534' } : 
+                            { background: '#fef2f2', color: '#dc2626' })
+                        }}>
                           {user.is_active ? 'Activo' : 'Inactivo'}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {new Date(user.created_at).toLocaleDateString()}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <div className="flex justify-end space-x-2">
+                      <td style={{ padding: '0.75rem', textAlign: 'center' }}>
+                        <div style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem' }}>
                           <button
-                            onClick={() => handleEditUser(user)}
-                            className="text-blue-600 hover:text-blue-900"
+                            onClick={() => {
+                              setEditingUser(user);
+                              setIsModalOpen(true);
+                            }}
+                            style={{
+                              padding: '0.25rem',
+                              background: '#f59e0b',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '0.25rem',
+                              cursor: 'pointer'
+                            }}
                           >
-                            <FiEdit className="w-4 h-4" />
+                            <FiEdit2 size={14} />
                           </button>
                           <button
                             onClick={() => handleDeleteUser(user.id)}
-                            className="text-red-600 hover:text-red-900"
+                            style={{
+                              padding: '0.25rem',
+                              background: '#dc2626',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '0.25rem',
+                              cursor: 'pointer'
+                            }}
                           >
-                            <FiTrash2 className="w-4 h-4" />
+                            <FiTrash2 size={14} />
                           </button>
                         </div>
                       </td>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
 
           {filteredUsers.length === 0 && (
-            <div className="text-center py-12">
-              <FiUsers className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No se encontraron usuarios</h3>
-              <p className="text-gray-600">Intenta ajustar los filtros de búsqueda.</p>
+            <div style={{ padding: '3rem', textAlign: 'center', color: '#6b7280' }}>
+              <FiUsers size={48} style={{ margin: '0 auto 1rem', opacity: 0.5 }} />
+              <h3 style={{ fontSize: '1.125rem', fontWeight: '500', marginBottom: '0.5rem' }}>
+                No se encontraron usuarios
+              </h3>
+              <p>Intenta ajustar los filtros de búsqueda o agrega un nuevo usuario.</p>
             </div>
           )}
         </div>
 
-      {/* Modal */}
-      <EditUserModal
-        isOpen={showModal}
-        onClose={() => setShowModal(false)}
-        onSave={handleSaveUser}
-        user={editingUser}
-      />
+        {/* Modal */}
+        <EditUserModal
+          user={editingUser}
+          isOpen={isModalOpen}
+          onClose={() => {
+            setIsModalOpen(false);
+            setEditingUser(null);
+          }}
+          onSave={handleSaveUser}
+        />
+      </div>
     </div>
   );
 }
