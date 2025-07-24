@@ -59,6 +59,7 @@ export async function GET(request: Request) {
     // Extraer las materias y filtrar por año si se especifica
     let subjects = (enrollments || [])
       .map(enrollment => enrollment.subjects)
+      .flat() // Aplanar el array de arrays
       .filter(subject => subject && subject.is_active);
 
     console.log('Student API: Subjects after extraction:', subjects.length);
@@ -111,10 +112,11 @@ export async function GET(request: Request) {
 
     return NextResponse.json(validSubjects);
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error in GET /api/student/subjects:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Error interno del servidor';
     return NextResponse.json(
-      { error: error.message || 'Error interno del servidor' },
+      { error: errorMessage },
       { status: 500 }
     );
   }
