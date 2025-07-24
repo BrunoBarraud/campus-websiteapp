@@ -1,7 +1,7 @@
-// 📚 API pública para obtener información de una materia
+// 📚 API para gestionar materias con permisos por rol
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/app/lib/supabaseClient';
-import { requireAuth } from '@/app/lib/auth';
+import { requireSubjectTeacher, requireRole, requireRole as requireAuth } from '@/app/lib/permissions';
 
 export async function GET(
   request: Request,
@@ -9,7 +9,7 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const currentUser = await requireAuth();
+    const currentUser = await requireAuth(['admin', 'teacher', 'student']);
 
     const { data, error } = await supabaseAdmin
       .from('subjects')
@@ -56,7 +56,7 @@ export async function GET(
   }
 }
 
-// PUT - Actualizar materia (temporal sin restricciones para testing)
+// PUT - Actualizar materia (solo profesores de la materia y admins)
 export async function PUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -64,6 +64,9 @@ export async function PUT(
   try {
     const { id } = await params;
     console.log(`🔄 PUT: Actualizando materia con ID: ${id}`);
+    
+    // Verificar que el usuario sea profesor de esta materia o admin
+    const currentUser = await requireSubjectTeacher(id);
     
     const {
       name,
@@ -150,16 +153,17 @@ export async function PUT(
       data
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('💥 Error in PUT /api/subjects/[id]:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Error interno del servidor';
     return NextResponse.json(
-      { error: error.message || 'Error interno del servidor' },
+      { error: errorMessage },
       { status: 500 }
     );
   }
 }
 
-// DELETE - Eliminar materia (temporal sin restricciones para testing)
+// DELETE - Eliminar materia (solo admins)
 export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -167,6 +171,9 @@ export async function DELETE(
   try {
     const { id } = await params;
     console.log(`🗑️ DELETE: Eliminando materia con ID: ${id}`);
+    
+    // Solo admins pueden eliminar materias
+    await requireRole(['admin']);
     
     // Marcar como inactiva en lugar de eliminar
     const { data, error } = await supabaseAdmin
@@ -200,10 +207,11 @@ export async function DELETE(
       message: 'Materia eliminada exitosamente'
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('💥 Error in DELETE /api/subjects/[id]:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Error interno del servidor';
     return NextResponse.json(
-      { error: error.message || 'Error interno del servidor' },
+      { error: errorMessage },
       { status: 500 }
     );
   }

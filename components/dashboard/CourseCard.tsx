@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 
 interface Course {
   id?: string;
@@ -21,13 +22,26 @@ interface CourseCardProps {
 
 const CourseCard: React.FC<CourseCardProps> = ({ course, delay }) => {
   const [imageError, setImageError] = useState(false);
-  const fallbackImage = "/images/ipdvs-logo.png"; // Using your existing logo as fallback
+  const { data: session } = useSession();
+  const fallbackImage = "/images/ipdvs-logo.png";
 
-  // Generate URL for subject detail page
-  const subjectUrl = `/campus/subjects/${course.id || course.title.toLowerCase().replace(/\s+/g, '-')}`;
+  // Generate URL based on user role
+  const getSubjectUrl = () => {
+    const baseUrl = course.id ? course.id : course.title.toLowerCase().replace(/\s+/g, '-');
+    
+    if (session?.user?.role === 'student') {
+      return `/campus/student/subjects/${baseUrl}`;
+    } else if (session?.user?.role === 'teacher') {
+      return `/campus/teacher/subjects/${baseUrl}`;
+    } else if (session?.user?.role === 'admin') {
+      return `/campus/settings/subjects`; // Admin goes to management
+    }
+    
+    return `/campus/subjects/${baseUrl}`; // Default fallback
+  };
 
   return (
-    <Link href={subjectUrl} className="block group">
+    <Link href={getSubjectUrl()} className="block group">
       <div className={`bg-white/80 backdrop-blur-sm rounded-xl overflow-hidden shadow-lg border-2 border-yellow-100 transition-all duration-300 card-hover fade-in delay-${delay} hover:shadow-2xl hover:border-rose-200 cursor-pointer transform hover:scale-105`}>
         <div className="overflow-hidden relative aspect-video">
           <Image 
