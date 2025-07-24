@@ -1,156 +1,99 @@
-import NextAuth, { User, Session, DefaultSession, AuthOptions } from "next-auth";
-import { JWT } from "next-auth/jwt";
-import CredentialsProvider from "next-auth/providers/credentials";
-import { supabase, supabaseAdmin } from "@/app/lib/supabaseClient";
+import NextAuth from 'next-auth';
+import CredentialsProvider from 'next-auth/providers/credentials';
+import { supabase } from '@/app/lib/supabaseClient';
+import bcrypt from 'bcryptjs';
 
-declare module "next-auth" {
-  interface User {
-    id: string;
-    role?: string;
-  }
-  interface Session {
-    user?: {
-      id: string;
-      role?: string;
-    } & DefaultSession["user"];
-  }
-}
-
-const authOptions: AuthOptions = {
-  pages: {
-    signIn: '/campus/auth/login',
-    error: '/campus/auth/login',
-  },
-  secret: process.env.NEXTAUTH_SECRET,
-  // Configuración específica para App Router en producción
-  useSecureCookies: process.env.NODE_ENV === 'production',
-  cookies: {
-    sessionToken: {
-      name: `next-auth.session-token`,
-      options: {
-        httpOnly: true,
-        sameSite: 'lax',
-        path: '/',
-        secure: process.env.NODE_ENV === 'production',
-      },
-    },
-  },
+const handler = NextAuth({
   providers: [
     CredentialsProvider({
-      name: "Credentials",
+      name: 'credentials',
       credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" },
+        email: { label: 'Email', type: 'email' },
+        password: { label: 'Password', type: 'password' }
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
-          throw new Error("Email y contraseña son requeridos");
+          return null;
         }
 
-        const { email, password } = credentials;
-
         try {
-          // 🔥 NUEVO: Usar Supabase Auth para autenticar
-          const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-            email: email as string,
-            password: password as string,
-          });
-
-          if (authError || !authData.user) {
-            console.error('Auth error:', authError?.message);
-            
-            // Verificar si es por email no confirmado
-            if (authError?.message?.includes('Email not confirmed')) {
-              // Permitir login aunque el email no esté confirmado (para desarrollo)
-              console.log('⚠️  Permitiendo login sin confirmación de email (modo desarrollo)');
-              
-              // Obtener usuario por email usando admin client
-              const { data: userData, error: userError } = await supabaseAdmin
-                .from('users')
-                .select('*')
-                .eq('email', email)
-                .single();
-
-              if (userData) {
-                return {
-                  id: userData.id,
-                  email: userData.email,
-                  name: userData.name,
-                  role: userData.role || 'student',
-                };
-              }
-            }
-            
-            throw new Error("Credenciales incorrectas");
-          }
-
-          // Obtener datos adicionales del usuario desde nuestra tabla personalizada
-          const { data: userData, error: userError } = await supabaseAdmin
+          // Get user from database
+          const { data: user, error } = await supabase
             .from('users')
             .select('*')
-            .eq('id', authData.user.id)
+            .eq('email', credentials.email)
             .single();
 
-          let finalUserData = userData;
-
-          if (userError) {
-            // Si no existe en nuestra tabla, crear entrada
-            const { data: newUserData, error: createError } = await supabaseAdmin
-              .from('users')
-              .insert([
-                {
-                  id: authData.user.id,
-                  email: authData.user.email,
-                  name: authData.user.user_metadata?.name || authData.user.email,
-                  role: authData.user.user_metadata?.role || 'student',
-                  created_at: new Date().toISOString(),
-                }
-              ])
-              .select()
-              .single();
-
-            if (createError) {
-              console.error('Error creating user profile:', createError);
-            } else {
-              finalUserData = newUserData;
-            }
+          if (error || !user) {
+            console.log('User not found:', credentials.email);
+            return null;
           }
 
+          console.log('User found:', { 
+            id: user.id, 
+            email: user.email, 
+            name: user.name, 
+            role: user.role,
+            password: typeof user.password,
+            passwordValue: user.password 
+          });
+
+          // Verify password
+          console.log('About to compare passwords:', {
+            credentialsPassword: credentials.password,
+            userPassword: user.password,
+            userPasswordType: typeof user.password
+          });
+          
+          const passwordMatch = await bcrypt.compare(credentials.password, String(user.password));
+          
+          if (!passwordMatch) {
+            console.log('Password mismatch for user:', credentials.email);
+            return null;
+          }
+
+          // Return user object
           return {
-            id: authData.user.id,
-            email: authData.user.email!,
-            name: finalUserData?.name || authData.user.user_metadata?.name || authData.user.email,
-            role: finalUserData?.role || authData.user.user_metadata?.role || 'student',
+            id: user.id.toString(),
+            email: user.email,
+            name: user.name,
+            role: user.role,
+            division: user.division,
+            year: user.year
           };
         } catch (error) {
           console.error('Authorization error:', error);
-          throw new Error("Error al autenticar usuario");
+          return null;
         }
-      },
-    }),
+      }
+    })
   ],
   session: {
-    strategy: "jwt" as const,
+    strategy: 'jwt'
   },
   callbacks: {
-    async jwt({ token, user }: { token: JWT; user: User | null }) {
+    async jwt({ token, user }) {
       if (user) {
         token.role = user.role;
-        token.id = user.id;
+        token.division = user.division;
+        token.year = user.year;
       }
       return token;
     },
-    async session({ session, token }: { session: Session; token: JWT }) {
-      if (session?.user) {
-        session.user.role = token.role as string | undefined;
-        session.user.id = token.id as string;
+    async session({ session, token }) {
+      if (token && session.user) {
+        session.user.id = token.sub || '';
+        session.user.role = token.role;
+        session.user.division = token.division;
+        session.user.year = token.year;
       }
       return session;
-    },
+    }
   },
-};
+  pages: {
+    signIn: '/campus/login',
+    signOut: '/campus/logout'
+  }
+});
 
-const handler = NextAuth(authOptions);
-
-// Configuración específica para App Router y Vercel
 export { handler as GET, handler as POST };

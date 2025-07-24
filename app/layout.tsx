@@ -3,6 +3,7 @@ import {Poppins} from "next/font/google";
 import "./globals.css";
 import { NextAuthProvider } from "../app/components/auth/AuthProvider";
 import ConditionalNav from "@/app/ConditionalNav";
+import { ToastProvider } from "@/components/ui/toast-provider";
 
 const font =  Poppins({
   variable: "--font-poppins",
@@ -40,6 +41,7 @@ export default function RootLayout({
         <NextAuthProvider>
           <ConditionalNav />
           {children}
+          <ToastProvider />
         </NextAuthProvider>
       </body>
     </html>

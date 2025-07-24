@@ -1,6 +1,7 @@
 // 📚 Servicios para manejar datos del Campus Virtual
 
 import { supabase, supabaseAdmin } from '@/app/lib/supabaseClient';
+import { requireRole } from '@/app/lib/auth';
 import { 
   User, 
   Subject, 
@@ -21,29 +22,15 @@ import {
 
 // 👥 SERVICIOS DE USUARIOS
 export const userService = {
-  // Obtener usuario actual con su rol y permisos
-  async getCurrentUser(): Promise<User | null> {
+  // Obtener usuario por email (para usar con NextAuth)
+  async getUserByEmail(email: string): Promise<User | null> {
     try {
-      // Intentar obtener el usuario autenticado
-      const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
-      
-      if (authError) {
-        console.error('Error getting auth user:', authError);
-        return null;
-      }
-      
-      if (!authUser) {
-        console.log('No authenticated user found');
-        return null;
-      }
+      console.log('Getting user by email:', email);
 
-      console.log('Auth user found:', authUser.id, authUser.email);
-
-      // Obtener datos completos del usuario desde la base de datos
       const { data, error } = await supabase
         .from('users')
         .select('*')
-        .eq('id', authUser.id)
+        .eq('email', email)
         .single();
 
       if (error) {
@@ -51,10 +38,10 @@ export const userService = {
         return null;
       }
 
-      console.log('User data:', data);
+      console.log('User data found:', data);
       return data;
     } catch (error) {
-      console.error('Error in getCurrentUser:', error);
+      console.error('Error in getUserByEmail:', error);
       return null;
     }
   },
@@ -598,13 +585,14 @@ export const contentService = {
     unit_id?: string;
     is_pinned?: boolean;
   }): Promise<SubjectContent> {
-    const { data: { user } } = await supabase.auth.getUser();
+    // Verificar permisos - solo admin y teacher pueden crear contenido
+    const currentUser = await requireRole(['admin', 'teacher']);
     
     const { data, error } = await supabase
       .from('subject_content')
       .insert({
         ...contentData,
-        created_by: user?.id
+        created_by: currentUser.id
       })
       .select(`
         *,

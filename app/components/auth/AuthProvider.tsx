@@ -10,8 +10,9 @@ export function NextAuthProvider({ children }: { children: React.ReactNode }) {
     setMounted(true);
   }, []);
 
+  // Evitar problemas de hidratación
   if (!mounted) {
-    return <>{children}</>;
+    return <div style={{ visibility: 'hidden' }}>{children}</div>;
   }
 
   return <SessionProvider>{children}</SessionProvider>;

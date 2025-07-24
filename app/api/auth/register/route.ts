@@ -1,36 +1,19 @@
-import { NextResponse } from 'next/server';
-import { supabase, supabaseAdmin } from '@/app/lib/supabaseClient';
+import { NextRequest, NextResponse } from 'next/server';
+import { supabaseAdmin } from '@/app/lib/supabaseClient';
+import bcrypt from 'bcryptjs';
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
     const { email, password, name, year, division } = await request.json();
 
-    // Validar datos
+    // Validaciones básicas
     if (!email || !password || !name) {
       return NextResponse.json(
-        { error: 'Todos los campos son requeridos' },
+        { error: 'Email, contraseña y nombre son requeridos' },
         { status: 400 }
       );
     }
 
-    // Validar año si se proporciona
-    if (year && (year < 1 || year > 6)) {
-      return NextResponse.json(
-        { error: 'El año debe estar entre 1 y 6' },
-        { status: 400 }
-      );
-    }
-
-    // Validar formato de email
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return NextResponse.json(
-        { error: 'Formato de email inválido' },
-        { status: 400 }
-      );
-    }
-
-    // Validar longitud de contraseña
     if (password.length < 6) {
       return NextResponse.json(
         { error: 'La contraseña debe tener al menos 6 caracteres' },
@@ -38,122 +21,120 @@ export async function POST(request: Request) {
       );
     }
 
-    // 🔥 NUEVO: Usar Supabase Auth para crear el usuario
-    const { data: authData, error: authError } = await supabase.auth.signUp({
+    // Verificar si el usuario ya existe
+    const { data: existingUser } = await supabaseAdmin
+      .from('users')
+      .select('id')
+      .eq('email', email)
+      .single();
+
+    if (existingUser) {
+      return NextResponse.json(
+        { error: 'Ya existe una cuenta con este email' },
+        { status: 409 }
+      );
+    }
+
+    // Hash de la contraseña
+    const hashedPassword = await bcrypt.hash(password, 12);
+
+    // Crear usuario en Supabase Auth
+    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
-      options: {
-        data: {
-          name: name,
-          role: 'student',
-          year: year || null,
-          division: division || null
-        },
-        emailRedirectTo: `${process.env.NEXTAUTH_URL}/campus/auth/verify-email`
+      email_confirm: true, // Auto-confirmar para desarrollo
+      user_metadata: {
+        name,
+        role: 'student' // Por defecto los registros son estudiantes
       }
     });
 
     if (authError) {
-      console.error('Auth error:', authError);
-      
-      if (authError.message.includes('User already registered')) {
-        return NextResponse.json(
-          { error: 'El email ya está registrado' },
-          { status: 400 }
-        );
-      }
-      
+      console.error('Error creating auth user:', authError);
       return NextResponse.json(
-        { error: authError.message },
-        { status: 400 }
+        { error: 'Error al crear la cuenta. Intenta nuevamente.' },
+        { status: 500 }
       );
     }
 
-    // El usuario se crea automáticamente en auth.users
-    // Ahora sincronizar con nuestra tabla personalizada users (SIN password)
-    if (authData.user) {
-      // Verificar si el usuario ya existe en nuestra tabla personalizada
-      const { data: existingUser } = await supabaseAdmin
-        .from('users')
-        .select('id')
-        .eq('id', authData.user.id)
-        .single();
+    if (!authData.user) {
+      return NextResponse.json(
+        { error: 'Error al crear la cuenta' },
+        { status: 500 }
+      );
+    }
 
-      if (!existingUser) {
-        // Solo insertar si no existe
-        const { error: dbError } = await supabaseAdmin
-          .from('users')
-          .insert([
-            {
-              id: authData.user.id, // Usar el mismo ID de auth
-              email: authData.user.email,
-              name: name,
-              role: 'student',
-              year: year || null,
-              division: division || null,
-              is_active: true,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
-              // NO incluir password - Supabase Auth lo maneja de forma segura
-            }
-          ]);
+    // Crear perfil de usuario en la tabla users
+    const { data: userData, error: userError } = await supabaseAdmin
+      .from('users')
+      .insert({
+        id: authData.user.id,
+        email,
+        password: hashedPassword, // Guardamos el hash para compatibilidad con el login local
+        name,
+        role: 'student',
+        year: year || null,
+        division: division || null,
+        is_active: true
+      })
+      .select()
+      .single();
 
-        if (dbError) {
-          console.error('Database sync error:', dbError);
-          // Si hay error en la tabla personalizada, eliminar el usuario de auth
-          await supabase.auth.admin.deleteUser(authData.user.id);
-          
-          return NextResponse.json(
-            { error: 'Error al sincronizar los datos del usuario' },
-            { status: 500 }
-          );
+    if (userError) {
+      console.error('Error creating user profile:', userError);
+      
+      // Limpiar usuario de auth si falla la creación del perfil
+      await supabaseAdmin.auth.admin.deleteUser(authData.user.id);
+      
+      return NextResponse.json(
+        { error: 'Error al crear el perfil de usuario' },
+        { status: 500 }
+      );
+    }
+
+    // Auto-inscribir al estudiante en materias de su año si especificó año
+    if (year) {
+      try {
+        const { data: subjects } = await supabaseAdmin
+          .from('subjects')
+          .select('id')
+          .eq('year', year)
+          .eq('is_active', true);
+
+        if (subjects && subjects.length > 0) {
+          const enrollments = subjects.map(subject => ({
+            student_id: userData.id,
+            subject_id: subject.id
+          }));
+
+          await supabaseAdmin
+            .from('student_subjects')
+            .upsert(enrollments, { 
+              onConflict: 'student_id,subject_id',
+              ignoreDuplicates: true 
+            });
         }
+      } catch (enrollError) {
+        console.log('Error en auto-inscripción (no crítico):', enrollError);
+        // No fallar el registro si la inscripción falla
       }
     }
 
-    return NextResponse.json(
-      { 
-        message: 'Usuario registrado exitosamente. Por favor, verifica tu email para completar el registro.',
-        user: {
-          id: authData.user?.id,
-          email: authData.user?.email,
-          name: name,
-          role: 'student',
-          year: year || null,
-          division: division || null
-        },
-        needsVerification: true
+    return NextResponse.json({
+      success: true,
+      user: {
+        id: userData.id,
+        email: userData.email,
+        name: userData.name,
+        role: userData.role,
+        year: userData.year,
+        division: userData.division
       },
-      { status: 201 }
-    );
+      message: 'Usuario registrado exitosamente'
+    });
 
-  } catch (error) {
-    console.error('Registration error:', error);
-    
-    // Detectar si es un error de Supabase temporalmente caído
-    if (error instanceof Error && error.message.includes('fetch failed')) {
-      return NextResponse.json(
-        { 
-          error: 'Servicio temporalmente no disponible',
-          details: 'La base de datos está experimentando problemas temporales. Por favor, intenta nuevamente en unos minutos.',
-          retryAfter: 60000 // 1 minuto
-        },
-        { status: 503 }
-      );
-    }
-    
-    // Detectar error 521 de Cloudflare/Supabase
-    if (error instanceof Error && error.message.includes('521')) {
-      return NextResponse.json(
-        { 
-          error: 'Servicio de base de datos no disponible',
-          details: 'El servicio de base de datos está temporalmente fuera de línea. Intenta nuevamente en unos minutos.',
-          retryAfter: 60000
-        },
-        { status: 503 }
-      );
-    }
-    
+  } catch (error: unknown) {
+    console.error('Error in register API:', error);
     return NextResponse.json(
       { error: 'Error interno del servidor' },
       { status: 500 }

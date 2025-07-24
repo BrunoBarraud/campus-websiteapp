@@ -20,34 +20,50 @@ const DashboardPage = () => {
       if (session?.user?.email) {
         try {
           setLoading(true);
+          console.log('Dashboard: Starting to fetch data for:', session.user.email);
           
           // Obtener datos del usuario actual
           const userResponse = await fetch('/api/user/me');
+          console.log('Dashboard: User API response status:', userResponse.status);
+          
           if (userResponse.ok) {
             const userData = await userResponse.json();
+            console.log('Dashboard: User data received:', userData);
             setUser(userData);
             
             // Obtener materias basadas en el rol del usuario
             let subjectsResponse;
             if (userData.role === 'admin') {
               // Admins ven todas las materias
+              console.log('Dashboard: Fetching admin subjects');
               subjectsResponse = await fetch('/api/admin/subjects');
             } else if (userData.role === 'teacher') {
               // Profesores ven sus materias asignadas
+              console.log('Dashboard: Fetching teacher subjects');
               subjectsResponse = await fetch(`/api/admin/subjects?teacher_id=${userData.id}`);
             } else if (userData.role === 'student' && userData.year) {
-              // Estudiantes ven materias de su año
-              subjectsResponse = await fetch(`/api/admin/subjects?year=${userData.year}`);
+              // Estudiantes ven materias donde están inscritos
+              console.log('Dashboard: Fetching student subjects for year:', userData.year);
+              subjectsResponse = await fetch('/api/student/subjects');
             } else {
               // Fallback: no hay materias
+              console.log('Dashboard: No role match, setting empty subjects');
               setSubjects([]);
               return;
             }
             
+            console.log('Dashboard: Subjects API response status:', subjectsResponse?.status);
+            
             if (subjectsResponse && subjectsResponse.ok) {
               const subjectsData = await subjectsResponse.json();
+              console.log('Dashboard: Subjects data received:', subjectsData);
               setSubjects(subjectsData);
             } else {
+              console.log('Dashboard: Subjects API failed, setting empty array');
+              if (subjectsResponse) {
+                const errorText = await subjectsResponse.text();
+                console.log('Dashboard: Subjects API error response:', errorText);
+              }
               setSubjects([]);
             }
           }
@@ -251,7 +267,8 @@ const DashboardPage = () => {
                   teacher: subject.teacher?.name || 'Sin profesor',
                   image: subject.image_url || 'https://via.placeholder.com/800x400/f3f4f6/9ca3af?text=Sin+Imagen',
                   code: subject.code,
-                  year: subject.year
+                  year: subject.year,
+                  division: subject.division
                 }} 
                 delay={index + 1} 
               />

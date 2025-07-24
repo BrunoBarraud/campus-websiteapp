@@ -11,6 +11,7 @@ interface Course {
   teacher: string;
   code?: string;
   year?: number;
+  division?: string;
 }
 
 interface CourseCardProps {
@@ -45,7 +46,12 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, delay }) => {
           <div className="flex justify-between items-start mb-2">
             <h3 className="text-base sm:text-xl font-bold text-gray-800 group-hover:bg-gradient-to-r group-hover:from-yellow-600 group-hover:to-rose-600 group-hover:bg-clip-text group-hover:text-transparent transition-all duration-300 line-clamp-2">{course.title}</h3>
             <span className="bg-gradient-to-r from-yellow-100 to-rose-100 text-yellow-800 text-xs px-2 py-1 rounded-full ml-2 flex-shrink-0 border border-yellow-200">
-              {course.code || course.year ? `${course.code || ''} ${course.year ? `${course.year}°` : ''}`.trim() : 'Curso'}
+              {course.year && course.division 
+                ? `${course.year}° ${course.division}` 
+                : course.code || course.year 
+                  ? `${course.code || ''} ${course.year ? `${course.year}°` : ''}`.trim() 
+                  : 'Curso'
+              }
             </span>
           </div>
           <p className="text-gray-600 mb-3 sm:mb-4 text-sm sm:text-base line-clamp-2">Haz clic para ver el contenido completo de la materia.</p>

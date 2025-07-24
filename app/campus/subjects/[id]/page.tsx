@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Subject, SubjectUnit, SubjectContent, User, UserRole } from '@/app/lib/types';
-import { UnitModal, ContentModal, DocumentModal } from '@/components/modals/SubjectModals';
-import { FiPlus, FiEdit, FiTrash2, FiFile, FiBookOpen, FiCalendar, FiUsers, FiArrowLeft, FiUpload, FiFolder } from 'react-icons/fi';
+import { Subject, SubjectUnit, SubjectContent, User, UserRole, Assignment } from '@/app/lib/types';
+import { UnitModal, ContentModal, DocumentModal, AssignmentModal } from '@/components/modals/SubjectModals';
+import { FiPlus, FiEdit, FiTrash2, FiFile, FiBookOpen, FiCalendar, FiUsers, FiArrowLeft, FiUpload, FiFolder, FiClipboard } from 'react-icons/fi';
 import { BsPinFill } from 'react-icons/bs';
 
 // Mock data para desarrollo
@@ -111,8 +111,8 @@ const mockCurrentUser: User = {
 };
 
 interface Modal {
-  type: 'unit' | 'content' | 'document' | null;
-  data?: any;
+  type: 'unit' | 'content' | 'document' | 'assignment' | null;
+  data?: SubjectUnit | SubjectContent | Assignment | { unitId?: string } | null;
 }
 
 export default function SubjectDetailPage() {
@@ -123,9 +123,10 @@ export default function SubjectDetailPage() {
   const [subject, setSubject] = useState<Subject | null>(null);
   const [units, setUnits] = useState<SubjectUnit[]>([]);
   const [content, setContent] = useState<SubjectContent[]>([]);
+  const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'units' | 'content'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'units' | 'content' | 'assignments'>('overview');
   const [modal, setModal] = useState<Modal>({ type: null });
 
   // Función para recargar datos
@@ -171,6 +172,16 @@ export default function SubjectDetailPage() {
         console.error('Error loading content:', await contentResponse.text());
       }
 
+      // Obtener assignments de la materia
+      const assignmentsResponse = await fetch(`/api/subjects/${subjectId}/assignments`);
+      if (assignmentsResponse.ok) {
+        const assignmentsData = await assignmentsResponse.json();
+        setAssignments(assignmentsData);
+        console.log('Assignments loaded:', assignmentsData); // Debug log
+      } else {
+        console.error('Error loading assignments:', await assignmentsResponse.text());
+      }
+
     } catch (error) {
       console.error('Error refreshing data:', error);
     } finally {
@@ -214,8 +225,22 @@ export default function SubjectDetailPage() {
   }, [subjectId]);
 
   // Verificar permisos
-  const canEdit = currentUser?.role === 'admin' || 
-    (currentUser?.role === 'teacher' && subject?.teacher_id === currentUser?.id);
+  // Para desarrollo: permitir que todos los profesores puedan editar cualquier materia
+  const canEdit = currentUser?.role === 'admin' || currentUser?.role === 'teacher';
+  
+  // Para producción (comentado): solo el profesor asignado puede editar
+  // const canEdit = currentUser?.role === 'admin' || 
+  //   (currentUser?.role === 'teacher' && subject?.teacher_id === currentUser?.id);
+
+  // Debug logs
+  console.log('Debug permisos:', {
+    currentUser: currentUser,
+    subject: subject,
+    canEdit: canEdit,
+    isAdmin: currentUser?.role === 'admin',
+    isTeacher: currentUser?.role === 'teacher',
+    teacherIdMatch: subject?.teacher_id === currentUser?.id
+  });
 
   const handleCreateUnit = () => {
     setModal({ type: 'unit', data: null });
@@ -227,6 +252,14 @@ export default function SubjectDetailPage() {
 
   const handleCreateContent = () => {
     setModal({ type: 'content', data: null });
+  };
+
+  const handleCreateAssignment = () => {
+    setModal({ type: 'assignment', data: null });
+  };
+
+  const handleEditAssignment = (assignment: Assignment) => {
+    setModal({ type: 'assignment', data: assignment });
   };
 
   const handleUploadDocument = (unitId?: string) => {
@@ -292,6 +325,34 @@ export default function SubjectDetailPage() {
     } catch (error) {
       console.error('Error saving content:', error);
       alert('Error al guardar el contenido');
+    }
+  };
+
+  const handleSaveAssignment = async (assignmentData: Partial<Assignment>) => {
+    try {
+      const url = assignmentData.id 
+        ? `/api/subjects/${subjectId}/assignments/${assignmentData.id}`
+        : `/api/subjects/${subjectId}/assignments`;
+      
+      const method = assignmentData.id ? 'PUT' : 'POST';
+      
+      const response = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(assignmentData),
+      });
+
+      if (response.ok) {
+        await refreshData();
+        setModal({ type: null });
+        alert('Tarea guardada correctamente');
+      } else {
+        const error = await response.json();
+        alert(`Error al guardar la tarea: ${error.error}`);
+      }
+    } catch (error) {
+      console.error('Error saving assignment:', error);
+      alert('Error al guardar la tarea');
     }
   };
 
@@ -438,6 +499,13 @@ export default function SubjectDetailPage() {
                       <FiPlus className="w-4 h-4 mr-2" />
                       Nuevo Contenido
                     </button>
+                    <button
+                      onClick={handleCreateAssignment}
+                      className="bg-purple-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-purple-700 flex items-center"
+                    >
+                      <FiPlus className="w-4 h-4 mr-2" />
+                      Nueva Tarea
+                    </button>
                   </>
                 )}
               </div>
@@ -453,11 +521,12 @@ export default function SubjectDetailPage() {
             {[
               { id: 'overview', name: 'Información General', icon: FiBookOpen },
               { id: 'units', name: 'Unidades', icon: FiFolder },
-              { id: 'content', name: 'Contenido', icon: FiFile }
+              { id: 'content', name: 'Contenido', icon: FiFile },
+              { id: 'assignments', name: 'Tareas', icon: FiClipboard }
             ].map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id as any)}
+                onClick={() => setActiveTab(tab.id as 'overview' | 'units' | 'content' | 'assignments')}
                 className={`flex items-center py-4 px-1 border-b-2 font-medium text-sm ${
                   activeTab === tab.id
                     ? 'border-blue-500 text-blue-600'
@@ -501,6 +570,10 @@ export default function SubjectDetailPage() {
                     {units.reduce((acc, unit) => acc + (unit.documents?.length || 0), 0)}
                   </div>
                   <div className="text-sm text-gray-600">Documentos</div>
+                </div>
+                <div className="text-center p-4 bg-yellow-50 rounded-lg">
+                  <div className="text-2xl font-bold text-yellow-600">{assignments.length}</div>
+                  <div className="text-sm text-gray-600">Tareas</div>
                 </div>
                 <div className="text-center p-4 bg-orange-50 rounded-lg">
                   <div className="text-2xl font-bold text-orange-600">{subject.credits}</div>
@@ -673,6 +746,69 @@ export default function SubjectDetailPage() {
             )}
           </div>
         )}
+
+        {activeTab === 'assignments' && (
+          <div className="space-y-4">
+            {assignments.map((assignment) => (
+              <div key={assignment.id} className="bg-white rounded-lg shadow p-6">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center">
+                      <FiClipboard className="w-5 h-5 mr-2 text-purple-600" />
+                      <h3 className="text-lg font-medium text-gray-900">{assignment.title}</h3>
+                    </div>
+                    <p className="text-gray-700 mt-2">{assignment.description}</p>
+                    {assignment.instructions && (
+                      <div className="mt-3 p-3 bg-blue-50 rounded-md">
+                        <h4 className="text-sm font-medium text-blue-900 mb-1">Instrucciones:</h4>
+                        <p className="text-sm text-blue-800">{assignment.instructions}</p>
+                      </div>
+                    )}
+                    <div className="flex items-center text-sm text-gray-500 mt-3 flex-wrap gap-4">
+                      <span className="flex items-center">
+                        <FiCalendar className="w-4 h-4 mr-1" />
+                        Vence: {new Date(assignment.due_date).toLocaleString()}
+                      </span>
+                      <span>Puntaje máximo: {assignment.max_score}</span>
+                      {assignment.unit && (
+                        <span>Unidad {assignment.unit.unit_number}: {assignment.unit.title}</span>
+                      )}
+                    </div>
+                  </div>
+                  {canEdit && (
+                    <div className="flex space-x-2 ml-4">
+                      <button 
+                        onClick={() => handleEditAssignment(assignment)}
+                        className="text-gray-600 hover:text-gray-800"
+                      >
+                        <FiEdit className="w-4 h-4" />
+                      </button>
+                      <button className="text-red-600 hover:text-red-800">
+                        <FiTrash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+
+            {assignments.length === 0 && (
+              <div className="text-center py-12 bg-white rounded-lg shadow">
+                <FiClipboard className="w-12 h-12 mx-auto text-gray-400 mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No hay tareas</h3>
+                <p className="text-gray-600 mb-4">Comienza creando la primera tarea de la materia.</p>
+                {canEdit && (
+                  <button
+                    onClick={handleCreateAssignment}
+                    className="bg-purple-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-purple-700"
+                  >
+                    Crear Primera Tarea
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Modales */}
@@ -680,7 +816,7 @@ export default function SubjectDetailPage() {
         isOpen={modal.type === 'unit'}
         onClose={() => setModal({ type: null })}
         onSave={handleSaveUnit}
-        unit={modal.data}
+        unit={modal.data && 'unit_number' in modal.data ? modal.data as SubjectUnit : null}
       />
 
       <ContentModal
@@ -696,7 +832,15 @@ export default function SubjectDetailPage() {
         onClose={() => setModal({ type: null })}
         onSave={handleSaveDocument}
         subjectId={subjectId}
-        unitId={modal.data?.unitId}
+        unitId={modal.data && 'unitId' in modal.data ? modal.data.unitId : undefined}
+      />
+
+      <AssignmentModal
+        isOpen={modal.type === 'assignment'}
+        onClose={() => setModal({ type: null })}
+        onSave={handleSaveAssignment}
+        assignment={modal.data && 'title' in modal.data ? modal.data as Assignment : null}
+        units={units}
       />
       </div>
     </>

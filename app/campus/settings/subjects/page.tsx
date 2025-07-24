@@ -33,6 +33,7 @@ function EditSubjectModal({ isOpen, onClose, onSave, subject, teachers }: EditSu
     description: '',
     year: 1,
     semester: 1,
+    division: 'A',
     teacher_id: '',
     image_url: ''
   });
@@ -46,6 +47,7 @@ function EditSubjectModal({ isOpen, onClose, onSave, subject, teachers }: EditSu
         description: subject.description || '',
         year: subject.year || 1,
         semester: subject.semester || 1,
+        division: subject.division || 'A',
         teacher_id: subject.teacher_id || '',
         image_url: subject.image_url || ''
       });
@@ -56,6 +58,7 @@ function EditSubjectModal({ isOpen, onClose, onSave, subject, teachers }: EditSu
         description: '',
         year: 1,
         semester: 1,
+        division: 'A',
         teacher_id: '',
         image_url: ''
       });
@@ -174,8 +177,8 @@ function EditSubjectModal({ isOpen, onClose, onSave, subject, teachers }: EditSu
         />
       </div>
 
-      {/* Año */}
-      <div style={{ display: 'flex', gap: '16px', marginBottom: '24px' }}>
+      {/* Año y División */}
+      <div style={{ display: 'flex', gap: '16px', marginBottom: '16px' }}>
         <div style={{ flex: 1 }}>
           <label style={{ 
             display: 'block', 
@@ -204,6 +207,36 @@ function EditSubjectModal({ isOpen, onClose, onSave, subject, teachers }: EditSu
         </div>
 
         <div style={{ flex: 1 }}>
+          <label style={{ 
+            display: 'block', 
+            fontWeight: 'bold', 
+            marginBottom: '8px',
+            color: '#374151'
+          }}>
+            División:
+          </label>
+          <select 
+            value={formData.division}
+            onChange={(e) => setFormData({ ...formData, division: e.target.value })}
+            style={{
+              width: '100%',
+              padding: '12px',
+              border: '2px solid #d1d5db',
+              borderRadius: '4px',
+              fontSize: '16px',
+              backgroundColor: 'white'
+            }}
+          >
+            {['A', 'B'].map(division => (
+              <option key={division} value={division}>{division}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {/* Profesor */}
+      <div style={{ marginBottom: '24px' }}>
+        <div>
           <label style={{ 
             display: 'block', 
             fontWeight: 'bold', 
@@ -395,9 +428,9 @@ export default function SubjectsManagementPage() {
       console.log('💾 Guardando materia:', subjectData);
       
       if (editingSubject) {
-        // Actualizar materia existente - usando API pública temporal
+        // Actualizar materia existente - usando API de admin
         console.log(`🔄 Actualizando materia con ID: ${editingSubject.id}`);
-        const response = await fetch(`/api/subjects/${editingSubject.id}`, {
+        const response = await fetch(`/api/admin/subjects/${editingSubject.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(subjectData)
@@ -416,9 +449,9 @@ export default function SubjectsManagementPage() {
           alert(`❌ Error al actualizar: ${errorData.error || 'Error desconocido'}`);
         }
       } else {
-        // Crear nueva materia - usando API pública temporal
+        // Crear nueva materia - usando API de admin
         console.log('➕ Creando nueva materia');
-        const response = await fetch('/api/subjects', {
+        const response = await fetch('/api/admin/subjects', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(subjectData)

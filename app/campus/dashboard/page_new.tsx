@@ -34,8 +34,8 @@ const DashboardPage = () => {
               // Profesores ven sus materias asignadas
               subjectsResponse = await fetch(`/api/admin/subjects?teacher_id=${userData.id}`);
             } else if (userData.role === 'student' && userData.year) {
-              // Estudiantes ven materias de su año
-              subjectsResponse = await fetch(`/api/admin/subjects?year=${userData.year}`);
+              // Estudiantes ven materias donde están inscritos
+              subjectsResponse = await fetch('/api/student/subjects');
             } else {
               // Fallback: no hay materias
               setSubjects([]);

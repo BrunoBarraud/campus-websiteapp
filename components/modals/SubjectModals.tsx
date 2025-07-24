@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { SubjectUnit, SubjectContent, ContentType } from '@/app/lib/types';
+import { SubjectUnit, SubjectContent, ContentType, Assignment } from '@/app/lib/types';
 import { FiX, FiUpload, FiFile } from 'react-icons/fi';
 
 interface UnitModalProps {
@@ -448,6 +448,158 @@ export function DocumentModal({ isOpen, onClose, onSave, subjectId, unitId }: Do
               className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
             >
               Subir Documento
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+// Assignment Modal
+interface AssignmentModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSave: (assignmentData: Partial<Assignment>) => void;
+  assignment?: Assignment | null;
+  units: SubjectUnit[];
+}
+
+export function AssignmentModal({ isOpen, onClose, onSave, assignment, units }: AssignmentModalProps) {
+  const [formData, setFormData] = useState({
+    title: assignment?.title || '',
+    description: assignment?.description || '',
+    due_date: assignment?.due_date || '',
+    max_score: assignment?.max_score || 100,
+    instructions: assignment?.instructions || '',
+    unit_id: assignment?.unit_id || ''
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSave({
+      ...formData,
+      unit_id: formData.unit_id || undefined
+    });
+    onClose();
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between p-6 border-b">
+          <h3 className="text-lg font-semibold">
+            {assignment ? 'Editar Tarea' : 'Nueva Tarea'}
+          </h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+            <FiX className="w-5 h-5" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Título de la Tarea *
+            </label>
+            <input
+              type="text"
+              value={formData.title}
+              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Ej: Ejercicios de álgebra básica"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Descripción *
+            </label>
+            <textarea
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              rows={4}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Describe qué deben hacer los estudiantes..."
+              required
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Fecha de Entrega *
+              </label>
+              <input
+                type="datetime-local"
+                value={formData.due_date}
+                onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Puntaje Máximo
+              </label>
+              <input
+                type="number"
+                min="1"
+                max="1000"
+                value={formData.max_score}
+                onChange={(e) => setFormData({ ...formData, max_score: parseInt(e.target.value) })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Unidad (opcional)
+            </label>
+            <select
+              value={formData.unit_id}
+              onChange={(e) => setFormData({ ...formData, unit_id: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">Sin unidad específica</option>
+              {units.map((unit) => (
+                <option key={unit.id} value={unit.id}>
+                  Unidad {unit.unit_number}: {unit.title}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Instrucciones Adicionales (opcional)
+            </label>
+            <textarea
+              value={formData.instructions}
+              onChange={(e) => setFormData({ ...formData, instructions: e.target.value })}
+              rows={3}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Instrucciones específicas, formato de entrega, etc..."
+            />
+          </div>
+
+          <div className="flex justify-end space-x-3 pt-4">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            >
+              {assignment ? 'Actualizar' : 'Crear'} Tarea
             </button>
           </div>
         </form>

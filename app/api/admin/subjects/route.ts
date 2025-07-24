@@ -1,19 +1,14 @@
 // 📚 API para gestión de materias (Solo administradores y profesores)
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/app/lib/supabaseClient';
-import { userService } from '@/app/lib/services';
+import { requireRole } from '@/app/lib/auth';
 
 // GET - Obtener todas las materias (con filtros opcionales)
 export async function GET(request: Request) {
   try {
-    const currentUser = await userService.getCurrentUser();
+    const currentUser = await requireRole(['admin', 'teacher']);
     
-    if (!currentUser || currentUser.role === 'student') {
-      return NextResponse.json(
-        { error: 'No tienes permisos para acceder a esta información' },
-        { status: 403 }
-      );
-    }
+    console.log('User accessing admin subjects:', currentUser.email, 'Role:', currentUser.role);
 
     const { searchParams } = new URL(request.url);
     const year = searchParams.get('year');
@@ -22,8 +17,19 @@ export async function GET(request: Request) {
     let query = supabaseAdmin
       .from('subjects')
       .select(`
-        *,
-        teacher:users!subjects_teacher_id_fkey(id, name, email)
+        id,
+        name,
+        code,
+        description,
+        year,
+        semester,
+        credits,
+        division,
+        teacher_id,
+        image_url,
+        is_active,
+        created_at,
+        updated_at
       `)
       .order('year')
       .order('name');
@@ -65,14 +71,7 @@ export async function GET(request: Request) {
 // POST - Crear nueva materia (Solo administradores)
 export async function POST(request: Request) {
   try {
-    const currentUser = await userService.getCurrentUser();
-    
-    if (!currentUser || currentUser.role !== 'admin') {
-      return NextResponse.json(
-        { error: 'Solo los administradores pueden crear materias' },
-        { status: 403 }
-      );
-    }
+    const currentUser = await requireRole(['admin']);
 
     const {
       name,
@@ -81,6 +80,7 @@ export async function POST(request: Request) {
       year,
       semester,
       credits,
+      division,
       teacher_id,
       image_url
     } = await request.json();
@@ -141,13 +141,25 @@ export async function POST(request: Request) {
         year,
         semester: semester || 1,
         credits: credits || 3,
+        division: division || null,
         teacher_id: teacher_id || null,
         image_url: image_url || null,
         is_active: true
       }])
       .select(`
-        *,
-        teacher:users!subjects_teacher_id_fkey(id, name, email)
+        id,
+        name,
+        code,
+        description,
+        year,
+        semester,
+        credits,
+        division,
+        teacher_id,
+        image_url,
+        is_active,
+        created_at,
+        updated_at
       `)
       .single();
 

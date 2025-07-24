@@ -1,7 +1,7 @@
 // 📚 API para gestión individual de materias (PUT/DELETE)
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/app/lib/supabaseClient';
-import { userService } from '@/app/lib/services';
+import { requireRole } from '@/app/lib/auth';
 
 // GET - Obtener una materia específica
 export async function GET(
@@ -10,14 +10,9 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const currentUser = await userService.getCurrentUser();
-    
-    if (!currentUser) {
-      return NextResponse.json(
-        { error: 'Usuario no autenticado' },
-        { status: 401 }
-      );
-    }
+    const currentUser = await requireRole(['admin', 'teacher']);
+
+    console.log('🔍 GET Subject - Usuario autorizado:', currentUser.email);
 
     const { data, error } = await supabaseAdmin
       .from('subjects')
@@ -68,14 +63,9 @@ export async function PUT(
 ) {
   try {
     const { id } = await params;
-    const currentUser = await userService.getCurrentUser();
-    
-    if (!currentUser || currentUser.role !== 'admin') {
-      return NextResponse.json(
-        { error: 'Solo los administradores pueden editar materias' },
-        { status: 403 }
-      );
-    }
+    const currentUser = await requireRole(['admin']);
+
+    console.log('🔄 PUT Subject - Usuario autorizado:', currentUser.email);
 
     const {
       name,
@@ -84,9 +74,22 @@ export async function PUT(
       year,
       semester,
       credits,
+      division,
       teacher_id,
       image_url
     } = await request.json();
+
+    console.log('🔄 PUT Subject - Datos recibidos:', {
+      name,
+      code,
+      description,
+      year,
+      semester,
+      credits,
+      division,
+      teacher_id,
+      image_url
+    });
 
     // Validaciones
     if (!name || !code || !year) {
@@ -145,6 +148,7 @@ export async function PUT(
         year,
         semester: semester || 1,
         credits: credits || 3,
+        division: division || null,
         teacher_id: teacher_id || null,
         image_url: image_url || null,
         updated_at: new Date().toISOString()
@@ -189,14 +193,9 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    const currentUser = await userService.getCurrentUser();
-    
-    if (!currentUser || currentUser.role !== 'admin') {
-      return NextResponse.json(
-        { error: 'Solo los administradores pueden eliminar materias' },
-        { status: 403 }
-      );
-    }
+    const currentUser = await requireRole(['admin']);
+
+    console.log('🗑️ DELETE Subject - Usuario autorizado:', currentUser.email);
 
     // Verificar que la materia existe
     const { data: subject } = await supabaseAdmin

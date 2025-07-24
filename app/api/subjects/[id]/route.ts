@@ -1,7 +1,7 @@
 // 📚 API pública para obtener información de una materia
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/app/lib/supabaseClient';
-import { userService } from '@/app/lib/services';
+import { requireAuth } from '@/app/lib/auth';
 
 export async function GET(
   request: Request,
@@ -9,14 +9,7 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const currentUser = await userService.getCurrentUser();
-    
-    if (!currentUser) {
-      return NextResponse.json(
-        { error: 'Usuario no autenticado' },
-        { status: 401 }
-      );
-    }
+    const currentUser = await requireAuth();
 
     const { data, error } = await supabaseAdmin
       .from('subjects')
@@ -44,15 +37,9 @@ export async function GET(
           { status: 403 }
         );
       }
-    } else if (currentUser.role === 'teacher') {
-      // Los profesores solo pueden ver sus materias asignadas
-      if (data.teacher_id !== currentUser.id) {
-        return NextResponse.json(
-          { error: 'No tienes permiso para ver esta materia' },
-          { status: 403 }
-        );
-      }
     }
+    // Los profesores y admins pueden ver todas las materias
+    // La restricción de edición se maneja en el frontend
     // Los admins pueden ver todas las materias
 
     return NextResponse.json({
@@ -84,11 +71,12 @@ export async function PUT(
       description,
       year,
       semester,
+      division,
       teacher_id,
       image_url
     } = await request.json();
 
-    console.log('📝 Datos para actualizar:', { name, code, description, year, semester });
+    console.log('📝 Datos para actualizar:', { name, code, description, year, semester, division });
 
     // Validaciones básicas
     if (!name || !code || !year) {
@@ -129,6 +117,7 @@ export async function PUT(
         description,
         year,
         semester: semester || 1,
+        division: division || null,
         teacher_id: teacher_id || null,
         image_url: image_url || null,
         updated_at: new Date().toISOString()

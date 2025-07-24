@@ -25,6 +25,7 @@ export interface Subject {
   year: number;
   semester?: number;
   credits: number;
+  division?: string; // División de la materia (A, B, C, etc.)
   teacher_id?: string;
   teacher?: User; // Relación con profesor
   units?: SubjectUnit[]; // Unidades de la materia
@@ -101,6 +102,44 @@ export interface Document {
   year?: number; // Para filtrar por año
   is_public: boolean;
   is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Assignment {
+  id: string;
+  subject_id: string;
+  subject?: Subject; // Relación con materia
+  unit_id?: string;
+  unit?: SubjectUnit; // Relación con unidad
+  title: string;
+  description: string;
+  due_date: string;
+  max_score: number;
+  instructions?: string;
+  created_by: string;
+  creator?: User; // Relación con creador
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AssignmentSubmission {
+  id: string;
+  assignment_id: string;
+  assignment?: Assignment; // Relación con tarea
+  student_id: string;
+  student?: User; // Relación con estudiante
+  submission_text?: string;
+  file_url?: string;
+  file_name?: string;
+  submitted_at?: string;
+  score?: number;
+  feedback?: string;
+  status: 'submitted' | 'graded' | 'late';
+  graded_by?: string;
+  grader?: User; // Relación con quien calificó
+  graded_at?: string;
   created_at: string;
   updated_at: string;
 }
