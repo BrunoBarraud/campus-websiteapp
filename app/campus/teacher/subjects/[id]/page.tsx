@@ -4,6 +4,7 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter, useParams } from 'next/navigation';
+import UnitManagement from '../../../../../components/dashboard/UnitManagement';
 
 interface Subject {
   id: string;
@@ -52,8 +53,13 @@ export default function SubjectDetailPage() {
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState<'units' | 'documents'>('units');
 
-  // Estados para crear unidad
-  const [showCreateUnit, setShowCreateUnit] = useState(false);
+  // Estado para controlar la vista principal
+  const [currentView, setCurrentView] = useState<'content' | 'management'>('content');
+
+  // Estados para crear/editar unidad
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  // const [isEditing, setIsEditing] = useState(false);
+  // const [editingUnit, setEditingUnit] = useState<SubjectUnit | null>(null);
   const [newUnit, setNewUnit] = useState({
     unit_number: '',
     title: '',
@@ -166,7 +172,7 @@ export default function SubjectDetailPage() {
       
       // Resetear formulario
       setNewUnit({ unit_number: '', title: '', description: '' });
-      setShowCreateUnit(false);
+      setShowCreateForm(false);
 
     } catch (err: any) {
       setError(err.message);
@@ -281,17 +287,66 @@ export default function SubjectDetailPage() {
           {/* Botones de navegación rápida */}
           <div className="mt-4 flex gap-2">
             <button
-              onClick={() => router.push(`/campus/teacher/subjects/${subjectId}/assignments`)}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center"
+              onClick={() => setCurrentView('content')}
+              className={`px-4 py-2 rounded-lg flex items-center transition-colors ${
+                currentView === 'content'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+              </svg>
+              Contenido y Unidades
+            </button>
+            <button
+              onClick={() => setCurrentView('management')}
+              className={`px-4 py-2 rounded-lg flex items-center transition-colors ${
+                currentView === 'management'
+                  ? 'bg-green-600 text-white'
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
             >
               <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
-              Gestionar Tareas
+              Gestionar Unidades y Tareas
+            </button>
+            <button
+              onClick={() => router.push(`/campus/teacher/subjects/${subjectId}/assignments`)}
+              className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 flex items-center"
+            >
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-5 5v-5zM3 9v10a1 1 0 001 1h6m5-7V8a1 1 0 00-1-1H9m0 0V6a1 1 0 011-1h1m0 0V3a1 1 0 011-1h1a1 1 0 011 1v3M9 7h3" />
+              </svg>
+              Ver Entregas
             </button>
           </div>
         </div>
 
+        {/* Contenido principal basado en la vista seleccionada */}
+        {currentView === 'management' ? (
+          /* Vista de Gestión de Unidades y Tareas */
+          <div className="bg-white rounded-lg shadow-sm p-6">
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                <i className="fas fa-tasks mr-3 text-green-600"></i>
+                Gestión de Unidades y Tareas
+              </h2>
+              <p className="text-gray-600">
+                Administra las unidades temáticas y crea tareas con archivos adjuntos para tus estudiantes.
+              </p>
+            </div>
+            
+            <UnitManagement 
+              subjectId={subjectId}
+              onUnitSelect={(unitId: string) => setSelectedUnitId(unitId)}
+              selectedUnitId={selectedUnitId}
+            />
+          </div>
+        ) : (
+          /* Vista de Contenido Tradicional */
+          <>
         {/* Tabs */}
         <div className="bg-white rounded-lg shadow-sm mb-6">
           <div className="border-b border-gray-200">
@@ -328,7 +383,7 @@ export default function SubjectDetailPage() {
                   <div className="flex justify-between items-center mb-4">
                     <h3 className="text-lg font-semibold text-gray-900">Unidades</h3>
                     <button
-                      onClick={() => setShowCreateUnit(true)}
+                      onClick={() => setShowCreateForm(true)}
                       className="px-3 py-1 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700"
                     >
                       + Nueva
@@ -431,7 +486,7 @@ export default function SubjectDetailPage() {
         </div>
 
         {/* Modal para crear unidad */}
-        {showCreateUnit && (
+        {showCreateForm && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 w-full max-w-md">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Nueva Unidad</h3>
@@ -481,7 +536,7 @@ export default function SubjectDetailPage() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => setShowCreateUnit(false)}
+                    onClick={() => setShowCreateForm(false)}
                     className="flex-1 px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400"
                   >
                     Cancelar
@@ -567,6 +622,8 @@ export default function SubjectDetailPage() {
               </form>
             </div>
           </div>
+        )}
+          </>
         )}
       </div>
     </div>

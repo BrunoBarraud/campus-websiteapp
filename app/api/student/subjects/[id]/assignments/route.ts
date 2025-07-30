@@ -4,11 +4,11 @@ import { requireRole } from "@/app/lib/auth";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await requireRole(['student']);
-    const subjectId = params.id;
+    const { id: subjectId } = await params;
 
     // Verificar que el estudiante está inscrito en la materia
     const { data: studentSubject } = await supabaseAdmin
@@ -38,8 +38,6 @@ export async function GET(
         submissions:assignment_submissions!left (
           id,
           submission_text,
-          file_url,
-          file_name,
           submitted_at,
           score,
           feedback,

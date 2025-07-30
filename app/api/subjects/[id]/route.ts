@@ -66,7 +66,7 @@ export async function PUT(
     console.log(`🔄 PUT: Actualizando materia con ID: ${id}`);
     
     // Verificar que el usuario sea profesor de esta materia o admin
-    const currentUser = await requireSubjectTeacher(id);
+    await requireSubjectTeacher(id); // Solo para verificación de permisos
     
     const {
       name,

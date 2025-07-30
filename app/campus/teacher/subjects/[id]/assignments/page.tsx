@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -38,7 +38,7 @@ interface Unit {
   order_index: number;
 }
 
-export default function TeacherAssignmentsPage({ params }: { params: { id: string } }) {
+export default function TeacherAssignmentsPage({ params }: { params: Promise<{ id: string }> }) {
   const { data: session } = useSession();
   const router = useRouter();
   const [assignments, setAssignments] = useState<Assignment[]>([]);
@@ -46,25 +46,27 @@ export default function TeacherAssignmentsPage({ params }: { params: { id: strin
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingAssignment, setEditingAssignment] = useState<Assignment | null>(null);
+  const [subjectId, setSubjectId] = useState<string>('');
   const [formData, setFormData] = useState({
     title: "",
     description: "",
     due_date: "",
     max_score: 100,
     instructions: "",
-    unit_id: "",
+    unit_id: null as string | null,
   });
 
   useEffect(() => {
-    if (session?.user) {
-      fetchAssignments();
-      fetchUnits();
-    }
-  }, [session, params.id]);
+    const loadParams = async () => {
+      const resolvedParams = await params;
+      setSubjectId(resolvedParams.id);
+    };
+    loadParams();
+  }, [params]);
 
-  const fetchAssignments = async () => {
+  const fetchAssignments = useCallback(async () => {
     try {
-      const response = await fetch(`/api/subjects/${params.id}/assignments`);
+      const response = await fetch(`/api/subjects/${subjectId}/assignments`);
       if (response.ok) {
         const data = await response.json();
         setAssignments(data);
@@ -75,11 +77,11 @@ export default function TeacherAssignmentsPage({ params }: { params: { id: strin
     } finally {
       setLoading(false);
     }
-  };
+  }, [subjectId]);
 
-  const fetchUnits = async () => {
+  const fetchUnits = useCallback(async () => {
     try {
-      const response = await fetch(`/api/subjects/${params.id}/units`);
+      const response = await fetch(`/api/subjects/${subjectId}/units`);
       if (response.ok) {
         const data = await response.json();
         setUnits(data);
@@ -87,14 +89,21 @@ export default function TeacherAssignmentsPage({ params }: { params: { id: strin
     } catch (error) {
       console.error("Error fetching units:", error);
     }
-  };
+  }, [subjectId]);
+
+  useEffect(() => {
+    if (session?.user && subjectId) {
+      fetchAssignments();
+      fetchUnits();
+    }
+  }, [session, subjectId, fetchAssignments, fetchUnits]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       const url = editingAssignment 
-        ? `/api/subjects/${params.id}/assignments`
-        : `/api/subjects/${params.id}/assignments`;
+        ? `/api/subjects/${subjectId}/assignments`
+        : `/api/subjects/${subjectId}/assignments`;
       
       const method = editingAssignment ? "PUT" : "POST";
       const body = editingAssignment 
@@ -119,7 +128,7 @@ export default function TeacherAssignmentsPage({ params }: { params: { id: strin
           due_date: "",
           max_score: 100,
           instructions: "",
-          unit_id: "",
+          unit_id: null,
         });
         fetchAssignments();
       } else {
@@ -139,7 +148,7 @@ export default function TeacherAssignmentsPage({ params }: { params: { id: strin
       due_date: assignment.due_date.split('T')[0] + 'T' + assignment.due_date.split('T')[1].substring(0, 5),
       max_score: assignment.max_score,
       instructions: assignment.instructions || "",
-      unit_id: assignment.unit_id || "",
+      unit_id: assignment.unit_id || null,
     });
     setIsDialogOpen(true);
   };
@@ -148,7 +157,7 @@ export default function TeacherAssignmentsPage({ params }: { params: { id: strin
     if (!confirm("¿Estás seguro de que quieres eliminar esta tarea?")) return;
 
     try {
-      const response = await fetch(`/api/subjects/${params.id}/assignments`, {
+      const response = await fetch(`/api/subjects/${subjectId}/assignments`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
@@ -207,7 +216,7 @@ export default function TeacherAssignmentsPage({ params }: { params: { id: strin
                 due_date: "",
                 max_score: 100,
                 instructions: "",
-                unit_id: "",
+                unit_id: null,
               });
             }}>
               <PlusIcon className="h-4 w-4 mr-2" />
@@ -274,12 +283,12 @@ export default function TeacherAssignmentsPage({ params }: { params: { id: strin
               </div>
               <div>
                 <Label htmlFor="unit_id">Unidad (opcional)</Label>
-                <Select value={formData.unit_id} onValueChange={(value) => setFormData({ ...formData, unit_id: value })}>
+                <Select value={formData.unit_id || "none"} onValueChange={(value) => setFormData({ ...formData, unit_id: value === "none" ? null : value })}>
                   <SelectTrigger>
                     <SelectValue placeholder="Seleccionar unidad" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Sin unidad específica</SelectItem>
+                    <SelectItem value="none">Sin unidad específica</SelectItem>
                     {units.map((unit) => (
                       <SelectItem key={unit.id} value={unit.id}>
                         {unit.title}
@@ -378,7 +387,7 @@ export default function TeacherAssignmentsPage({ params }: { params: { id: strin
                       <div className="mt-4">
                         <Button
                           variant="outline"
-                          onClick={() => router.push(`/campus/teacher/subjects/${params.id}/assignments/${assignment.id}/submissions`)}
+                          onClick={() => router.push(`/campus/teacher/subjects/${subjectId}/assignments/${assignment.id}/submissions`)}
                         >
                           Ver Entregas ({assignment.submissions_count})
                         </Button>

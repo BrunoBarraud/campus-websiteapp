@@ -24,7 +24,7 @@ function VerifyEmailContent() {
         }
 
         // Verificar el email con Supabase
-        const { data, error } = await supabase.auth.verifyOtp({
+        const { error } = await supabase.auth.verifyOtp({
           token_hash,
           type: 'email',
         });

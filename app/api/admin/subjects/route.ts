@@ -59,10 +59,11 @@ export async function GET(request: Request) {
 
     return NextResponse.json(data || []);
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error in GET /api/admin/subjects:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Error interno del servidor';
     return NextResponse.json(
-      { error: error.message || 'Error interno del servidor' },
+      { error: errorMessage },
       { status: 500 }
     );
   }
@@ -71,7 +72,7 @@ export async function GET(request: Request) {
 // POST - Crear nueva materia (Solo administradores)
 export async function POST(request: Request) {
   try {
-    const currentUser = await requireRole(['admin']);
+    await requireRole(['admin']);
 
     const {
       name,
@@ -173,10 +174,11 @@ export async function POST(request: Request) {
 
     return NextResponse.json(data, { status: 201 });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error in POST /api/admin/subjects:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Error interno del servidor';
     return NextResponse.json(
-      { error: error.message || 'Error interno del servidor' },
+      { error: errorMessage },
       { status: 500 }
     );
   }

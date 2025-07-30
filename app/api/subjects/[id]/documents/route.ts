@@ -13,7 +13,6 @@ export async function GET(
     const { id: subjectId } = await params;
     const { searchParams } = new URL(request.url);
     const unitId = searchParams.get('unit_id');
-    const documentType = searchParams.get('type'); // 'material' o 'assignment'
 
     // Verificar que la materia existe
     const { data: subject, error: subjectError } = await supabaseAdmin
@@ -55,8 +54,7 @@ export async function GET(
         is_public,
         is_active,
         created_at,
-        updated_at,
-        uploader:users!documents_uploaded_by_fkey(id, name, email)
+        updated_at
       `)
       .eq('subject_id', subjectId)
       .eq('is_active', true);
@@ -84,10 +82,11 @@ export async function GET(
 
     return NextResponse.json(documents || []);
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error in GET /api/subjects/[id]/documents:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Error interno del servidor';
     return NextResponse.json(
-      { error: error.message || 'Error interno del servidor' },
+      { error: errorMessage },
       { status: 500 }
     );
   }
@@ -209,10 +208,11 @@ export async function POST(
 
     return NextResponse.json(data, { status: 201 });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error in POST /api/subjects/[id]/documents:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Error interno del servidor';
     return NextResponse.json(
-      { error: error.message || 'Error interno del servidor' },
+      { error: errorMessage },
       { status: 500 }
     );
   }

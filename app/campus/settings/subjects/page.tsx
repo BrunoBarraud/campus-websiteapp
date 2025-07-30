@@ -4,19 +4,9 @@
 export const dynamic = 'force-dynamic';
 
 import React, { useState, useEffect } from 'react';
-import { FiPlus, FiEdit, FiTrash2, FiBook, FiUser, FiCalendar, FiX, FiUpload } from 'react-icons/fi';
+import { FiPlus, FiEdit, FiTrash2, FiBook, FiUser, FiCalendar } from 'react-icons/fi';
 import { User, Subject } from '@/app/lib/types';
 import SimpleModal from '@/components/common/SimpleModal';
-
-interface SubjectFormData {
-  name: string;
-  code: string;
-  description: string;
-  year: number;
-  semester: number;
-  teacher_id: string;
-  image_url: string;
-}
 
 interface EditSubjectModalProps {
   isOpen: boolean;

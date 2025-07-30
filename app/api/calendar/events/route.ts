@@ -1,7 +1,8 @@
 // 📅 API para gestión de eventos del calendario
 import { NextResponse } from 'next/server';
-import { calendarService, userService } from '@/app/lib/services';
-import { CreateEventForm } from '@/app/lib/types';
+import { calendarService } from '@/app/lib/services';
+import { CreateEventForm, EventType } from '@/app/lib/types';
+import { requireRole } from '@/app/lib/permissions';
 
 // GET - Obtener eventos según el rol del usuario
 export async function GET(request: Request) {
@@ -12,8 +13,8 @@ export async function GET(request: Request) {
     const type = searchParams.get('type');
     const month = searchParams.get('month');
 
-    // Obtener usuario actual para determinar qué eventos mostrar
-    const currentUser = await userService.getCurrentUser();
+    // Get authenticated user using role-based authentication
+    const currentUser = await requireRole(['admin', 'teacher', 'student']);
     
     if (!currentUser) {
       return NextResponse.json(
@@ -25,7 +26,7 @@ export async function GET(request: Request) {
     const filter = {
       year: year ? parseInt(year) : undefined,
       subject_id: subjectId || undefined,
-      type: type as any,
+      type: type as EventType | undefined,
       month: month ? parseInt(month) : undefined
     };
 
@@ -41,12 +42,13 @@ export async function GET(request: Request) {
       data: events
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error getting events:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Error al obtener eventos';
     return NextResponse.json(
       { 
         success: false, 
-        error: error.message || 'Error al obtener eventos' 
+        error: errorMessage 
       },
       { status: 500 }
     );
@@ -58,15 +60,8 @@ export async function POST(request: Request) {
   try {
     const eventData: CreateEventForm = await request.json();
 
-    // Obtener usuario actual
-    const currentUser = await userService.getCurrentUser();
-    
-    if (!currentUser) {
-      return NextResponse.json(
-        { success: false, error: 'Usuario no autenticado' },
-        { status: 401 }
-      );
-    }
+    // Get authenticated user using role-based authentication
+    const currentUser = await requireRole(['admin', 'teacher']);
 
     // Verificar permisos
     if (currentUser.role === 'student') {
@@ -105,12 +100,13 @@ export async function POST(request: Request) {
       data: newEvent
     }, { status: 201 });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error creating event:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Error al crear evento';
     return NextResponse.json(
       { 
         success: false, 
-        error: error.message || 'Error al crear evento' 
+        error: errorMessage
       },
       { status: 500 }
     );

@@ -1,6 +1,7 @@
 // 📄 API para gestión de documentos
 import { NextResponse } from 'next/server';
-import { documentService, userService } from '@/app/lib/services';
+import { documentService } from '@/app/lib/services';
+import { requireRole } from '@/app/lib/permissions';
 
 // GET - Obtener documentos según el rol del usuario
 export async function GET(request: Request) {
@@ -10,15 +11,8 @@ export async function GET(request: Request) {
     const subjectId = searchParams.get('subject_id');
     const search = searchParams.get('search');
 
-    // Obtener usuario actual para determinar qué documentos mostrar
-    const currentUser = await userService.getCurrentUser();
-    
-    if (!currentUser) {
-      return NextResponse.json(
-        { success: false, error: 'Usuario no autenticado' },
-        { status: 401 }
-      );
-    }
+    // Get authenticated user using role-based authentication
+    const currentUser = await requireRole(['admin', 'teacher', 'student']);
 
     const filter = {
       year: year ? parseInt(year) : undefined,
@@ -38,12 +32,13 @@ export async function GET(request: Request) {
       data: documents
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error getting documents:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Error al obtener documentos';
     return NextResponse.json(
       { 
         success: false, 
-        error: error.message || 'Error al obtener documentos' 
+        error: errorMessage 
       },
       { status: 500 }
     );
@@ -53,15 +48,8 @@ export async function GET(request: Request) {
 // POST - Subir nuevo documento
 export async function POST(request: Request) {
   try {
-    // Obtener usuario actual
-    const currentUser = await userService.getCurrentUser();
-    
-    if (!currentUser) {
-      return NextResponse.json(
-        { success: false, error: 'Usuario no autenticado' },
-        { status: 401 }
-      );
-    }
+    // Get authenticated user using role-based authentication
+    const currentUser = await requireRole(['admin', 'teacher']);
 
     const formData = await request.formData();
     const title = formData.get('title') as string;
@@ -127,12 +115,13 @@ export async function POST(request: Request) {
       data: newDocument
     }, { status: 201 });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error uploading document:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Error al subir documento';
     return NextResponse.json(
       { 
         success: false, 
-        error: error.message || 'Error al subir documento' 
+        error: errorMessage
       },
       { status: 500 }
     );

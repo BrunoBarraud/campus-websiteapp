@@ -1,11 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/app/lib/supabaseClient';
 import { requireRole } from '@/app/lib/auth';
 
 // POST - Inscribir estudiante en materia automáticamente
-export async function POST(
-  request: NextRequest
-) {
+export async function POST() {
   try {
     const currentUser = await requireRole(['student']);
     

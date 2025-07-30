@@ -243,7 +243,7 @@ export async function getTeacherStats(teacherId: string): Promise<any> {
     
     // Obtener estudiantes por materia
     const studentsPromises = subjects.map(async (subject) => {
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('student_subjects')
         .select('id')
         .eq('subject_id', subject.id)

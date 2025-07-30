@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { CalendarIcon, FileIcon, UserIcon, DownloadIcon, GradeIcon } from "lucide-react";
+import { CalendarIcon, FileIcon, UserIcon, DownloadIcon, StarIcon } from "lucide-react";
 import { toast } from "sonner";
 
 interface Assignment {
@@ -41,7 +41,7 @@ interface Submission {
 export default function AssignmentSubmissionsPage({ 
   params 
 }: { 
-  params: { id: string; assignmentId: string } 
+  params: Promise<{ id: string; assignmentId: string }> 
 }) {
   const { data: session } = useSession();
   const router = useRouter();
@@ -50,17 +50,21 @@ export default function AssignmentSubmissionsPage({
   const [loading, setLoading] = useState(true);
   const [gradingSubmission, setGradingSubmission] = useState<Submission | null>(null);
   const [gradeData, setGradeData] = useState({ score: "", feedback: "" });
+  const [subjectId, setSubjectId] = useState<string>('');
+  const [assignmentId, setAssignmentId] = useState<string>('');
 
   useEffect(() => {
-    if (session?.user) {
-      fetchAssignment();
-      fetchSubmissions();
-    }
-  }, [session, params.id, params.assignmentId]);
+    const loadParams = async () => {
+      const resolvedParams = await params;
+      setSubjectId(resolvedParams.id);
+      setAssignmentId(resolvedParams.assignmentId);
+    };
+    loadParams();
+  }, [params]);
 
-  const fetchAssignment = async () => {
+  const fetchAssignment = useCallback(async () => {
     try {
-      const response = await fetch(`/api/subjects/${params.id}/assignments?assignmentId=${params.assignmentId}`);
+      const response = await fetch(`/api/subjects/${subjectId}/assignments?assignmentId=${assignmentId}`);
       if (response.ok) {
         const data = await response.json();
         setAssignment(data[0]); // Assuming it returns an array with one item
@@ -69,11 +73,11 @@ export default function AssignmentSubmissionsPage({
       console.error("Error fetching assignment:", error);
       toast.error("Error al cargar la tarea");
     }
-  };
+  }, [subjectId, assignmentId]);
 
-  const fetchSubmissions = async () => {
+  const fetchSubmissions = useCallback(async () => {
     try {
-      const response = await fetch(`/api/subjects/${params.id}/assignments/${params.assignmentId}/submissions`);
+      const response = await fetch(`/api/subjects/${subjectId}/assignments/${assignmentId}/submissions`);
       if (response.ok) {
         const data = await response.json();
         setSubmissions(data);
@@ -84,14 +88,21 @@ export default function AssignmentSubmissionsPage({
     } finally {
       setLoading(false);
     }
-  };
+  }, [subjectId, assignmentId]);
+
+  useEffect(() => {
+    if (session?.user && subjectId && assignmentId) {
+      fetchAssignment();
+      fetchSubmissions();
+    }
+  }, [session, subjectId, assignmentId, fetchAssignment, fetchSubmissions]);
 
   const handleGrade = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!gradingSubmission) return;
 
     try {
-      const response = await fetch(`/api/subjects/${params.id}/assignments/${params.assignmentId}/submissions`, {
+      const response = await fetch(`/api/subjects/${subjectId}/assignments/${assignmentId}/submissions`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -275,7 +286,7 @@ export default function AssignmentSubmissionsPage({
                           variant="outline"
                           onClick={() => openGradingDialog(submission)}
                         >
-                          <GradeIcon className="h-4 w-4 mr-2" />
+                          <StarIcon className="h-4 w-4 mr-2" />
                           {submission.score !== null && submission.score !== undefined 
                             ? "Editar Calificación" 
                             : "Calificar"

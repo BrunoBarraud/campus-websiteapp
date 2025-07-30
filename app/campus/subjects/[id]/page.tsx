@@ -2,13 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Subject, SubjectUnit, SubjectContent, User, UserRole, Assignment } from '@/app/lib/types';
+import { Subject, SubjectUnit, SubjectContent, User, Assignment } from '@/app/lib/types';
 import { UnitModal, ContentModal, DocumentModal, AssignmentModal } from '@/components/modals/SubjectModals';
 import { FiPlus, FiEdit, FiTrash2, FiFile, FiBookOpen, FiCalendar, FiUsers, FiArrowLeft, FiUpload, FiFolder, FiClipboard } from 'react-icons/fi';
 import { BsPinFill } from 'react-icons/bs';
 
 // Mock data para desarrollo
-const mockSubject: Subject = {
+/* const mockSubject: Subject = {
   id: '1',
   name: 'Matemática I',
   code: 'MAT1',
@@ -29,9 +29,9 @@ const mockSubject: Subject = {
   is_active: true,
   created_at: '2024-01-01',
   updated_at: '2024-01-01'
-};
+}; */
 
-const mockUnits: SubjectUnit[] = [
+/* const mockUnits: SubjectUnit[] = [
   {
     id: '1',
     subject_id: '1',
@@ -73,9 +73,9 @@ const mockUnits: SubjectUnit[] = [
     updated_at: '2024-01-01',
     documents: []
   }
-];
+]; */
 
-const mockContent: SubjectContent[] = [
+/* const mockContent: SubjectContent[] = [
   {
     id: 'content1',
     subject_id: '1',
@@ -98,9 +98,9 @@ const mockContent: SubjectContent[] = [
     created_at: '2024-01-15',
     updated_at: '2024-01-15'
   }
-];
+]; */
 
-const mockCurrentUser: User = {
+/* const mockCurrentUser: User = {
   id: 'admin1',
   email: 'brunobarraud13@gmail.com',
   name: 'Bruno Barraud',
@@ -108,7 +108,7 @@ const mockCurrentUser: User = {
   is_active: true,
   created_at: '2024-01-01',
   updated_at: '2024-01-01'
-};
+}; */
 
 interface Modal {
   type: 'unit' | 'content' | 'document' | 'assignment' | null;

@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { CalendarEvent, User, Subject, EventType, CreateEventForm } from '@/app/lib/types';
-import { calendarService, userService, subjectService } from '@/app/lib/services';
+import { calendarService, subjectService } from '@/app/lib/services';
+import { useSession } from 'next-auth/react';
 
 interface CalendarProps {
   events?: CalendarEvent[];
@@ -15,12 +16,13 @@ interface CalendarProps {
 
 const Calendar: React.FC<CalendarProps> = ({ 
   events = [], 
-  canEdit = false,
+  canEdit = false, // eslint-disable-line @typescript-eslint/no-unused-vars
   userYear,
   onEventCreate,
   onEventEdit,
   onEventDelete 
 }) => {
+  const { data: session } = useSession();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>(events);
@@ -43,26 +45,28 @@ const Calendar: React.FC<CalendarProps> = ({
 
   // Cargar datos iniciales
   useEffect(() => {
-    loadInitialData();
-  }, []);
+    if (session?.user) {
+      loadInitialData();
+    }
+  }, [session]);
 
   const loadInitialData = async () => {
+    if (!session?.user) return;
+    
     try {
       setLoading(true);
       
-      // Obtener usuario actual
-      const user = await userService.getCurrentUser();
+      // Usar usuario de la sesión
+      const user = session.user as User;
       setCurrentUser(user);
 
-      if (user) {
-        // Cargar eventos del calendario
-        const userEvents = await calendarService.getEvents(user.role, user.id, user.year || undefined);
-        setCalendarEvents(userEvents);
+      // Cargar eventos del calendario
+      const userEvents = await calendarService.getEvents(user.role, user.id, user.year || undefined);
+      setCalendarEvents(userEvents);
 
-        // Cargar materias del usuario
-        const subjects = await subjectService.getSubjects(user.role, user.id, user.year || undefined);
-        setUserSubjects(subjects);
-      }
+      // Cargar materias del usuario
+      const subjects = await subjectService.getSubjects(user.role, user.id, user.year || undefined);
+      setUserSubjects(subjects);
     } catch (error) {
       console.error('Error loading initial data:', error);
     } finally {
@@ -448,7 +452,11 @@ const Calendar: React.FC<CalendarProps> = ({
             
             <form onSubmit={(e) => {
               e.preventDefault();
-              editingEvent ? handleEditEvent() : handleCreateEvent();
+              if (editingEvent) {
+                handleEditEvent();
+              } else {
+                handleCreateEvent();
+              }
             }}>
               <div className="space-y-4">
                 <div>

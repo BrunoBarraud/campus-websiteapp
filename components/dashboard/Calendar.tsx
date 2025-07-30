@@ -15,17 +15,19 @@ interface CalendarProps {
 
 const Calendar: React.FC<CalendarProps> = ({ 
   events = [], 
-  canEdit = false,
+  canEdit = false, // eslint-disable-line @typescript-eslint/no-unused-vars
   userYear,
   onEventCreate,
   onEventEdit,
   onEventDelete 
 }) => {
+  // const canEdit = canEdit; // Already passed as prop
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>(events);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [userSubjects, setUserSubjects] = useState<Subject[]>([]);
+  const [userSubjects] = useState<Subject[]>([]);
+  // const [userSubjects, setUserSubjects] = useState<Subject[]>([]);
   const [showEventModal, setShowEventModal] = useState(false);
   const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
   const [loading, setLoading] = useState(true);
@@ -540,7 +542,11 @@ const Calendar: React.FC<CalendarProps> = ({
             
             <form onSubmit={(e) => {
               e.preventDefault();
-              editingEvent ? handleEditEvent() : handleCreateEvent();
+              if (editingEvent) {
+                handleEditEvent();
+              } else {
+                handleCreateEvent();
+              }
             }}>
               <div className="space-y-4">
                 <div>

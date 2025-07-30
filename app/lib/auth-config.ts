@@ -1,4 +1,4 @@
-import { NextAuthOptions } from "next-auth";
+// NextAuth configuration types
 
 export const NEXTAUTH_CONFIG = {
   debug: process.env.NODE_ENV === 'development',

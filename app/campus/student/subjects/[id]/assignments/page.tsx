@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -36,7 +36,7 @@ interface Assignment {
   };
 }
 
-export default function StudentAssignmentsPage({ params }: { params: { id: string } }) {
+export default function StudentAssignmentsPage({ params }: { params: Promise<{ id: string }> }) {
   const { data: session } = useSession();
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -47,27 +47,37 @@ export default function StudentAssignmentsPage({ params }: { params: { id: strin
     file: null as File | null,
   });
   const [uploading, setUploading] = useState(false);
+  const [subjectId, setSubjectId] = useState<string>('');
 
   useEffect(() => {
-    if (session?.user) {
-      fetchAssignments();
-    }
-  }, [session, params.id]);
+    const loadParams = async () => {
+      const resolvedParams = await params;
+      setSubjectId(resolvedParams.id);
+    };
+    loadParams();
+  }, [params]);
 
-  const fetchAssignments = async () => {
+  const fetchAssignments = useCallback(async () => {
     try {
-      const response = await fetch(`/api/student/subjects/${params.id}/assignments`);
+      const response = await fetch(`/api/student/subjects/${subjectId}/assignments`);
       if (response.ok) {
         const data = await response.json();
-        setAssignments(data);
+        setAssignments(data.assignments || []);
+      } else {
+        console.error('Error fetching assignments');
       }
     } catch (error) {
-      console.error("Error fetching assignments:", error);
-      toast.error("Error al cargar las tareas");
+      console.error('Error:', error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [subjectId]);
+
+  useEffect(() => {
+    if (session?.user && subjectId) {
+      fetchAssignments();
+    }
+  }, [session, subjectId, fetchAssignments]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -75,53 +85,50 @@ export default function StudentAssignmentsPage({ params }: { params: { id: strin
 
     setUploading(true);
     try {
-      let fileUrl = null;
-      let fileName = null;
-
-      // Si hay un archivo, subirlo primero
+      // Crear FormData si hay archivo, JSON si solo hay texto
       if (submissionData.file) {
+        // Enviar como FormData con el archivo
         const formData = new FormData();
+        formData.append('content', submissionData.submission_text);
         formData.append('file', submissionData.file);
-        formData.append('type', 'assignment_submission');
-        formData.append('subjectId', params.id);
-        formData.append('assignmentId', selectedAssignment.id);
 
-        const uploadResponse = await fetch('/api/upload', {
-          method: 'POST',
-          body: formData,
+        const response = await fetch(`/api/subjects/${subjectId}/assignments/${selectedAssignment.id}/submissions`, {
+          method: "POST",
+          body: formData, // No incluir Content-Type header, deja que el navegador lo configure
         });
 
-        if (uploadResponse.ok) {
-          const uploadData = await uploadResponse.json();
-          fileUrl = uploadData.url;
-          fileName = submissionData.file.name;
+        if (response.ok) {
+          toast.success("Tarea entregada exitosamente");
+          setSubmitDialogOpen(false);
+          setSelectedAssignment(null);
+          setSubmissionData({ submission_text: "", file: null });
+          fetchAssignments();
         } else {
-          throw new Error('Error al subir el archivo');
+          const errorData = await response.json();
+          toast.error(errorData.error || "Error al entregar la tarea");
         }
-      }
-
-      // Crear la entrega
-      const response = await fetch(`/api/subjects/${params.id}/assignments/${selectedAssignment.id}/submissions`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          submission_text: submissionData.submission_text || null,
-          file_url: fileUrl,
-          file_name: fileName,
-        }),
-      });
-
-      if (response.ok) {
-        toast.success("Tarea entregada exitosamente");
-        setSubmitDialogOpen(false);
-        setSelectedAssignment(null);
-        setSubmissionData({ submission_text: "", file: null });
-        fetchAssignments();
       } else {
-        const errorData = await response.json();
-        toast.error(errorData.error || "Error al entregar la tarea");
+        // Enviar como JSON solo con texto
+        const response = await fetch(`/api/subjects/${subjectId}/assignments/${selectedAssignment.id}/submissions`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            content: submissionData.submission_text,
+          }),
+        });
+
+        if (response.ok) {
+          toast.success("Tarea entregada exitosamente");
+          setSubmitDialogOpen(false);
+          setSelectedAssignment(null);
+          setSubmissionData({ submission_text: "", file: null });
+          fetchAssignments();
+        } else {
+          const errorData = await response.json();
+          toast.error(errorData.error || "Error al entregar la tarea");
+        }
       }
     } catch (error) {
       console.error("Error:", error);

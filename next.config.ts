@@ -4,12 +4,12 @@ const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
       {
-        protocol: 'https',
-        hostname: '**',
-      }
+        protocol: "https",
+        hostname: "**",
+      },
     ],
   },
-  serverExternalPackages: ['next-auth'],
+  serverExternalPackages: ["next-auth"],
 };
 
 export default nextConfig;

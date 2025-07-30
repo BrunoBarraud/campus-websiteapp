@@ -7,7 +7,7 @@ import React, { useState } from "react";
 import { useSession } from 'next-auth/react';
 
 const ProfilePage = () => {
-  const { data: session, update } = useSession();
+  const { data: session } = useSession();
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     name: session?.user?.name || '',

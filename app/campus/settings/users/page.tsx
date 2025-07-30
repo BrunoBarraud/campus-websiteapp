@@ -3,7 +3,7 @@
 export const dynamic = 'force-dynamic';
 
 import React, { useState, useEffect } from "react";
-import { FiUsers, FiPlus, FiEdit2, FiTrash2, FiSearch, FiFilter, FiX } from 'react-icons/fi';
+import { FiUsers, FiPlus, FiEdit2, FiTrash2, FiSearch, FiX } from 'react-icons/fi';
 
 // Definir tipos
 interface User {
