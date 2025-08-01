@@ -1,78 +1,95 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/app/lib/supabaseClient';
-import { requireRole, requireSubjectTeacher } from '@/app/lib/permissions';
+import { NextRequest, NextResponse } from "next/server";
+import { supabaseAdmin } from "@/app/lib/supabaseClient";
+import { requireRole, requireSubjectTeacher } from "@/app/lib/permissions";
 
-// GET - Obtener asignaciones de una materia
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const currentUser = await requireRole(['admin', 'teacher', 'student']);
+    const currentUser = await requireRole(["admin", "teacher", "student"]);
     const { id: subjectId } = await params;
 
+    // Obtener parámetros de consulta
+    const { searchParams } = new URL(request.url);
+    const unitId = searchParams.get("unit_id");
+
     // Students can only see assignments for subjects they have access to
-    if (currentUser.role === 'student') {
+    if (currentUser.role === "student") {
       // Check if student has access to this subject
       const { data: subject, error: subjectError } = await supabaseAdmin
-        .from('subjects')
-        .select('year, division')
-        .eq('id', subjectId)
+        .from("subjects")
+        .select("year, division")
+        .eq("id", subjectId)
         .single();
 
       if (subjectError || !subject) {
         return NextResponse.json(
-          { error: 'Subject not found' },
+          { error: "Subject not found" },
           { status: 404 }
         );
       }
 
       // Check if student belongs to this subject's year and division
-      if (subject.year !== currentUser.year || subject.division !== currentUser.division) {
-        return NextResponse.json(
-          { error: 'Access denied' },
-          { status: 403 }
-        );
+      if (
+        subject.year !== currentUser.year ||
+        subject.division !== currentUser.division
+      ) {
+        return NextResponse.json({ error: "Access denied" }, { status: 403 });
       }
     }
 
     // Teachers can only see assignments for subjects they teach
-    if (currentUser.role === 'teacher') {
+    if (currentUser.role === "teacher") {
       await requireSubjectTeacher(subjectId);
     }
 
-    const { data: assignments, error } = await supabaseAdmin
-      .from('assignments')
-      .select(`
+    // Construir la consulta con filtros opcionales
+    let query = supabaseAdmin
+      .from("assignments")
+      .select(
+        `
         id,
         title,
         description,
         due_date,
+        max_score,
+        instructions,
+        is_active,
         subject_id,
+        unit_id,
         created_by,
         created_at,
         updated_at,
-        subject:subjects(name)
-      `)
-      .eq('subject_id', subjectId)
-      .order('created_at', { ascending: false });
+        subject:subjects(name),
+        unit:subject_units(id, title, unit_number)
+      `
+      )
+      .eq("subject_id", subjectId);
+
+    // Filtrar por unidad si se especifica
+    if (unitId && unitId !== "null") {
+      query = query.eq("unit_id", unitId);
+    }
+
+    const { data: assignments, error } = await query.order("created_at", {
+      ascending: false,
+    });
 
     if (error) {
-      console.error('Error fetching assignments:', error);
+      console.error("Error fetching assignments:", error);
       return NextResponse.json(
-        { error: 'Error al obtener las asignaciones' },
+        { error: "Error al obtener las asignaciones" },
         { status: 500 }
       );
     }
 
     return NextResponse.json(assignments || []);
   } catch (error: unknown) {
-    console.error('Error in assignments GET:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Error interno del servidor';
-    return NextResponse.json(
-      { error: errorMessage },
-      { status: 500 }
-    );
+    console.error("Error in assignments GET:", error);
+    const errorMessage =
+      error instanceof Error ? error.message : "Error interno del servidor";
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
 
@@ -82,46 +99,54 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const currentUser = await requireRole(['admin', 'teacher']);
+    const currentUser = await requireRole(["admin", "teacher"]);
     const { id: subjectId } = await params;
 
     // Teachers can only create assignments for subjects they teach
-    if (currentUser.role === 'teacher') {
+    if (currentUser.role === "teacher") {
       await requireSubjectTeacher(subjectId);
     }
 
     // Verificar si es FormData (con archivo) o JSON
-    const contentType = request.headers.get('content-type');
+    const contentType = request.headers.get("content-type");
     let data: any = {};
     let file: File | null = null;
 
-    if (contentType?.includes('multipart/form-data')) {
+    if (contentType?.includes("multipart/form-data")) {
       // Manejar FormData con archivos
       const formData = await request.formData();
-      
+
       // Extraer campos del formulario
       data = {
-        title: formData.get('title') as string,
-        description: formData.get('description') as string,
-        due_date: formData.get('due_date') as string,
-        max_score: parseInt(formData.get('max_score') as string) || 100,
-        instructions: formData.get('instructions') as string || null,
-        unit_id: formData.get('unit_id') as string || null,
-        is_active: formData.get('is_active') === 'true'
+        title: formData.get("title") as string,
+        description: formData.get("description") as string,
+        due_date: formData.get("due_date") as string,
+        max_score: parseInt(formData.get("max_score") as string) || 100,
+        instructions: (formData.get("instructions") as string) || null,
+        unit_id: (formData.get("unit_id") as string) || null,
+        is_active: formData.get("is_active") === "true",
       };
 
       // Obtener archivo si existe
-      file = formData.get('assignment_file') as File;
+      file = formData.get("assignment_file") as File;
     } else {
       // Manejar JSON simple
       data = await request.json();
     }
 
-    const { title, description, due_date, max_score = 100, instructions, unit_id, is_active = false } = data;
+    const {
+      title,
+      description,
+      due_date,
+      max_score = 100,
+      instructions,
+      unit_id,
+      is_active = true,
+    } = data;
 
     if (!title || !description || !due_date) {
       return NextResponse.json(
-        { error: 'Título, descripción y fecha de entrega son requeridos' },
+        { error: "Título, descripción y fecha de entrega son requeridos" },
         { status: 400 }
       );
     }
@@ -130,23 +155,23 @@ export async function POST(
     const dueDate = new Date(due_date);
     if (isNaN(dueDate.getTime())) {
       return NextResponse.json(
-        { error: 'Fecha de entrega inválida' },
+        { error: "Fecha de entrega inválida" },
         { status: 400 }
       );
     }
 
     // Verificar que la unidad existe si se especifica
-    if (unit_id && unit_id !== 'null') {
+    if (unit_id && unit_id !== "null") {
       const { data: unit, error: unitError } = await supabaseAdmin
-        .from('subject_units')
-        .select('id')
-        .eq('id', unit_id)
-        .eq('subject_id', subjectId)
+        .from("subject_units")
+        .select("id")
+        .eq("id", unit_id)
+        .eq("subject_id", subjectId)
         .single();
 
       if (unitError || !unit) {
         return NextResponse.json(
-          { error: 'Unidad no encontrada' },
+          { error: "Unidad no encontrada" },
           { status: 400 }
         );
       }
@@ -158,8 +183,10 @@ export async function POST(
     // Subir archivo a Supabase Storage si existe
     if (file && file.size > 0) {
       try {
-        const fileExtension = file.name.split('.').pop();
-        const uniqueFileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExtension}`;
+        const fileExtension = file.name.split(".").pop();
+        const uniqueFileName = `${Date.now()}-${Math.random()
+          .toString(36)
+          .substring(2)}.${fileExtension}`;
         const filePath = `assignments/${subjectId}/${uniqueFileName}`;
 
         // Convertir File a ArrayBuffer
@@ -167,35 +194,35 @@ export async function POST(
         const buffer = new Uint8Array(arrayBuffer);
 
         // Subir a Supabase Storage
-        const { data: uploadData, error: uploadError } = await supabaseAdmin.storage
-          .from('assignment-files')
-          .upload(filePath, buffer, {
-            contentType: file.type,
-            upsert: false
-          });
+        const { data: uploadData, error: uploadError } =
+          await supabaseAdmin.storage
+            .from("assignment-files")
+            .upload(filePath, buffer, {
+              contentType: file.type,
+              upsert: false,
+            });
 
         if (uploadError) {
-          console.error('Error uploading file:', uploadError);
+          console.error("Error uploading file:", uploadError);
           return NextResponse.json(
-            { error: 'Error al subir el archivo' },
+            { error: "Error al subir el archivo" },
             { status: 500 }
           );
         }
 
         // Obtener URL pública del archivo
         const { data: urlData } = supabaseAdmin.storage
-          .from('assignment-files')
+          .from("assignment-files")
           .getPublicUrl(uploadData.path);
 
         // fileUrl = urlData.publicUrl;
         // fileName = file.name;
-        
-        console.log('File uploaded successfully:', urlData.publicUrl);
 
+        console.log("File uploaded successfully:", urlData.publicUrl);
       } catch (uploadError) {
-        console.error('Error processing file:', uploadError);
+        console.error("Error processing file:", uploadError);
         return NextResponse.json(
-          { error: 'Error al procesar el archivo' },
+          { error: "Error al procesar el archivo" },
           { status: 500 }
         );
       }
@@ -203,22 +230,25 @@ export async function POST(
 
     // Crear la asignación (temporalmente sin soporte de archivos hasta agregar columnas)
     const { data: assignment, error } = await supabaseAdmin
-      .from('assignments')
-      .insert([{
-        subject_id: subjectId,
-        title,
-        description,
-        due_date: dueDate.toISOString(),
-        max_score,
-        instructions,
-        unit_id: unit_id && unit_id !== 'null' ? unit_id : null,
-        is_active,
-        // Comentado temporalmente hasta agregar columnas
-        // file_url: fileUrl,
-        // file_name: fileName,
-        created_by: currentUser.id
-      }])
-      .select(`
+      .from("assignments")
+      .insert([
+        {
+          subject_id: subjectId,
+          title,
+          description,
+          due_date: dueDate.toISOString(),
+          max_score,
+          instructions,
+          unit_id: unit_id && unit_id !== "null" ? unit_id : null,
+          is_active,
+          // Comentado temporalmente hasta agregar columnas
+          // file_url: fileUrl,
+          // file_name: fileName,
+          created_by: currentUser.id,
+        },
+      ])
+      .select(
+        `
         id,
         title,
         description,
@@ -229,26 +259,24 @@ export async function POST(
         unit_id,
         created_at,
         updated_at
-      `)
+      `
+      )
       .single();
 
     if (error) {
-      console.error('Error creating assignment:', error);
+      console.error("Error creating assignment:", error);
       return NextResponse.json(
-        { error: 'Error al crear la asignación' },
+        { error: "Error al crear la asignación" },
         { status: 500 }
       );
     }
 
     return NextResponse.json(assignment, { status: 201 });
-
   } catch (error) {
-    console.error('Error in POST /api/subjects/[id]/assignments:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Error interno del servidor';
-    return NextResponse.json(
-      { error: errorMessage },
-      { status: 500 }
-    );
+    console.error("Error in POST /api/subjects/[id]/assignments:", error);
+    const errorMessage =
+      error instanceof Error ? error.message : "Error interno del servidor";
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
 
@@ -258,11 +286,11 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const currentUser = await requireRole(['admin', 'teacher']);
+    const currentUser = await requireRole(["admin", "teacher"]);
     const { id: subjectId } = await params;
 
     // Teachers can only update assignments for subjects they teach
-    if (currentUser.role === 'teacher') {
+    if (currentUser.role === "teacher") {
       await requireSubjectTeacher(subjectId);
     }
 
@@ -271,35 +299,37 @@ export async function PUT(
 
     if (!assignmentId) {
       return NextResponse.json(
-        { error: 'ID de asignación es requerido' },
+        { error: "ID de asignación es requerido" },
         { status: 400 }
       );
     }
 
     // Verificar que la asignación existe y pertenece a la materia
-    const { data: existingAssignment, error: assignmentError } = await supabaseAdmin
-      .from('assignments')
-      .select('id, subject_id')
-      .eq('id', assignmentId)
-      .eq('subject_id', subjectId)
-      .single();
+    const { data: existingAssignment, error: assignmentError } =
+      await supabaseAdmin
+        .from("assignments")
+        .select("id, subject_id")
+        .eq("id", assignmentId)
+        .eq("subject_id", subjectId)
+        .single();
 
     if (assignmentError || !existingAssignment) {
       return NextResponse.json(
-        { error: 'Asignación no encontrada' },
+        { error: "Asignación no encontrada" },
         { status: 404 }
       );
     }
 
     // Actualizar la asignación
     const { data, error } = await supabaseAdmin
-      .from('assignments')
+      .from("assignments")
       .update({
         ...updateData,
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
       })
-      .eq('id', assignmentId)
-      .select(`
+      .eq("id", assignmentId)
+      .select(
+        `
         id,
         title,
         description,
@@ -310,26 +340,24 @@ export async function PUT(
         unit_id,
         created_at,
         updated_at
-      `)
+      `
+      )
       .single();
 
     if (error) {
-      console.error('Error updating assignment:', error);
+      console.error("Error updating assignment:", error);
       return NextResponse.json(
-        { error: 'Error al actualizar la asignación' },
+        { error: "Error al actualizar la asignación" },
         { status: 500 }
       );
     }
 
     return NextResponse.json(data);
-
   } catch (error) {
-    console.error('Error in PUT /api/subjects/[id]/assignments:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Error interno del servidor';
-    return NextResponse.json(
-      { error: errorMessage },
-      { status: 500 }
-    );
+    console.error("Error in PUT /api/subjects/[id]/assignments:", error);
+    const errorMessage =
+      error instanceof Error ? error.message : "Error interno del servidor";
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
 
@@ -339,11 +367,11 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const currentUser = await requireRole(['admin', 'teacher']);
+    const currentUser = await requireRole(["admin", "teacher"]);
     const { id: subjectId } = await params;
 
     // Teachers can only delete assignments for subjects they teach
-    if (currentUser.role === 'teacher') {
+    if (currentUser.role === "teacher") {
       await requireSubjectTeacher(subjectId);
     }
 
@@ -352,31 +380,64 @@ export async function DELETE(
 
     if (!assignmentId) {
       return NextResponse.json(
-        { error: 'ID de asignación es requerido' },
+        { error: "ID de asignación es requerido" },
         { status: 400 }
       );
     }
 
     // Verificar que la asignación existe y pertenece a la materia
-    const { data: existingAssignment, error: assignmentError } = await supabaseAdmin
-      .from('assignments')
-      .select('id, subject_id, file_url')
-      .eq('id', assignmentId)
-      .eq('subject_id', subjectId)
-      .single();
+    const { data: existingAssignment, error: assignmentError } =
+      await supabaseAdmin
+        .from("assignments")
+        .select("id, subject_id, file_url")
+        .eq("id", assignmentId)
+        .eq("subject_id", subjectId)
+        .single();
 
     if (assignmentError || !existingAssignment) {
       return NextResponse.json(
-        { error: 'Asignación no encontrada' },
+        { error: "Asignación no encontrada" },
         { status: 404 }
       );
     }
 
-    // Eliminar primero las entregas asociadas
-    await supabaseAdmin
-      .from('assignment_submissions')
+    // Obtener todas las entregas con archivos para eliminar de Storage
+    const { data: submissions } = await supabaseAdmin
+      .from("assignment_submissions")
+      .select("id, file_url")
+      .eq("assignment_id", assignmentId);
+
+    // Eliminar archivos de entregas de Supabase Storage si existen
+    if (submissions && submissions.length > 0) {
+      for (const submission of submissions) {
+        if (submission.file_url) {
+          try {
+            // Extraer la ruta del archivo de la URL
+            const url = new URL(submission.file_url);
+            const pathParts = url.pathname.split("/");
+            const filePath = pathParts.slice(-2).join("/"); // submissions/assignmentId/filename
+
+            await supabaseAdmin.storage
+              .from("submission-files")
+              .remove([filePath]);
+          } catch (fileError) {
+            console.error("Error deleting submission file:", fileError);
+            // Continuar con la eliminación aunque falle el archivo
+          }
+        }
+      }
+    }
+
+    // Eliminar las entregas asociadas
+    const { error: submissionsError } = await supabaseAdmin
+      .from("assignment_submissions")
       .delete()
-      .eq('assignment_id', assignmentId);
+      .eq("assignment_id", assignmentId);
+
+    if (submissionsError) {
+      console.error("Error deleting submissions:", submissionsError);
+      // Continuar con la eliminación de la asignación aunque falle
+    }
 
     // Eliminar archivo de Supabase Storage si existe
     /* Comentado temporalmente hasta agregar soporte de archivos a la BD
@@ -399,26 +460,23 @@ export async function DELETE(
 
     // Eliminar la asignación
     const { error } = await supabaseAdmin
-      .from('assignments')
+      .from("assignments")
       .delete()
-      .eq('id', assignmentId);
+      .eq("id", assignmentId);
 
     if (error) {
-      console.error('Error deleting assignment:', error);
+      console.error("Error deleting assignment:", error);
       return NextResponse.json(
-        { error: 'Error al eliminar la asignación' },
+        { error: "Error al eliminar la asignación" },
         { status: 500 }
       );
     }
 
-    return NextResponse.json({ message: 'Asignación eliminada exitosamente' });
-
+    return NextResponse.json({ message: "Asignación eliminada exitosamente" });
   } catch (error) {
-    console.error('Error in DELETE /api/subjects/[id]/assignments:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Error interno del servidor';
-    return NextResponse.json(
-      { error: errorMessage },
-      { status: 500 }
-    );
+    console.error("Error in DELETE /api/subjects/[id]/assignments:", error);
+    const errorMessage =
+      error instanceof Error ? error.message : "Error interno del servidor";
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }

@@ -9,14 +9,20 @@ import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Collapsible,
   CollapsibleContent,
@@ -34,6 +40,7 @@ import {
   EyeIcon,
   EyeOffIcon,
   CalendarIcon,
+  ClockIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -52,7 +59,7 @@ interface Unit {
   title: string;
   description: string;
   order_index: number;
-  is_active: boolean;
+  is_visible: boolean;
   created_at: string;
   contents: Content[];
   assignments: Assignment[];
@@ -77,7 +84,6 @@ interface Assignment {
   max_score: number;
   instructions?: string;
   is_active: boolean;
-  unit_id?: string;
   submissions_count: number;
   graded_count: number;
 }
@@ -98,27 +104,23 @@ export default function UnifiedSubjectPage() {
   const [createContentOpen, setCreateContentOpen] = useState(false);
   const [createAssignmentOpen, setCreateAssignmentOpen] = useState(false);
   const [editUnitOpen, setEditUnitOpen] = useState(false);
-  const [editContentOpen, setEditContentOpen] = useState(false);
-  const [editAssignmentOpen, setEditAssignmentOpen] = useState(false);
-  const [selectedUnitId, setSelectedUnitId] = useState<string>("");
-  const [selectedContentId, setSelectedContentId] = useState<string>("");
-  const [selectedAssignmentId, setSelectedAssignmentId] = useState<string>("");
 
   // Estados para formularios
+  const [selectedUnitId, setSelectedUnitId] = useState<string>("");
+  const [editingUnit, setEditingUnit] = useState<Unit | null>(null);
   const [newUnit, setNewUnit] = useState({
     unit_number: "",
     title: "",
     description: "",
-    is_active: true,
+    is_visible: true,
   });
-
   const [newContent, setNewContent] = useState({
     title: "",
     content: "",
     content_type: "text",
     is_pinned: false,
+    file: null as File | null,
   });
-
   const [newAssignment, setNewAssignment] = useState({
     title: "",
     description: "",
@@ -241,7 +243,7 @@ export default function UnifiedSubjectPage() {
         unit_number: "",
         title: "",
         description: "",
-        is_active: true,
+        is_visible: true,
       });
       setCreateUnitOpen(false);
       toast.success("Unidad creada exitosamente");
@@ -254,22 +256,43 @@ export default function UnifiedSubjectPage() {
   const handleCreateContent = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!selectedUnitId) {
-      toast.error("Selecciona una unidad primero");
-      return;
-    }
-
     try {
-      const response = await fetch(
-        `/api/subjects/${subjectId}/units/${selectedUnitId}/contents`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(newContent),
-        }
-      );
+      let response;
+
+      if (newContent.file) {
+        // Subir archivo con FormData
+        const formData = new FormData();
+        formData.append("title", newContent.title);
+        formData.append("content", newContent.content);
+        formData.append("content_type", newContent.content_type);
+        formData.append("is_pinned", newContent.is_pinned.toString());
+        formData.append("file", newContent.file);
+
+        response = await fetch(
+          `/api/subjects/${subjectId}/units/${selectedUnitId}/contents`,
+          {
+            method: "POST",
+            body: formData,
+          }
+        );
+      } else {
+        // Enviar JSON sin archivo
+        response = await fetch(
+          `/api/subjects/${subjectId}/units/${selectedUnitId}/contents`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              title: newContent.title,
+              content: newContent.content,
+              content_type: newContent.content_type,
+              is_pinned: newContent.is_pinned,
+            }),
+          }
+        );
+      }
 
       if (!response.ok) {
         throw new Error("Error al crear el contenido");
@@ -281,9 +304,9 @@ export default function UnifiedSubjectPage() {
         content: "",
         content_type: "text",
         is_pinned: false,
+        file: null,
       });
       setCreateContentOpen(false);
-      setSelectedUnitId("");
       toast.success("Contenido creado exitosamente");
     } catch (error) {
       console.error("Error:", error);
@@ -294,23 +317,16 @@ export default function UnifiedSubjectPage() {
   const handleCreateAssignment = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!selectedUnitId) {
-      toast.error("Selecciona una unidad primero");
-      return;
-    }
-
     try {
-      const assignmentData = {
-        ...newAssignment,
-        unit_id: selectedUnitId,
-      };
-
       const response = await fetch(`/api/subjects/${subjectId}/assignments`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(assignmentData),
+        body: JSON.stringify({
+          ...newAssignment,
+          unit_id: selectedUnitId,
+        }),
       });
 
       if (!response.ok) {
@@ -327,7 +343,6 @@ export default function UnifiedSubjectPage() {
         is_active: true,
       });
       setCreateAssignmentOpen(false);
-      setSelectedUnitId("");
       toast.success("Tarea creada exitosamente");
     } catch (error) {
       console.error("Error:", error);
@@ -335,58 +350,52 @@ export default function UnifiedSubjectPage() {
     }
   };
 
-  // Funciones para edición
-  const handleEditUnit = (unit: Unit) => {
-    setSelectedUnitId(unit.id);
-    setNewUnit({
-      unit_number: unit.unit_number.toString(),
-      title: unit.title,
-      description: unit.description,
-      is_active: unit.is_active,
-    });
-    setEditUnitOpen(true);
-  };
-
-  const handleUpdateUnit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
+  const handleToggleUnitVisibility = async (
+    unitId: string,
+    isVisible: boolean
+  ) => {
     try {
-      const response = await fetch(`/api/subjects/${subjectId}/units/${selectedUnitId}`, {
+      const response = await fetch(`/api/subjects/${subjectId}/units`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(newUnit),
+        body: JSON.stringify({
+          id: unitId,
+          is_visible: !isVisible,
+        }),
       });
 
       if (!response.ok) {
-        throw new Error("Error al actualizar la unidad");
+        throw new Error("Error al actualizar la visibilidad");
       }
 
       await fetchUnitsWithContent();
-      setNewUnit({
-        unit_number: "",
-        title: "",
-        description: "",
-        is_active: true,
-      });
-      setEditUnitOpen(false);
-      setSelectedUnitId("");
-      toast.success("Unidad actualizada exitosamente");
+      toast.success(
+        `Unidad ${!isVisible ? "mostrada" : "ocultada"} para estudiantes`
+      );
     } catch (error) {
       console.error("Error:", error);
-      toast.error("Error al actualizar la unidad");
+      toast.error("Error al actualizar la visibilidad");
     }
   };
 
   const handleDeleteUnit = async (unitId: string) => {
-    if (!confirm("¿Estás seguro de que quieres eliminar esta unidad? Esta acción no se puede deshacer.")) {
+    if (
+      !confirm(
+        "¿Estás seguro de que quieres eliminar esta unidad? Se eliminarán todos sus contenidos y tareas."
+      )
+    ) {
       return;
     }
 
     try {
-      const response = await fetch(`/api/subjects/${subjectId}/units/${unitId}`, {
+      const response = await fetch(`/api/subjects/${subjectId}/units`, {
         method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ id: unitId }),
       });
 
       if (!response.ok) {
@@ -398,169 +407,6 @@ export default function UnifiedSubjectPage() {
     } catch (error) {
       console.error("Error:", error);
       toast.error("Error al eliminar la unidad");
-    }
-  };
-
-  const handleEditContent = (content: Content) => {
-    setSelectedContentId(content.id);
-    setNewContent({
-      title: content.title,
-      content: content.content,
-      content_type: content.content_type,
-      is_pinned: content.is_pinned,
-    });
-    setEditContentOpen(true);
-  };
-
-  const handleUpdateContent = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    try {
-      const response = await fetch(`/api/subjects/${subjectId}/units/${selectedUnitId}/contents/${selectedContentId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(newContent),
-      });
-
-      if (!response.ok) {
-        throw new Error("Error al actualizar el contenido");
-      }
-
-      await fetchUnitsWithContent();
-      setNewContent({
-        title: "",
-        content: "",
-        content_type: "text",
-        is_pinned: false,
-      });
-      setEditContentOpen(false);
-      setSelectedContentId("");
-      toast.success("Contenido actualizado exitosamente");
-    } catch (error) {
-      console.error("Error:", error);
-      toast.error("Error al actualizar el contenido");
-    }
-  };
-
-  const handleDeleteContent = async (unitId: string, contentId: string) => {
-    if (!confirm("¿Estás seguro de que quieres eliminar este contenido?")) {
-      return;
-    }
-
-    try {
-      const response = await fetch(`/api/subjects/${subjectId}/units/${unitId}/contents/${contentId}`, {
-        method: "DELETE",
-      });
-
-      if (!response.ok) {
-        throw new Error("Error al eliminar el contenido");
-      }
-
-      await fetchUnitsWithContent();
-      toast.success("Contenido eliminado exitosamente");
-    } catch (error) {
-      console.error("Error:", error);
-      toast.error("Error al eliminar el contenido");
-    }
-  };
-
-  const handleEditAssignment = (assignment: Assignment) => {
-    setSelectedAssignmentId(assignment.id);
-    setSelectedUnitId(assignment.unit_id || "");
-    setNewAssignment({
-      title: assignment.title,
-      description: assignment.description,
-      due_date: assignment.due_date.slice(0, 16), // Format for datetime-local input
-      max_score: assignment.max_score,
-      instructions: assignment.instructions || "",
-      is_active: assignment.is_active,
-    });
-    setEditAssignmentOpen(true);
-  };
-
-  const handleUpdateAssignment = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    try {
-      const assignmentData = {
-        ...newAssignment,
-        unit_id: selectedUnitId,
-      };
-
-      const response = await fetch(`/api/subjects/${subjectId}/assignments/${selectedAssignmentId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(assignmentData),
-      });
-
-      if (!response.ok) {
-        throw new Error("Error al actualizar la tarea");
-      }
-
-      await fetchUnitsWithContent();
-      setNewAssignment({
-        title: "",
-        description: "",
-        due_date: "",
-        max_score: 100,
-        instructions: "",
-        is_active: true,
-      });
-      setEditAssignmentOpen(false);
-      setSelectedAssignmentId("");
-      setSelectedUnitId("");
-      toast.success("Tarea actualizada exitosamente");
-    } catch (error) {
-      console.error("Error:", error);
-      toast.error("Error al actualizar la tarea");
-    }
-  };
-
-  const handleDeleteAssignment = async (assignmentId: string) => {
-    if (!confirm("¿Estás seguro de que quieres eliminar esta tarea?")) {
-      return;
-    }
-
-    try {
-      const response = await fetch(`/api/subjects/${subjectId}/assignments/${assignmentId}`, {
-        method: "DELETE",
-      });
-
-      if (!response.ok) {
-        throw new Error("Error al eliminar la tarea");
-      }
-
-      await fetchUnitsWithContent();
-      toast.success("Tarea eliminada exitosamente");
-    } catch (error) {
-      console.error("Error:", error);
-      toast.error("Error al eliminar la tarea");
-    }
-  };
-
-  const toggleUnitVisibility = async (unitId: string, currentVisibility: boolean) => {
-    try {
-      const response = await fetch(`/api/subjects/${subjectId}/units/${unitId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ is_active: !currentVisibility }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Error al cambiar la visibilidad");
-      }
-
-      await fetchUnitsWithContent();
-      toast.success(`Unidad ${!currentVisibility ? 'publicada' : 'despublicada'} exitosamente`);
-    } catch (error) {
-      console.error("Error:", error);
-      toast.error("Error al cambiar la visibilidad");
     }
   };
 
@@ -640,8 +486,8 @@ export default function UnifiedSubjectPage() {
                           <div>
                             <CardTitle className="flex items-center gap-2">
                               Unidad {unit.unit_number}: {unit.title}
-                              {!unit.is_active && (
-                                <Badge variant="secondary">No publicada</Badge>
+                              {!unit.is_visible && (
+                                <Badge variant="secondary">Oculta</Badge>
                               )}
                             </CardTitle>
                             <p className="text-sm text-gray-600">
@@ -697,11 +543,13 @@ export default function UnifiedSubjectPage() {
                             size="sm"
                             onClick={(e) => {
                               e.stopPropagation();
-                              toggleUnitVisibility(unit.id, unit.is_active);
+                              handleToggleUnitVisibility(
+                                unit.id,
+                                unit.is_visible
+                              );
                             }}
-                            title={unit.is_active ? "Despublicar unidad" : "Publicar unidad"}
                           >
-                            {unit.is_active ? (
+                            {unit.is_visible ? (
                               <EyeOffIcon className="h-4 w-4" />
                             ) : (
                               <EyeIcon className="h-4 w-4" />
@@ -712,7 +560,8 @@ export default function UnifiedSubjectPage() {
                             size="sm"
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleEditUnit(unit);
+                              setEditingUnit(unit);
+                              setEditUnitOpen(true);
                             }}
                           >
                             <EditIcon className="h-4 w-4" />
@@ -757,25 +606,10 @@ export default function UnifiedSubjectPage() {
                                   )}
                                 </div>
                                 <div className="flex space-x-2">
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setSelectedUnitId(unit.id);
-                                      handleEditContent(content);
-                                    }}
-                                  >
+                                  <Button variant="outline" size="sm">
                                     <EditIcon className="h-4 w-4" />
                                   </Button>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleDeleteContent(unit.id, content.id);
-                                    }}
-                                  >
+                                  <Button variant="outline" size="sm">
                                     <TrashIcon className="h-4 w-4" />
                                   </Button>
                                 </div>
@@ -848,24 +682,10 @@ export default function UnifiedSubjectPage() {
                                         {assignment.submissions_count})
                                       </Button>
                                     )}
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleEditAssignment(assignment);
-                                      }}
-                                    >
+                                    <Button variant="outline" size="sm">
                                       <EditIcon className="h-4 w-4" />
                                     </Button>
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleDeleteAssignment(assignment.id);
-                                      }}
-                                    >
+                                    <Button variant="outline" size="sm">
                                       <TrashIcon className="h-4 w-4" />
                                     </Button>
                                   </div>
@@ -890,6 +710,8 @@ export default function UnifiedSubjectPage() {
             ))
           )}
         </div>
+
+        {/* Dialogs */}
 
         {/* Create Unit Dialog */}
         <Dialog open={createUnitOpen} onOpenChange={setCreateUnitOpen}>
@@ -934,13 +756,13 @@ export default function UnifiedSubjectPage() {
               <div className="flex items-center space-x-2">
                 <input
                   type="checkbox"
-                  id="is_active"
-                  checked={newUnit.is_active}
+                  id="is_visible"
+                  checked={newUnit.is_visible}
                   onChange={(e) =>
-                    setNewUnit({ ...newUnit, is_active: e.target.checked })
+                    setNewUnit({ ...newUnit, is_visible: e.target.checked })
                   }
                 />
-                <Label htmlFor="is_active">Publicar unidad (visible para estudiantes)</Label>
+                <Label htmlFor="is_visible">Visible para estudiantes</Label>
               </div>
               <div className="flex space-x-2">
                 <Button type="submit" className="flex-1">
@@ -958,20 +780,17 @@ export default function UnifiedSubjectPage() {
           </DialogContent>
         </Dialog>
 
-        {/* Diálogo para crear contenido */}
+        {/* Create Content Dialog */}
         <Dialog open={createContentOpen} onOpenChange={setCreateContentOpen}>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Agregar Contenido</DialogTitle>
-              <DialogDescription>
-                Agrega nuevo contenido a la unidad seleccionada.
-              </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleCreateContent} className="space-y-4">
               <div>
-                <Label htmlFor="content-title">Título</Label>
+                <Label htmlFor="content_title">Título</Label>
                 <Input
-                  id="content-title"
+                  id="content_title"
                   value={newContent.title}
                   onChange={(e) =>
                     setNewContent({ ...newContent, title: e.target.value })
@@ -980,34 +799,46 @@ export default function UnifiedSubjectPage() {
                 />
               </div>
               <div>
-                <Label htmlFor="content-type">Tipo de contenido</Label>
-                <select
-                  id="content-type"
-                  className="w-full border border-gray-300 rounded-md px-3 py-2"
+                <Label htmlFor="content_type">Tipo de Contenido</Label>
+                <Select
                   value={newContent.content_type}
-                  onChange={(e) =>
-                    setNewContent({
-                      ...newContent,
-                      content_type: e.target.value,
-                    })
+                  onValueChange={(value) =>
+                    setNewContent({ ...newContent, content_type: value })
                   }
                 >
-                  <option value="text">Texto</option>
-                  <option value="video">Video</option>
-                  <option value="document">Documento</option>
-                  <option value="link">Enlace</option>
-                </select>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="text">Texto</SelectItem>
+                    <SelectItem value="document">Documento</SelectItem>
+                    <SelectItem value="link">Enlace</SelectItem>
+                    <SelectItem value="video">Video</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div>
-                <Label htmlFor="content">Contenido</Label>
+                <Label htmlFor="content_content">Contenido</Label>
                 <Textarea
-                  id="content"
+                  id="content_content"
                   value={newContent.content}
                   onChange={(e) =>
                     setNewContent({ ...newContent, content: e.target.value })
                   }
-                  required
                   rows={4}
+                />
+              </div>
+              <div>
+                <Label htmlFor="content_file">Archivo (opcional)</Label>
+                <Input
+                  id="content_file"
+                  type="file"
+                  onChange={(e) =>
+                    setNewContent({
+                      ...newContent,
+                      file: e.target.files?.[0] || null,
+                    })
+                  }
                 />
               </div>
               <div className="flex items-center space-x-2">
@@ -1022,7 +853,7 @@ export default function UnifiedSubjectPage() {
                     })
                   }
                 />
-                <Label htmlFor="is_pinned">Destacar contenido</Label>
+                <Label htmlFor="is_pinned">Fijar contenido</Label>
               </div>
               <div className="flex space-x-2">
                 <Button type="submit" className="flex-1">
@@ -1040,23 +871,20 @@ export default function UnifiedSubjectPage() {
           </DialogContent>
         </Dialog>
 
-        {/* Diálogo para crear tarea */}
+        {/* Create Assignment Dialog */}
         <Dialog
           open={createAssignmentOpen}
           onOpenChange={setCreateAssignmentOpen}
         >
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Crear Tarea</DialogTitle>
-              <DialogDescription>
-                Crea una nueva tarea para la unidad seleccionada.
-              </DialogDescription>
+              <DialogTitle>Crear Nueva Tarea</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleCreateAssignment} className="space-y-4">
               <div>
-                <Label htmlFor="assignment-title">Título</Label>
+                <Label htmlFor="assignment_title">Título</Label>
                 <Input
-                  id="assignment-title"
+                  id="assignment_title"
                   value={newAssignment.title}
                   onChange={(e) =>
                     setNewAssignment({
@@ -1068,14 +896,44 @@ export default function UnifiedSubjectPage() {
                 />
               </div>
               <div>
-                <Label htmlFor="assignment-description">Descripción</Label>
+                <Label htmlFor="assignment_description">Descripción</Label>
                 <Textarea
-                  id="assignment-description"
+                  id="assignment_description"
                   value={newAssignment.description}
                   onChange={(e) =>
                     setNewAssignment({
                       ...newAssignment,
                       description: e.target.value,
+                    })
+                  }
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="due_date">Fecha de Entrega</Label>
+                <Input
+                  id="due_date"
+                  type="datetime-local"
+                  value={newAssignment.due_date}
+                  onChange={(e) =>
+                    setNewAssignment({
+                      ...newAssignment,
+                      due_date: e.target.value,
+                    })
+                  }
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="max_score">Puntuación Máxima</Label>
+                <Input
+                  id="max_score"
+                  type="number"
+                  value={newAssignment.max_score}
+                  onChange={(e) =>
+                    setNewAssignment({
+                      ...newAssignment,
+                      max_score: parseInt(e.target.value),
                     })
                   }
                   required
@@ -1095,41 +953,10 @@ export default function UnifiedSubjectPage() {
                   rows={3}
                 />
               </div>
-              <div>
-                <Label htmlFor="due-date">Fecha de entrega</Label>
-                <Input
-                  id="due-date"
-                  type="datetime-local"
-                  value={newAssignment.due_date}
-                  onChange={(e) =>
-                    setNewAssignment({
-                      ...newAssignment,
-                      due_date: e.target.value,
-                    })
-                  }
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="max-score">Puntaje máximo</Label>
-                <Input
-                  id="max-score"
-                  type="number"
-                  value={newAssignment.max_score}
-                  onChange={(e) =>
-                    setNewAssignment({
-                      ...newAssignment,
-                      max_score: parseInt(e.target.value),
-                    })
-                  }
-                  min="1"
-                  required
-                />
-              </div>
               <div className="flex items-center space-x-2">
                 <input
                   type="checkbox"
-                  id="is_active"
+                  id="assignment_is_active"
                   checked={newAssignment.is_active}
                   onChange={(e) =>
                     setNewAssignment({
@@ -1138,7 +965,7 @@ export default function UnifiedSubjectPage() {
                     })
                   }
                 />
-                <Label htmlFor="is_active">Tarea activa</Label>
+                <Label htmlFor="assignment_is_active">Tarea activa</Label>
               </div>
               <div className="flex space-x-2">
                 <Button type="submit" className="flex-1">
@@ -1148,271 +975,6 @@ export default function UnifiedSubjectPage() {
                   type="button"
                   variant="outline"
                   onClick={() => setCreateAssignmentOpen(false)}
-                >
-                  Cancelar
-                </Button>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog>
-
-        {/* Edit Unit Dialog */}
-        <Dialog open={editUnitOpen} onOpenChange={setEditUnitOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Editar Unidad</DialogTitle>
-            </DialogHeader>
-            <form onSubmit={handleUpdateUnit} className="space-y-4">
-              <div>
-                <Label htmlFor="edit_unit_number">Número de Unidad</Label>
-                <Input
-                  id="edit_unit_number"
-                  type="number"
-                  value={newUnit.unit_number}
-                  onChange={(e) =>
-                    setNewUnit({ ...newUnit, unit_number: e.target.value })
-                  }
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="edit_title">Título</Label>
-                <Input
-                  id="edit_title"
-                  value={newUnit.title}
-                  onChange={(e) =>
-                    setNewUnit({ ...newUnit, title: e.target.value })
-                  }
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="edit_description">Descripción</Label>
-                <Textarea
-                  id="edit_description"
-                  value={newUnit.description}
-                  onChange={(e) =>
-                    setNewUnit({ ...newUnit, description: e.target.value })
-                  }
-                />
-              </div>
-              <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  id="edit_is_active"
-                  checked={newUnit.is_active}
-                  onChange={(e) =>
-                    setNewUnit({ ...newUnit, is_active: e.target.checked })
-                  }
-                />
-                <Label htmlFor="edit_is_active">Publicar unidad (visible para estudiantes)</Label>
-              </div>
-              <div className="flex space-x-2">
-                <Button type="submit" className="flex-1">
-                  Actualizar Unidad
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setEditUnitOpen(false)}
-                >
-                  Cancelar
-                </Button>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog>
-
-        {/* Edit Content Dialog */}
-        <Dialog open={editContentOpen} onOpenChange={setEditContentOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Editar Contenido</DialogTitle>
-              <DialogDescription>
-                Modifica el contenido seleccionado.
-              </DialogDescription>
-            </DialogHeader>
-            <form onSubmit={handleUpdateContent} className="space-y-4">
-              <div>
-                <Label htmlFor="edit-content-title">Título</Label>
-                <Input
-                  id="edit-content-title"
-                  value={newContent.title}
-                  onChange={(e) =>
-                    setNewContent({ ...newContent, title: e.target.value })
-                  }
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="edit-content-type">Tipo de contenido</Label>
-                <select
-                  id="edit-content-type"
-                  className="w-full border border-gray-300 rounded-md px-3 py-2"
-                  value={newContent.content_type}
-                  onChange={(e) =>
-                    setNewContent({
-                      ...newContent,
-                      content_type: e.target.value,
-                    })
-                  }
-                >
-                  <option value="text">Texto</option>
-                  <option value="video">Video</option>
-                  <option value="document">Documento</option>
-                  <option value="link">Enlace</option>
-                </select>
-              </div>
-              <div>
-                <Label htmlFor="edit-content">Contenido</Label>
-                <Textarea
-                  id="edit-content"
-                  value={newContent.content}
-                  onChange={(e) =>
-                    setNewContent({ ...newContent, content: e.target.value })
-                  }
-                  required
-                  rows={4}
-                />
-              </div>
-              <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  id="edit_is_pinned"
-                  checked={newContent.is_pinned}
-                  onChange={(e) =>
-                    setNewContent({
-                      ...newContent,
-                      is_pinned: e.target.checked,
-                    })
-                  }
-                />
-                <Label htmlFor="edit_is_pinned">Destacar contenido</Label>
-              </div>
-              <div className="flex space-x-2">
-                <Button type="submit" className="flex-1">
-                  Actualizar Contenido
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setEditContentOpen(false)}
-                >
-                  Cancelar
-                </Button>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog>
-
-        {/* Edit Assignment Dialog */}
-        <Dialog
-          open={editAssignmentOpen}
-          onOpenChange={setEditAssignmentOpen}
-        >
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Editar Tarea</DialogTitle>
-              <DialogDescription>
-                Modifica la tarea seleccionada.
-              </DialogDescription>
-            </DialogHeader>
-            <form onSubmit={handleUpdateAssignment} className="space-y-4">
-              <div>
-                <Label htmlFor="edit-assignment-title">Título</Label>
-                <Input
-                  id="edit-assignment-title"
-                  value={newAssignment.title}
-                  onChange={(e) =>
-                    setNewAssignment({
-                      ...newAssignment,
-                      title: e.target.value,
-                    })
-                  }
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="edit-assignment-description">Descripción</Label>
-                <Textarea
-                  id="edit-assignment-description"
-                  value={newAssignment.description}
-                  onChange={(e) =>
-                    setNewAssignment({
-                      ...newAssignment,
-                      description: e.target.value,
-                    })
-                  }
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="edit-instructions">Instrucciones</Label>
-                <Textarea
-                  id="edit-instructions"
-                  value={newAssignment.instructions}
-                  onChange={(e) =>
-                    setNewAssignment({
-                      ...newAssignment,
-                      instructions: e.target.value,
-                    })
-                  }
-                  rows={3}
-                />
-              </div>
-              <div>
-                <Label htmlFor="edit-due-date">Fecha de entrega</Label>
-                <Input
-                  id="edit-due-date"
-                  type="datetime-local"
-                  value={newAssignment.due_date}
-                  onChange={(e) =>
-                    setNewAssignment({
-                      ...newAssignment,
-                      due_date: e.target.value,
-                    })
-                  }
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="edit-max-score">Puntaje máximo</Label>
-                <Input
-                  id="edit-max-score"
-                  type="number"
-                  value={newAssignment.max_score}
-                  onChange={(e) =>
-                    setNewAssignment({
-                      ...newAssignment,
-                      max_score: parseInt(e.target.value),
-                    })
-                  }
-                  min="1"
-                  required
-                />
-              </div>
-              <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  id="edit_is_active"
-                  checked={newAssignment.is_active}
-                  onChange={(e) =>
-                    setNewAssignment({
-                      ...newAssignment,
-                      is_active: e.target.checked,
-                    })
-                  }
-                />
-                <Label htmlFor="edit_is_active">Tarea activa</Label>
-              </div>
-              <div className="flex space-x-2">
-                <Button type="submit" className="flex-1">
-                  Actualizar Tarea
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setEditAssignmentOpen(false)}
                 >
                   Cancelar
                 </Button>

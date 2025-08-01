@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
 // Forzar rendering dinámico para evitar errores de SSR
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 import React, { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
@@ -20,55 +20,74 @@ const DashboardPage = () => {
       if (session?.user?.email) {
         try {
           setLoading(true);
-          console.log('Dashboard: Starting to fetch data for:', session.user.email);
-          
+          console.log(
+            "Dashboard: Starting to fetch data for:",
+            session.user.email
+          );
+
           // Obtener datos del usuario actual
-          const userResponse = await fetch('/api/user/me');
-          console.log('Dashboard: User API response status:', userResponse.status);
-          
+          const userResponse = await fetch("/api/user/me");
+          console.log(
+            "Dashboard: User API response status:",
+            userResponse.status
+          );
+
           if (userResponse.ok) {
             const userData = await userResponse.json();
-            console.log('Dashboard: User data received:', userData);
+            console.log("Dashboard: User data received:", userData);
             setUser(userData);
-            
+
             // Obtener materias basadas en el rol del usuario
             let subjectsResponse;
-            if (userData.role === 'admin') {
+            if (userData.role === "admin") {
               // Admins ven todas las materias
-              console.log('Dashboard: Fetching admin subjects');
-              subjectsResponse = await fetch('/api/admin/subjects');
-            } else if (userData.role === 'teacher') {
+              console.log("Dashboard: Fetching admin subjects");
+              subjectsResponse = await fetch("/api/admin/subjects");
+            } else if (userData.role === "teacher") {
               // Profesores ven sus materias asignadas
-              console.log('Dashboard: Fetching teacher subjects');
-              subjectsResponse = await fetch(`/api/admin/subjects?teacher_id=${userData.id}`);
-            } else if (userData.role === 'student' && userData.year) {
+              console.log("Dashboard: Fetching teacher subjects");
+              subjectsResponse = await fetch(
+                `/api/admin/subjects?teacher_id=${userData.id}`
+              );
+            } else if (userData.role === "student" && userData.year) {
               // Estudiantes ven materias donde están inscritos
-              console.log('Dashboard: Fetching student subjects for year:', userData.year);
-              subjectsResponse = await fetch('/api/student/subjects');
+              console.log(
+                "Dashboard: Fetching student subjects for year:",
+                userData.year
+              );
+              subjectsResponse = await fetch("/api/student/subjects");
             } else {
               // Fallback: no hay materias
-              console.log('Dashboard: No role match, setting empty subjects');
+              console.log("Dashboard: No role match, setting empty subjects");
               setSubjects([]);
               return;
             }
-            
-            console.log('Dashboard: Subjects API response status:', subjectsResponse?.status);
-            
+
+            console.log(
+              "Dashboard: Subjects API response status:",
+              subjectsResponse?.status
+            );
+
             if (subjectsResponse && subjectsResponse.ok) {
               const subjectsData = await subjectsResponse.json();
-              console.log('Dashboard: Subjects data received:', subjectsData);
+              console.log("Dashboard: Subjects data received:", subjectsData);
               setSubjects(subjectsData);
             } else {
-              console.log('Dashboard: Subjects API failed, setting empty array');
+              console.log(
+                "Dashboard: Subjects API failed, setting empty array"
+              );
               if (subjectsResponse) {
                 const errorText = await subjectsResponse.text();
-                console.log('Dashboard: Subjects API error response:', errorText);
+                console.log(
+                  "Dashboard: Subjects API error response:",
+                  errorText
+                );
               }
               setSubjects([]);
             }
           }
         } catch (error) {
-          console.error('Error fetching data:', error);
+          console.error("Error fetching data:", error);
           setSubjects([]);
         } finally {
           setLoading(false);
@@ -83,24 +102,24 @@ const DashboardPage = () => {
 
   const getWelcomeMessage = () => {
     if (!user) return "Bienvenido al Campus Virtual";
-    
-    if (user.role === 'admin') {
+
+    if (user.role === "admin") {
       return `Bienvenido Administrador ${user.name}`;
-    } else if (user.role === 'teacher') {
+    } else if (user.role === "teacher") {
       return `Bienvenido Profesor ${user.name}`;
-    } else if (user.role === 'student') {
+    } else if (user.role === "student") {
       return `Bienvenido ${user.name} - ${user.year}° Año`;
     }
-    
+
     return `Bienvenido ${user.name}`;
   };
 
   const getSubjectCountMessage = () => {
     if (!user) return "Materias disponibles";
-    
-    if (user.role === 'student') {
+
+    if (user.role === "student") {
       return `Materias de ${user.year}° Año`;
-    } else if (user.role === 'teacher') {
+    } else if (user.role === "teacher") {
       return "Tus materias asignadas";
     } else {
       return "Todas las materias";
@@ -109,10 +128,10 @@ const DashboardPage = () => {
 
   const getEmptyStateMessage = () => {
     if (!user) return "No hay materias disponibles";
-    
-    if (user.role === 'student') {
+
+    if (user.role === "student") {
       return `No hay materias disponibles para ${user.year}° año`;
-    } else if (user.role === 'teacher') {
+    } else if (user.role === "teacher") {
       return "No tienes materias asignadas";
     } else {
       return "No hay materias creadas en el sistema";
@@ -120,10 +139,10 @@ const DashboardPage = () => {
   };
 
   const getEmptyStateAction = () => {
-    if (user?.role === 'admin') {
+    if (user?.role === "admin") {
       return {
         text: "Crear primera materia",
-        href: "/campus/settings/subjects"
+        href: "/campus/settings/subjects",
       };
     }
     return null;
@@ -133,7 +152,9 @@ const DashboardPage = () => {
     return (
       <div className="container mx-auto px-3 sm:px-4 py-6 sm:py-8">
         <div className="flex items-center justify-center h-64">
-          <div className="text-gray-500 text-sm sm:text-base">Cargando dashboard...</div>
+          <div className="text-gray-500 text-sm sm:text-base">
+            Cargando dashboard...
+          </div>
         </div>
       </div>
     );
@@ -171,7 +192,7 @@ const DashboardPage = () => {
               />
               <i className="fas fa-search absolute left-3 top-2.5 sm:top-3 text-yellow-600 text-sm sm:text-base"></i>
             </div>
-            {user?.role === 'admin' && (
+            {user?.role === "admin" && (
               <div className="flex space-x-2 w-full lg:w-auto">
                 <a
                   href="/campus/settings/subjects"
@@ -184,50 +205,68 @@ const DashboardPage = () => {
           </div>
         </div>
 
-        {/* Stats Section */}
-        <div className="mt-8 sm:mt-16 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+        {/* Stats Section - Solo para estudiantes y admin */}
+        {user?.role !== "teacher" && (
+          <div className="mt-8 sm:mt-16 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             <div className="bg-white/80 backdrop-blur-sm p-4 sm:p-6 rounded-xl shadow-lg border border-yellow-200 hover:shadow-xl hover:scale-105 transition-all duration-300 fade-in delay-2">
-                <div className="flex items-center">
-                    <div className="p-2 sm:p-3 rounded-full bg-gradient-to-r from-yellow-100 to-rose-100 text-yellow-600 mr-3 sm:mr-4">
-                        <i className="fas fa-book text-lg sm:text-xl"></i>
-                    </div>
-                    <div>
-                        <p className="text-gray-500 text-xs sm:text-sm font-medium">
-                          {user?.role === 'student' ? 'Mis Materias' : 'Total Materias'}
-                        </p>
-                        <h3 className="text-xl sm:text-2xl font-bold text-gray-800">{subjects.length}</h3>
-                    </div>
+              <div className="flex items-center">
+                <div className="p-2 sm:p-3 rounded-full bg-gradient-to-r from-yellow-100 to-rose-100 text-yellow-600 mr-3 sm:mr-4">
+                  <i className="fas fa-book text-lg sm:text-xl"></i>
                 </div>
-            </div>
-            <div className="bg-white/80 backdrop-blur-sm p-4 sm:p-6 rounded-xl shadow-lg border border-blue-200 hover:shadow-xl hover:scale-105 transition-all duration-300 fade-in delay-3">
-                <div className="flex items-center">
-                    <div className="p-2 sm:p-3 rounded-full bg-gradient-to-r from-blue-100 to-purple-100 text-blue-600 mr-3 sm:mr-4">
-                        <i className="fas fa-chalkboard-teacher text-lg sm:text-xl"></i>
-                    </div>
-                    <div>
-                        <p className="text-gray-500 text-xs sm:text-sm font-medium">Profesores Activos</p>
-                        <h3 className="text-xl sm:text-2xl font-bold text-gray-800">
-                          {[...new Set(subjects.map(s => s.teacher?.name).filter(Boolean))].length}
-                        </h3>
-                    </div>
+                <div>
+                  <p className="text-gray-500 text-xs sm:text-sm font-medium">
+                    {user?.role === "student"
+                      ? "Mis Materias"
+                      : "Total Materias"}
+                  </p>
+                  <h3 className="text-xl sm:text-2xl font-bold text-gray-800">
+                    {subjects.length}
+                  </h3>
                 </div>
+              </div>
             </div>
+            {user?.role === "admin" && (
+              <div className="bg-white/80 backdrop-blur-sm p-4 sm:p-6 rounded-xl shadow-lg border border-blue-200 hover:shadow-xl hover:scale-105 transition-all duration-300 fade-in delay-3">
+                <div className="flex items-center">
+                  <div className="p-2 sm:p-3 rounded-full bg-gradient-to-r from-blue-100 to-purple-100 text-blue-600 mr-3 sm:mr-4">
+                    <i className="fas fa-chalkboard-teacher text-lg sm:text-xl"></i>
+                  </div>
+                  <div>
+                    <p className="text-gray-500 text-xs sm:text-sm font-medium">
+                      Profesores Activos
+                    </p>
+                    <h3 className="text-xl sm:text-2xl font-bold text-gray-800">
+                      {
+                        [
+                          ...new Set(
+                            subjects.map((s) => s.teacher?.name).filter(Boolean)
+                          ),
+                        ].length
+                      }
+                    </h3>
+                  </div>
+                </div>
+              </div>
+            )}
             <div className="bg-white/80 backdrop-blur-sm p-4 sm:p-6 rounded-xl shadow-lg border border-green-200 hover:shadow-xl hover:scale-105 transition-all duration-300 fade-in delay-4 sm:col-span-2 lg:col-span-1">
-                <div className="flex items-center">
-                    <div className="p-2 sm:p-3 rounded-full bg-gradient-to-r from-green-100 to-teal-100 text-green-600 mr-3 sm:mr-4">
-                        <i className="fas fa-calendar-check text-lg sm:text-xl"></i>
-                    </div>
-                    <div>
-                        <p className="text-gray-500 text-xs sm:text-sm font-medium">
-                          {user?.role === 'student' ? `Año ${user.year}` : 'Próximas Clases'}
-                        </p>
-                        <h3 className="text-xl sm:text-2xl font-bold text-gray-800">
-                          {user?.role === 'student' ? user.year || '-' : '5'}
-                        </h3>
-                    </div>
+              <div className="flex items-center">
+                <div className="p-2 sm:p-3 rounded-full bg-gradient-to-r from-green-100 to-teal-100 text-green-600 mr-3 sm:mr-4">
+                  <i className="fas fa-calendar-check text-lg sm:text-xl"></i>
                 </div>
+                <div>
+                  <p className="text-gray-500 text-xs sm:text-sm font-medium">
+                    {user?.role === "student"
+                      ? `Año ${user.year}`
+                      : "Próximas Clases"}
+                  </p>
+                  <h3 className="text-xl sm:text-2xl font-bold text-gray-800">
+                    {user?.role === "student" ? user.year || "-" : "5"}
+                  </h3>
+                </div>
+              </div>
             </div>
-        </div>
+          </div>
+        )}
 
         {/* Subjects Grid or Empty State */}
         {subjects.length === 0 ? (
@@ -239,12 +278,11 @@ const DashboardPage = () => {
               {getEmptyStateMessage()}
             </h3>
             <p className="text-gray-500 text-center max-w-md mb-4 text-sm sm:text-base">
-              {user?.role === 'admin' 
-                ? 'Comienza creando materias para el campus virtual'
-                : user?.role === 'teacher'
-                ? 'Contacta con el administrador para que te asigne materias'
-                : 'Las materias se mostrarán aquí cuando estén disponibles'
-              }
+              {user?.role === "admin"
+                ? "Comienza creando materias para el campus virtual"
+                : user?.role === "teacher"
+                ? "Contacta con el administrador para que te asigne materias"
+                : "Las materias se mostrarán aquí cuando estén disponibles"}
             </p>
             {getEmptyStateAction() && (
               <a
@@ -259,18 +297,49 @@ const DashboardPage = () => {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 mt-8 sm:mt-16">
             {subjects.map((subject, index) => (
-              <CourseCard 
-                key={subject.id} 
+              <CourseCard
+                key={subject.id}
                 course={{
                   id: subject.id,
                   title: subject.name,
-                  teacher: subject.teacher?.name || 'Sin profesor',
-                  image: subject.image_url || 'https://via.placeholder.com/800x400/f3f4f6/9ca3af?text=Sin+Imagen',
+                  teacher: subject.teacher?.name || "Sin profesor",
+                  image:
+                    subject.image_url ||
+                    "https://via.placeholder.com/800x400/f3f4f6/9ca3af?text=Sin+Imagen",
                   code: subject.code,
                   year: subject.year,
-                  division: subject.division
-                }} 
-                delay={index + 1} 
+                  division: subject.division,
+                }}
+                delay={index + 1}
+                onUpdate={() => {
+                  // Recargar datos cuando se actualice una materia
+                  const fetchData = async () => {
+                    if (session?.user?.email) {
+                      try {
+                        let subjectsResponse;
+                        if (user?.role === "admin") {
+                          subjectsResponse = await fetch("/api/admin/subjects");
+                        } else if (user?.role === "teacher") {
+                          subjectsResponse = await fetch(
+                            `/api/admin/subjects?teacher_id=${user.id}`
+                          );
+                        } else if (user?.role === "student" && user.year) {
+                          subjectsResponse = await fetch(
+                            "/api/student/subjects"
+                          );
+                        }
+
+                        if (subjectsResponse && subjectsResponse.ok) {
+                          const subjectsData = await subjectsResponse.json();
+                          setSubjects(subjectsData);
+                        }
+                      } catch (error) {
+                        console.error("Error refreshing subjects:", error);
+                      }
+                    }
+                  };
+                  fetchData();
+                }}
               />
             ))}
           </div>
