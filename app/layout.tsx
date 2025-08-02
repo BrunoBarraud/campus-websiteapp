@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import {Poppins} from "next/font/google";
 import "./globals.css";
-import { NextAuthProvider } from "../app/components/auth/AuthProvider";
 import ConditionalNav from "@/app/ConditionalNav";
 import ConditionalFooter from "@/app/ConditionalFooter";
 import { ToastProvider } from "@/components/ui/toast-provider";
@@ -39,14 +38,12 @@ export default function RootLayout({
         />
       </head>
       <body className={`${font.className} antialiased bg-white text-gray-900 dark:bg-white dark:text-gray-900 h-full flex flex-col`}>
-        <NextAuthProvider>
           <ConditionalNav />
           <main className="flex-1 min-h-0">
             {children}
           </main>
           <ConditionalFooter />
           <ToastProvider />
-        </NextAuthProvider>
       </body>
     </html>
   );

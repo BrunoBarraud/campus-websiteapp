@@ -1,5 +1,10 @@
-import AuthFormFixed from '../../../components/auth/AuthFormFixed';
+import LoginWithRoles from "../../../components/auth/LoginWithRoles";
+import { LocalSessionProvider } from "../../../components/auth/LocalSessionProvider";
 
 export default function LoginPage() {
-  return <AuthFormFixed mode="login" />;
+  return (
+    <LocalSessionProvider>
+      <LoginWithRoles />
+    </LocalSessionProvider>
+  );
 }
