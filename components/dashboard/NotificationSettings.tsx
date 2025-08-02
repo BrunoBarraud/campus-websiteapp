@@ -34,7 +34,7 @@ export default function NotificationSettings() {
     system_notifications: true,
     quiet_hours_start: "22:00",
     quiet_hours_end: "08:00",
-    quiet_hours_enabled: false
+    quiet_hours_enabled: false,
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -43,14 +43,14 @@ export default function NotificationSettings() {
   useEffect(() => {
     const loadSettings = async () => {
       try {
-        const response = await fetch('/api/notifications/settings');
-        if (!response.ok) throw new Error('Error al cargar configuraciones');
-        
+        const response = await fetch("/api/notifications/settings");
+        if (!response.ok) throw new Error("Error al cargar configuraciones");
+
         const data = await response.json();
         setSettings(data);
       } catch (error) {
-        console.error('Error loading settings:', error);
-        toast.error('Error al cargar configuraciones');
+        console.error("Error loading settings:", error);
+        toast.error("Error al cargar configuraciones");
       } finally {
         setLoading(false);
       }
@@ -63,26 +63,29 @@ export default function NotificationSettings() {
   const saveSettings = async () => {
     setSaving(true);
     try {
-      const response = await fetch('/api/notifications/settings', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(settings)
+      const response = await fetch("/api/notifications/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(settings),
       });
 
-      if (!response.ok) throw new Error('Error al guardar configuraciones');
-      
-      toast.success('Configuraciones guardadas correctamente');
+      if (!response.ok) throw new Error("Error al guardar configuraciones");
+
+      toast.success("Configuraciones guardadas correctamente");
     } catch (error) {
-      console.error('Error saving settings:', error);
-      toast.error('Error al guardar configuraciones');
+      console.error("Error saving settings:", error);
+      toast.error("Error al guardar configuraciones");
     } finally {
       setSaving(false);
     }
   };
 
   // Actualizar configuración
-  const updateSetting = (key: keyof NotificationSettings, value: boolean | string) => {
-    setSettings(prev => ({ ...prev, [key]: value }));
+  const updateSetting = (
+    key: keyof NotificationSettings,
+    value: boolean | string
+  ) => {
+    setSettings((prev) => ({ ...prev, [key]: value }));
   };
 
   if (loading) {
@@ -90,7 +93,9 @@ export default function NotificationSettings() {
       <div className="flex items-center justify-center p-8">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-2 text-sm text-gray-600">Cargando configuraciones...</p>
+          <p className="mt-2 text-sm text-gray-600">
+            Cargando configuraciones...
+          </p>
         </div>
       </div>
     );
@@ -100,12 +105,20 @@ export default function NotificationSettings() {
     <div className="max-w-2xl mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Configuración de Notificaciones</h1>
-          <p className="text-gray-600">Personaliza cómo y cuándo recibir notificaciones</p>
+          <h1 className="text-2xl font-bold text-gray-900">
+            Configuración de Notificaciones
+          </h1>
+          <p className="text-gray-600">
+            Personaliza cómo y cuándo recibir notificaciones
+          </p>
         </div>
-        <Button onClick={saveSettings} disabled={saving} className="flex items-center gap-2">
+        <Button
+          onClick={saveSettings}
+          disabled={saving}
+          className="flex items-center gap-2"
+        >
           <Save size={16} />
-          {saving ? 'Guardando...' : 'Guardar'}
+          {saving ? "Guardando..." : "Guardar"}
         </Button>
       </div>
 
@@ -122,7 +135,10 @@ export default function NotificationSettings() {
             <div className="flex items-center gap-3">
               <Mail size={20} className="text-gray-600" />
               <div>
-                <Label htmlFor="email-notifications" className="text-base font-medium">
+                <Label
+                  htmlFor="email-notifications"
+                  className="text-base font-medium"
+                >
                   Notificaciones por Email
                 </Label>
                 <p className="text-sm text-gray-600">
@@ -133,7 +149,9 @@ export default function NotificationSettings() {
             <Switch
               id="email-notifications"
               checked={settings.email_notifications}
-              onCheckedChange={(checked: boolean) => updateSetting('email_notifications', checked)}
+              onCheckedChange={(checked: boolean) =>
+                updateSetting("email_notifications", checked)
+              }
             />
           </div>
 
@@ -143,7 +161,10 @@ export default function NotificationSettings() {
             <div className="flex items-center gap-3">
               <Smartphone size={20} className="text-gray-600" />
               <div>
-                <Label htmlFor="push-notifications" className="text-base font-medium">
+                <Label
+                  htmlFor="push-notifications"
+                  className="text-base font-medium"
+                >
                   Notificaciones Push
                 </Label>
                 <p className="text-sm text-gray-600">
@@ -154,7 +175,9 @@ export default function NotificationSettings() {
             <Switch
               id="push-notifications"
               checked={settings.push_notifications}
-              onCheckedChange={(checked: boolean) => updateSetting('push_notifications', checked)}
+              onCheckedChange={(checked: boolean) =>
+                updateSetting("push_notifications", checked)
+              }
             />
           </div>
         </CardContent>
@@ -172,7 +195,10 @@ export default function NotificationSettings() {
           <div className="grid gap-4">
             <div className="flex items-center justify-between">
               <div>
-                <Label htmlFor="assignment-notifications" className="text-base font-medium">
+                <Label
+                  htmlFor="assignment-notifications"
+                  className="text-base font-medium"
+                >
                   Asignaciones
                 </Label>
                 <p className="text-sm text-gray-600">
@@ -182,13 +208,18 @@ export default function NotificationSettings() {
               <Switch
                 id="assignment-notifications"
                 checked={settings.assignment_notifications}
-                onCheckedChange={(checked: boolean) => updateSetting('assignment_notifications', checked)}
+                onCheckedChange={(checked: boolean) =>
+                  updateSetting("assignment_notifications", checked)
+                }
               />
             </div>
 
             <div className="flex items-center justify-between">
               <div>
-                <Label htmlFor="grade-notifications" className="text-base font-medium">
+                <Label
+                  htmlFor="grade-notifications"
+                  className="text-base font-medium"
+                >
                   Calificaciones
                 </Label>
                 <p className="text-sm text-gray-600">
@@ -198,13 +229,18 @@ export default function NotificationSettings() {
               <Switch
                 id="grade-notifications"
                 checked={settings.grade_notifications}
-                onCheckedChange={(checked: boolean) => updateSetting('grade_notifications', checked)}
+                onCheckedChange={(checked: boolean) =>
+                  updateSetting("grade_notifications", checked)
+                }
               />
             </div>
 
             <div className="flex items-center justify-between">
               <div>
-                <Label htmlFor="comment-notifications" className="text-base font-medium">
+                <Label
+                  htmlFor="comment-notifications"
+                  className="text-base font-medium"
+                >
                   Comentarios
                 </Label>
                 <p className="text-sm text-gray-600">
@@ -214,13 +250,18 @@ export default function NotificationSettings() {
               <Switch
                 id="comment-notifications"
                 checked={settings.comment_notifications}
-                onCheckedChange={(checked: boolean) => updateSetting('comment_notifications', checked)}
+                onCheckedChange={(checked: boolean) =>
+                  updateSetting("comment_notifications", checked)
+                }
               />
             </div>
 
             <div className="flex items-center justify-between">
               <div>
-                <Label htmlFor="announcement-notifications" className="text-base font-medium">
+                <Label
+                  htmlFor="announcement-notifications"
+                  className="text-base font-medium"
+                >
                   Anuncios
                 </Label>
                 <p className="text-sm text-gray-600">
@@ -230,13 +271,18 @@ export default function NotificationSettings() {
               <Switch
                 id="announcement-notifications"
                 checked={settings.announcement_notifications}
-                onCheckedChange={(checked: boolean) => updateSetting('announcement_notifications', checked)}
+                onCheckedChange={(checked: boolean) =>
+                  updateSetting("announcement_notifications", checked)
+                }
               />
             </div>
 
             <div className="flex items-center justify-between">
               <div>
-                <Label htmlFor="system-notifications" className="text-base font-medium">
+                <Label
+                  htmlFor="system-notifications"
+                  className="text-base font-medium"
+                >
                   Sistema
                 </Label>
                 <p className="text-sm text-gray-600">
@@ -246,7 +292,9 @@ export default function NotificationSettings() {
               <Switch
                 id="system-notifications"
                 checked={settings.system_notifications}
-                onCheckedChange={(checked: boolean) => updateSetting('system_notifications', checked)}
+                onCheckedChange={(checked: boolean) =>
+                  updateSetting("system_notifications", checked)
+                }
               />
             </div>
           </div>
@@ -274,7 +322,9 @@ export default function NotificationSettings() {
             <Switch
               id="quiet-hours"
               checked={settings.quiet_hours_enabled}
-              onCheckedChange={(checked: boolean) => updateSetting('quiet_hours_enabled', checked)}
+              onCheckedChange={(checked: boolean) =>
+                updateSetting("quiet_hours_enabled", checked)
+              }
             />
           </div>
 
@@ -288,7 +338,9 @@ export default function NotificationSettings() {
                   id="quiet-start"
                   type="time"
                   value={settings.quiet_hours_start}
-                  onChange={(e) => updateSetting('quiet_hours_start', e.target.value)}
+                  onChange={(e) =>
+                    updateSetting("quiet_hours_start", e.target.value)
+                  }
                   className="mt-1"
                 />
               </div>
@@ -300,7 +352,9 @@ export default function NotificationSettings() {
                   id="quiet-end"
                   type="time"
                   value={settings.quiet_hours_end}
-                  onChange={(e) => updateSetting('quiet_hours_end', e.target.value)}
+                  onChange={(e) =>
+                    updateSetting("quiet_hours_end", e.target.value)
+                  }
                   className="mt-1"
                 />
               </div>

@@ -18,7 +18,7 @@ const eslintConfig = [
       "out/**",
       "dist/**",
       "*.js",
-      "scripts/**/*.js"
+      "scripts/**/*.js",
     ],
     rules: {
       "@typescript-eslint/no-explicit-any": "off",
@@ -26,9 +26,9 @@ const eslintConfig = [
       "@typescript-eslint/no-empty-object-type": "off",
       "@typescript-eslint/no-unused-expressions": "warn",
       "@next/next/no-img-element": "off",
-      "react-hooks/exhaustive-deps": "off"
-    }
-  }
+      "react-hooks/exhaustive-deps": "off",
+    },
+  },
 ];
 
 export default eslintConfig;

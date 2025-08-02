@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, useRef } from 'react';
-import { useSession } from 'next-auth/react';
+import { useState, useEffect, useRef } from "react";
+import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -33,9 +33,9 @@ import {
   ReplyIcon,
   PaperclipIcon,
 } from "lucide-react";
-import { useConversations, useMessages } from '@/hooks/useMessaging';
-import { toast } from 'sonner';
-import type { Conversation, Message, User } from '@/lib/types';
+import { useConversations, useMessages } from "@/hooks/useMessaging";
+import { toast } from "sonner";
+import type { Conversation, Message, User } from "@/lib/types";
 
 interface MessagingSystemProps {
   className?: string;
@@ -43,20 +43,25 @@ interface MessagingSystemProps {
 
 export default function MessagingSystem({ className }: MessagingSystemProps) {
   const { data: session } = useSession();
-  const { conversations, loading: conversationsLoading, createConversation } = useConversations();
-  const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
-  const [messageInput, setMessageInput] = useState('');
+  const {
+    conversations,
+    loading: conversationsLoading,
+    createConversation,
+  } = useConversations();
+  const [selectedConversation, setSelectedConversation] =
+    useState<Conversation | null>(null);
+  const [messageInput, setMessageInput] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [replyingTo, setReplyingTo] = useState<Message | null>(null);
   const [editingMessage, setEditingMessage] = useState<Message | null>(null);
-  const [editContent, setEditContent] = useState('');
-  
+  const [editContent, setEditContent] = useState("");
+
   // Estados para crear nueva conversación
   const [showNewConversation, setShowNewConversation] = useState(false);
-  const [searchUsers, setSearchUsers] = useState('');
+  const [searchUsers, setSearchUsers] = useState("");
   const [searchResults, setSearchResults] = useState<User[]>([]);
   const [selectedUsers, setSelectedUsers] = useState<User[]>([]);
-  
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -72,7 +77,7 @@ export default function MessagingSystem({ className }: MessagingSystemProps) {
 
   // Auto-scroll al final cuando llegan nuevos mensajes
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   // Buscar usuarios para nueva conversación
@@ -84,13 +89,15 @@ export default function MessagingSystem({ className }: MessagingSystemProps) {
       }
 
       try {
-        const response = await fetch(`/api/users/search?search=${encodeURIComponent(searchUsers)}&limit=10`);
+        const response = await fetch(
+          `/api/users/search?search=${encodeURIComponent(searchUsers)}&limit=10`
+        );
         if (response.ok) {
           const users = await response.json();
           setSearchResults(users);
         }
       } catch {
-        console.error('Error searching users');
+        console.error("Error searching users");
       }
     };
 
@@ -99,15 +106,20 @@ export default function MessagingSystem({ className }: MessagingSystemProps) {
   }, [searchUsers]);
 
   const handleSendMessage = async () => {
-    if ((!messageInput.trim() && !selectedFile) || !selectedConversation) return;
+    if ((!messageInput.trim() && !selectedFile) || !selectedConversation)
+      return;
 
     try {
-      await sendMessage(messageInput.trim(), selectedFile || undefined, replyingTo?.id);
-      setMessageInput('');
+      await sendMessage(
+        messageInput.trim(),
+        selectedFile || undefined,
+        replyingTo?.id
+      );
+      setMessageInput("");
       setSelectedFile(null);
       setReplyingTo(null);
     } catch {
-      toast.error('Error al enviar mensaje');
+      toast.error("Error al enviar mensaje");
     }
   };
 
@@ -116,7 +128,7 @@ export default function MessagingSystem({ className }: MessagingSystemProps) {
     if (file) {
       // Validar tamaño (máximo 10MB)
       if (file.size > 10 * 1024 * 1024) {
-        toast.error('El archivo es demasiado grande (máximo 10MB)');
+        toast.error("El archivo es demasiado grande (máximo 10MB)");
         return;
       }
       setSelectedFile(file);
@@ -125,24 +137,24 @@ export default function MessagingSystem({ className }: MessagingSystemProps) {
 
   const handleCreateConversation = async () => {
     if (selectedUsers.length === 0) {
-      toast.error('Selecciona al menos un usuario');
+      toast.error("Selecciona al menos un usuario");
       return;
     }
 
     try {
       const conversation = await createConversation(
-        selectedUsers.map(u => u.id),
-        selectedUsers.length === 1 ? 'direct' : 'group'
+        selectedUsers.map((u) => u.id),
+        selectedUsers.length === 1 ? "direct" : "group"
       );
-      
+
       setSelectedConversation(conversation);
       setShowNewConversation(false);
       setSelectedUsers([]);
-      setSearchUsers('');
+      setSearchUsers("");
       setSearchResults([]);
-      toast.success('Conversación creada');
+      toast.success("Conversación creada");
     } catch {
-      toast.error('Error al crear la conversación');
+      toast.error("Error al crear la conversación");
     }
   };
 
@@ -152,10 +164,10 @@ export default function MessagingSystem({ className }: MessagingSystemProps) {
     try {
       await editMessage(editingMessage.id, editContent.trim());
       setEditingMessage(null);
-      setEditContent('');
-      toast.success('Mensaje editado');
+      setEditContent("");
+      toast.success("Mensaje editado");
     } catch {
-      toast.error('Error al editar el mensaje');
+      toast.error("Error al editar el mensaje");
     }
   };
 
@@ -165,21 +177,32 @@ export default function MessagingSystem({ className }: MessagingSystemProps) {
     const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60);
 
     if (diffInHours < 24) {
-      return date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+      return date.toLocaleTimeString("es-ES", {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
     } else {
-      return date.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' });
+      return date.toLocaleDateString("es-ES", {
+        day: "2-digit",
+        month: "2-digit",
+      });
     }
   };
 
   const getConversationTitle = (conversation: Conversation) => {
-    if (conversation.type === 'group') {
-      return conversation.title || 'Grupo sin nombre';
+    if (conversation.type === "group") {
+      return conversation.title || "Grupo sin nombre";
     }
-    return conversation.other_participant_name || 'Conversación';
+    return conversation.other_participant_name || "Conversación";
   };
 
   const getUserInitials = (name: string) => {
-    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
   };
 
   // Comentando validación temporal para debugging
@@ -193,13 +216,18 @@ export default function MessagingSystem({ className }: MessagingSystemProps) {
   // }
 
   return (
-    <div className={`flex h-[600px] bg-background rounded-lg border ${className}`}>
+    <div
+      className={`flex h-[600px] bg-background rounded-lg border ${className}`}
+    >
       {/* Lista de conversaciones */}
       <div className="w-1/3 border-r">
         <div className="p-4 border-b">
           <div className="flex items-center justify-between mb-2">
             <h3 className="font-semibold">Mensajes</h3>
-            <Dialog open={showNewConversation} onOpenChange={setShowNewConversation}>
+            <Dialog
+              open={showNewConversation}
+              onOpenChange={setShowNewConversation}
+            >
               <DialogTrigger asChild>
                 <Button size="sm" variant="outline">
                   <PlusIcon className="h-4 w-4" />
@@ -219,15 +247,23 @@ export default function MessagingSystem({ className }: MessagingSystemProps) {
                       className="pl-10"
                     />
                   </div>
-                  
+
                   {/* Usuarios seleccionados */}
                   {selectedUsers.length > 0 && (
                     <div className="flex flex-wrap gap-2">
-                      {selectedUsers.map(user => (
-                        <Badge key={user.id} variant="secondary" className="px-2 py-1">
+                      {selectedUsers.map((user) => (
+                        <Badge
+                          key={user.id}
+                          variant="secondary"
+                          className="px-2 py-1"
+                        >
                           {user.name}
                           <button
-                            onClick={() => setSelectedUsers(prev => prev.filter(u => u.id !== user.id))}
+                            onClick={() =>
+                              setSelectedUsers((prev) =>
+                                prev.filter((u) => u.id !== user.id)
+                              )
+                            }
                             className="ml-2 text-gray-500 hover:text-gray-700"
                           >
                             ×
@@ -236,17 +272,22 @@ export default function MessagingSystem({ className }: MessagingSystemProps) {
                       ))}
                     </div>
                   )}
-                  
+
                   {/* Resultados de búsqueda */}
                   {searchResults.length > 0 && (
                     <ScrollArea className="h-32">
                       <div className="space-y-1">
                         {searchResults
-                          .filter(user => !selectedUsers.find(su => su.id === user.id))
-                          .map(user => (
+                          .filter(
+                            (user) =>
+                              !selectedUsers.find((su) => su.id === user.id)
+                          )
+                          .map((user) => (
                             <div
                               key={user.id}
-                              onClick={() => setSelectedUsers(prev => [...prev, user])}
+                              onClick={() =>
+                                setSelectedUsers((prev) => [...prev, user])
+                              }
                               className="flex items-center gap-2 p-2 hover:bg-gray-100 rounded cursor-pointer"
                             >
                               <Avatar className="h-6 w-6">
@@ -255,8 +296,12 @@ export default function MessagingSystem({ className }: MessagingSystemProps) {
                                 </AvatarFallback>
                               </Avatar>
                               <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium truncate">{user.name}</p>
-                                <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                                <p className="text-sm font-medium truncate">
+                                  {user.name}
+                                </p>
+                                <p className="text-xs text-gray-500 truncate">
+                                  {user.email}
+                                </p>
                               </div>
                               <Badge variant="outline" className="text-xs">
                                 {user.role}
@@ -266,12 +311,18 @@ export default function MessagingSystem({ className }: MessagingSystemProps) {
                       </div>
                     </ScrollArea>
                   )}
-                  
+
                   <div className="flex justify-end gap-2">
-                    <Button variant="outline" onClick={() => setShowNewConversation(false)}>
+                    <Button
+                      variant="outline"
+                      onClick={() => setShowNewConversation(false)}
+                    >
                       Cancelar
                     </Button>
-                    <Button onClick={handleCreateConversation} disabled={selectedUsers.length === 0}>
+                    <Button
+                      onClick={handleCreateConversation}
+                      disabled={selectedUsers.length === 0}
+                    >
                       Crear Conversación
                     </Button>
                   </div>
@@ -280,7 +331,7 @@ export default function MessagingSystem({ className }: MessagingSystemProps) {
             </Dialog>
           </div>
         </div>
-        
+
         <ScrollArea className="h-[calc(100%-80px)]">
           {conversationsLoading ? (
             <div className="p-4 text-center text-gray-500">Cargando...</div>
@@ -291,14 +342,14 @@ export default function MessagingSystem({ className }: MessagingSystemProps) {
             </div>
           ) : (
             <div className="space-y-1 p-2">
-              {conversations.map(conversation => (
+              {conversations.map((conversation) => (
                 <div
                   key={conversation.id}
                   onClick={() => setSelectedConversation(conversation)}
                   className={`p-3 rounded-lg cursor-pointer transition-colors ${
                     selectedConversation?.id === conversation.id
-                      ? 'bg-primary/10 border border-primary/20'
-                      : 'hover:bg-gray-100'
+                      ? "bg-primary/10 border border-primary/20"
+                      : "hover:bg-gray-100"
                   }`}
                 >
                   <div className="flex items-start gap-3">
@@ -312,17 +363,19 @@ export default function MessagingSystem({ className }: MessagingSystemProps) {
                         <p className="font-medium truncate">
                           {getConversationTitle(conversation)}
                         </p>
-                        {conversation.unread_count && conversation.unread_count > 0 && (
-                          <Badge variant="destructive" className="text-xs">
-                            {conversation.unread_count}
-                          </Badge>
-                        )}
+                        {conversation.unread_count &&
+                          conversation.unread_count > 0 && (
+                            <Badge variant="destructive" className="text-xs">
+                              {conversation.unread_count}
+                            </Badge>
+                          )}
                       </div>
                       <p className="text-sm text-gray-600 truncate">
-                        {conversation.last_message_content || 'Sin mensajes'}
+                        {conversation.last_message_content || "Sin mensajes"}
                       </p>
                       <p className="text-xs text-gray-400">
-                        {conversation.last_message_at && formatMessageTime(conversation.last_message_at)}
+                        {conversation.last_message_at &&
+                          formatMessageTime(conversation.last_message_at)}
                       </p>
                     </div>
                   </div>
@@ -342,13 +395,19 @@ export default function MessagingSystem({ className }: MessagingSystemProps) {
               <div className="flex items-center gap-3">
                 <Avatar className="h-8 w-8">
                   <AvatarFallback>
-                    {getUserInitials(getConversationTitle(selectedConversation))}
+                    {getUserInitials(
+                      getConversationTitle(selectedConversation)
+                    )}
                   </AvatarFallback>
                 </Avatar>
                 <div>
-                  <h4 className="font-medium">{getConversationTitle(selectedConversation)}</h4>
+                  <h4 className="font-medium">
+                    {getConversationTitle(selectedConversation)}
+                  </h4>
                   <p className="text-sm text-gray-500">
-                    {selectedConversation.type === 'group' ? 'Grupo' : 'Conversación directa'}
+                    {selectedConversation.type === "group"
+                      ? "Grupo"
+                      : "Conversación directa"}
                   </p>
                 </div>
               </div>
@@ -364,30 +423,36 @@ export default function MessagingSystem({ className }: MessagingSystemProps) {
                     onClick={loadMoreMessages}
                     disabled={messagesLoading}
                   >
-                    {messagesLoading ? 'Cargando...' : 'Cargar mensajes anteriores'}
+                    {messagesLoading
+                      ? "Cargando..."
+                      : "Cargar mensajes anteriores"}
                   </Button>
                 </div>
               )}
 
               <div className="space-y-4">
-                {messages.map(message => (
+                {messages.map((message) => (
                   <div
                     key={message.id}
                     className={`flex ${
-                      message.sender_id === session?.user?.id ? 'justify-end' : 'justify-start'
+                      message.sender_id === session?.user?.id
+                        ? "justify-end"
+                        : "justify-start"
                     }`}
                   >
                     <div
                       className={`max-w-[70%] ${
                         message.sender_id === session?.user?.id
-                          ? 'bg-primary text-primary-foreground'
-                          : 'bg-gray-100'
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-gray-100"
                       } rounded-lg p-3`}
                     >
                       {/* Reply indicator */}
                       {message.reply_to && (
                         <div className="text-xs opacity-70 mb-2 p-2 bg-black/10 rounded">
-                          <p className="font-medium">{message.reply_to.sender?.name}</p>
+                          <p className="font-medium">
+                            {message.reply_to.sender?.name}
+                          </p>
                           <p className="truncate">{message.reply_to.content}</p>
                         </div>
                       )}
@@ -395,20 +460,24 @@ export default function MessagingSystem({ className }: MessagingSystemProps) {
                       {/* Archivo/imagen */}
                       {message.file_url && (
                         <div className="mb-2">
-                          {message.type === 'image' ? (
+                          {message.type === "image" ? (
                             <img
                               src={message.file_url}
-                              alt={message.file_name || 'Imagen'}
+                              alt={message.file_name || "Imagen"}
                               className="max-w-full h-auto rounded"
                             />
                           ) : (
                             <div className="flex items-center gap-2 p-2 bg-black/10 rounded">
                               <FileIcon className="h-4 w-4" />
-                              <span className="text-sm">{message.file_name}</span>
+                              <span className="text-sm">
+                                {message.file_name}
+                              </span>
                               <Button
                                 size="sm"
                                 variant="ghost"
-                                onClick={() => window.open(message.file_url, '_blank')}
+                                onClick={() =>
+                                  window.open(message.file_url, "_blank")
+                                }
                               >
                                 Ver
                               </Button>
@@ -419,23 +488,30 @@ export default function MessagingSystem({ className }: MessagingSystemProps) {
 
                       {/* Contenido del mensaje */}
                       {message.content && (
-                        <p className="whitespace-pre-wrap break-words">{message.content}</p>
+                        <p className="whitespace-pre-wrap break-words">
+                          {message.content}
+                        </p>
                       )}
 
                       {/* Footer del mensaje */}
                       <div className="flex items-center justify-between mt-2 text-xs opacity-70">
                         <span>
-                          {message.sender_id !== session?.user?.id && message.sender?.name}
-                          {message.is_edited && ' (editado)'}
+                          {message.sender_id !== session?.user?.id &&
+                            message.sender?.name}
+                          {message.is_edited && " (editado)"}
                         </span>
                         <div className="flex items-center gap-2">
                           <span>{formatMessageTime(message.created_at)}</span>
-                          
+
                           {/* Opciones del mensaje */}
                           {message.sender_id === session?.user?.id && (
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
-                                <Button size="sm" variant="ghost" className="h-6 w-6 p-0">
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-6 w-6 p-0"
+                                >
                                   <MoreVerticalIcon className="h-3 w-3" />
                                 </Button>
                               </DropdownMenuTrigger>
@@ -480,7 +556,9 @@ export default function MessagingSystem({ className }: MessagingSystemProps) {
               {replyingTo && (
                 <div className="mb-2 p-2 bg-gray-100 rounded-lg text-sm">
                   <div className="flex items-center justify-between">
-                    <span className="font-medium">Respondiendo a {replyingTo.sender?.name}</span>
+                    <span className="font-medium">
+                      Respondiendo a {replyingTo.sender?.name}
+                    </span>
                     <Button
                       size="sm"
                       variant="ghost"
@@ -519,7 +597,7 @@ export default function MessagingSystem({ className }: MessagingSystemProps) {
                     value={messageInput}
                     onChange={(e) => setMessageInput(e.target.value)}
                     onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
+                      if (e.key === "Enter" && !e.shiftKey) {
                         e.preventDefault();
                         handleSendMessage();
                       }
@@ -528,7 +606,7 @@ export default function MessagingSystem({ className }: MessagingSystemProps) {
                     className="min-h-[40px] max-h-32 resize-none"
                   />
                 </div>
-                
+
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -536,7 +614,7 @@ export default function MessagingSystem({ className }: MessagingSystemProps) {
                   accept="image/*,.pdf,.doc,.docx,.txt"
                   className="hidden"
                 />
-                
+
                 <Button
                   variant="outline"
                   size="sm"
@@ -544,7 +622,7 @@ export default function MessagingSystem({ className }: MessagingSystemProps) {
                 >
                   <PaperclipIcon className="h-4 w-4" />
                 </Button>
-                
+
                 <Button
                   onClick={handleSendMessage}
                   disabled={!messageInput.trim() && !selectedFile}
@@ -559,14 +637,19 @@ export default function MessagingSystem({ className }: MessagingSystemProps) {
           <div className="flex-1 flex items-center justify-center">
             <div className="text-center">
               <MessageCircleIcon className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-              <p className="text-gray-600">Selecciona una conversación para empezar</p>
+              <p className="text-gray-600">
+                Selecciona una conversación para empezar
+              </p>
             </div>
           </div>
         )}
       </div>
 
       {/* Dialog para editar mensaje */}
-      <Dialog open={!!editingMessage} onOpenChange={() => setEditingMessage(null)}>
+      <Dialog
+        open={!!editingMessage}
+        onOpenChange={() => setEditingMessage(null)}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Editar Mensaje</DialogTitle>
@@ -581,9 +664,7 @@ export default function MessagingSystem({ className }: MessagingSystemProps) {
               <Button variant="outline" onClick={() => setEditingMessage(null)}>
                 Cancelar
               </Button>
-              <Button onClick={handleEditMessage}>
-                Guardar
-              </Button>
+              <Button onClick={handleEditMessage}>Guardar</Button>
             </div>
           </div>
         </DialogContent>

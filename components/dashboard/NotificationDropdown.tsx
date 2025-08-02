@@ -20,23 +20,25 @@ import { useNotifications } from "@/hooks/useNotifications";
 import { toast } from "sonner";
 
 interface NotificationDropdownProps {
-  theme?: 'light' | 'dark';
+  theme?: "light" | "dark";
 }
 
-export default function NotificationDropdown({ theme = 'light' }: NotificationDropdownProps) {
+export default function NotificationDropdown({
+  theme = "light",
+}: NotificationDropdownProps) {
   const {
     notifications,
     stats,
     loading,
     markAsRead,
-    requestNotificationPermission
+    requestNotificationPermission,
   } = useNotifications();
-  
+
   const [isOpen, setIsOpen] = useState(false);
 
   // Obtener solo las primeras 5 notificaciones sin leer
   const recentNotifications = notifications
-    .filter(n => !n.is_read)
+    .filter((n) => !n.is_read)
     .slice(0, 5);
 
   // Manejar click en notificación
@@ -44,7 +46,7 @@ export default function NotificationDropdown({ theme = 'light' }: NotificationDr
     try {
       await markAsRead([notificationId]);
     } catch {
-      toast.error('Error al marcar como leída');
+      toast.error("Error al marcar como leída");
     }
   };
 
@@ -66,43 +68,56 @@ export default function NotificationDropdown({ theme = 'light' }: NotificationDr
       announcement: "📢",
       subject_new_content: "📚",
       system: "⚙️",
-      user_action: "👤"
+      user_action: "👤",
     };
     return iconMap[type] || "🔔";
   };
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'urgent': return 'destructive';
-      case 'high': return 'secondary';
-      default: return 'outline';
+      case "urgent":
+        return "destructive";
+      case "high":
+        return "secondary";
+      default:
+        return "outline";
     }
   };
 
   return (
     <DropdownMenu open={isOpen} onOpenChange={handleOpen}>
       <DropdownMenuTrigger asChild>
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          className={`relative ${theme === 'dark' ? 'text-white hover:bg-white/20' : ''}`}
+        <Button
+          variant="ghost"
+          size="sm"
+          className={`relative ${
+            theme === "dark" ? "text-white hover:bg-white/20" : ""
+          }`}
         >
           {stats.unread_notifications > 0 ? (
-            <BellRing className={`h-5 w-5 ${theme === 'dark' ? 'text-amber-400' : ''}`} />
+            <BellRing
+              className={`h-5 w-5 ${theme === "dark" ? "text-amber-400" : ""}`}
+            />
           ) : (
-            <Bell className={`h-5 w-5 ${theme === 'dark' ? 'text-white' : ''}`} />
+            <Bell
+              className={`h-5 w-5 ${theme === "dark" ? "text-white" : ""}`}
+            />
           )}
           {stats.unread_notifications > 0 && (
-            <Badge 
-              variant={stats.high_priority_unread > 0 ? "destructive" : "default"}
+            <Badge
+              variant={
+                stats.high_priority_unread > 0 ? "destructive" : "default"
+              }
               className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center text-xs"
             >
-              {stats.unread_notifications > 99 ? '99+' : stats.unread_notifications}
+              {stats.unread_notifications > 99
+                ? "99+"
+                : stats.unread_notifications}
             </Badge>
           )}
         </Button>
       </DropdownMenuTrigger>
-      
+
       <DropdownMenuContent align="end" className="w-80">
         <DropdownMenuLabel className="flex items-center justify-between">
           <span>Notificaciones</span>
@@ -112,9 +127,9 @@ export default function NotificationDropdown({ theme = 'light' }: NotificationDr
             </Badge>
           )}
         </DropdownMenuLabel>
-        
+
         <DropdownMenuSeparator />
-        
+
         {loading ? (
           <div className="p-4 text-center text-sm text-gray-500">
             Cargando notificaciones...
@@ -140,8 +155,9 @@ export default function NotificationDropdown({ theme = 'light' }: NotificationDr
                       <p className="font-medium text-sm truncate">
                         {notification.title}
                       </p>
-                      {(notification.priority === 'high' || notification.priority === 'urgent') && (
-                        <Badge 
+                      {(notification.priority === "high" ||
+                        notification.priority === "urgent") && (
+                        <Badge
                           variant={getPriorityColor(notification.priority)}
                           className="text-xs"
                         >
@@ -155,7 +171,7 @@ export default function NotificationDropdown({ theme = 'light' }: NotificationDr
                     <p className="text-xs text-gray-400">
                       {formatDistanceToNow(new Date(notification.created_at), {
                         addSuffix: true,
-                        locale: es
+                        locale: es,
                       })}
                     </p>
                   </div>
@@ -164,12 +180,12 @@ export default function NotificationDropdown({ theme = 'light' }: NotificationDr
             ))}
           </ScrollArea>
         )}
-        
+
         <DropdownMenuSeparator />
-        
+
         <DropdownMenuItem asChild>
-          <Link 
-            href="/campus/notifications" 
+          <Link
+            href="/campus/notifications"
             className="w-full text-center text-sm font-medium"
           >
             Ver todas las notificaciones

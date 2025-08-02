@@ -1,9 +1,18 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import { FiPlus, FiBook, FiFileText, FiBarChart, FiFolder, FiGrid, FiList, FiSearch } from 'react-icons/fi';
-import SubjectDashboard from '@/components/subjects/SubjectDashboard';
-import { AcademicUtils } from '@/constant/academic';
+import React, { useState, useEffect } from "react";
+import {
+  FiPlus,
+  FiBook,
+  FiFileText,
+  FiBarChart,
+  FiFolder,
+  FiGrid,
+  FiList,
+  FiSearch,
+} from "react-icons/fi";
+import SubjectDashboard from "@/components/subjects/SubjectDashboard";
+import { AcademicUtils } from "@/constant/academic";
 
 interface Subject {
   id: string;
@@ -46,21 +55,23 @@ export default function CampusDashboardPage() {
     pendingAssignments: 0,
     averageGrade: 0,
     totalNotifications: 0,
-    unreadNotifications: 0
+    unreadNotifications: 0,
   });
   const [loading, setLoading] = useState(true);
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedYear, setSelectedYear] = useState<number | 'all'>('all');
-  const [selectedSemester, setSelectedSemester] = useState<number | 'all'>('all');
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedYear, setSelectedYear] = useState<number | "all">("all");
+  const [selectedSemester, setSelectedSemester] = useState<number | "all">(
+    "all"
+  );
 
   // Simulamos el usuario actual - en un caso real vendría de la autenticación
   const [currentUser, setCurrentUser] = useState({
-    id: '',
-    role: '' as 'admin' | 'teacher' | 'student' | '',
-    name: '',
-    email: '',
-    year: 1 // Solo para estudiantes
+    id: "",
+    role: "" as "admin" | "teacher" | "student" | "",
+    name: "",
+    email: "",
+    year: 1, // Solo para estudiantes
   });
   const [userLoaded, setUserLoaded] = useState(false);
 
@@ -68,7 +79,7 @@ export default function CampusDashboardPage() {
   useEffect(() => {
     const loadUserData = async () => {
       try {
-        const response = await fetch('/api/user/me');
+        const response = await fetch("/api/user/me");
         if (response.ok) {
           const userData = await response.json();
           setCurrentUser({
@@ -76,15 +87,15 @@ export default function CampusDashboardPage() {
             role: userData.role,
             name: userData.name,
             email: userData.email,
-            year: userData.year || 1
+            year: userData.year || 1,
           });
           setUserLoaded(true);
         } else {
-          console.error('Error loading user data:', response.status);
+          console.error("Error loading user data:", response.status);
           setUserLoaded(true); // Marcar como cargado incluso si falla
         }
       } catch (error) {
-        console.error('Error loading user data:', error);
+        console.error("Error loading user data:", error);
         setUserLoaded(true); // Marcar como cargado incluso si falla
       }
     };
@@ -102,35 +113,40 @@ export default function CampusDashboardPage() {
     const loadSubjects = async () => {
       try {
         setLoading(true);
-        console.log('🔄 Loading subjects for role:', currentUser.role, 'user:', currentUser.id);
-        
-        let apiUrl = '/api/subjects';
-        
+        console.log(
+          "🔄 Loading subjects for role:",
+          currentUser.role,
+          "user:",
+          currentUser.id
+        );
+
+        let apiUrl = "/api/subjects";
+
         // Determinar qué API usar según el rol
-        if (currentUser.role === 'admin') {
+        if (currentUser.role === "admin") {
           // Admin ve todas las materias
-          apiUrl = '/api/admin/subjects';
-        } else if (currentUser.role === 'teacher') {
+          apiUrl = "/api/admin/subjects";
+        } else if (currentUser.role === "teacher") {
           // Profesor ve solo sus materias asignadas
           apiUrl = `/api/teacher/subjects`;
-        } else if (currentUser.role === 'student') {
+        } else if (currentUser.role === "student") {
           // Estudiante ve materias de su año
           apiUrl = `/api/student/subjects`;
         } else {
-          console.log('⚠️ Invalid user role:', currentUser.role);
+          console.log("⚠️ Invalid user role:", currentUser.role);
           setSubjects([]);
           setLoading(false);
           return;
         }
-        
-        console.log('📡 Fetching from:', apiUrl);
+
+        console.log("📡 Fetching from:", apiUrl);
         const response = await fetch(apiUrl);
-        console.log('📡 Response status:', response.status);
-        
+        console.log("📡 Response status:", response.status);
+
         if (response.ok) {
           const result = await response.json();
-          console.log('📊 API Response:', result);
-          
+          console.log("📊 API Response:", result);
+
           // Manejar diferentes formatos de respuesta
           let data = [];
           if (result.success && Array.isArray(result.data)) {
@@ -143,28 +159,37 @@ export default function CampusDashboardPage() {
             // Formato alternativo: { subjects: [...] }
             data = result.subjects;
           }
-          
-          console.log('📚 Processed data:', data);
-          console.log('📚 Is array?', Array.isArray(data));
-          console.log('📚 Length:', data?.length);
-          
+
+          console.log("📚 Processed data:", data);
+          console.log("📚 Is array?", Array.isArray(data));
+          console.log("📚 Length:", data?.length);
+
           setSubjects(Array.isArray(data) ? data : []);
-          
+
           // Calcular estadísticas básicas
           const totalSubjects = Array.isArray(data) ? data.length : 0;
-          console.log('📊 Total subjects for', currentUser.role, ':', totalSubjects);
-          setStats(prev => ({
-            ...prev,
+          console.log(
+            "📊 Total subjects for",
+            currentUser.role,
+            ":",
             totalSubjects
+          );
+          setStats((prev) => ({
+            ...prev,
+            totalSubjects,
           }));
         } else {
-          console.error('Error response:', response.status, response.statusText);
+          console.error(
+            "Error response:",
+            response.status,
+            response.statusText
+          );
           const errorText = await response.text();
-          console.error('Error details:', errorText);
+          console.error("Error details:", errorText);
           setSubjects([]);
         }
       } catch (error) {
-        console.error('Error loading subjects:', error);
+        console.error("Error loading subjects:", error);
         setSubjects([]);
       } finally {
         setLoading(false);
@@ -175,21 +200,26 @@ export default function CampusDashboardPage() {
   }, [userLoaded, currentUser.id, currentUser.role, currentUser.year]);
 
   // Filtrar materias
-  const filteredSubjects = Array.isArray(subjects) ? subjects.filter(subject => {
-    const matchesSearch = subject.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         subject.code.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesYear = selectedYear === 'all' || subject.year === selectedYear;
-    const matchesSemester = selectedSemester === 'all' || subject.semester === selectedSemester;
-    
-    return matchesSearch && matchesYear && matchesSemester;
-  }) : [];
+  const filteredSubjects = Array.isArray(subjects)
+    ? subjects.filter((subject) => {
+        const matchesSearch =
+          subject.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          subject.code.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesYear =
+          selectedYear === "all" || subject.year === selectedYear;
+        const matchesSemester =
+          selectedSemester === "all" || subject.semester === selectedSemester;
 
-  console.log('🔍 Filter debug:', {
+        return matchesSearch && matchesYear && matchesSemester;
+      })
+    : [];
+
+  console.log("🔍 Filter debug:", {
     subjects: subjects?.length,
     filteredSubjects: filteredSubjects?.length,
     searchTerm,
     selectedYear,
-    selectedSemester
+    selectedSemester,
   });
 
   // Si hay una materia seleccionada, mostrar su dashboard
@@ -208,7 +238,7 @@ export default function CampusDashboardPage() {
         </div>
         <SubjectDashboard
           subjectId={selectedSubject}
-          userRole={currentUser.role as 'admin' | 'teacher' | 'student'}
+          userRole={currentUser.role as "admin" | "teacher" | "student"}
           currentUserId={currentUser.id}
         />
       </div>
@@ -223,37 +253,40 @@ export default function CampusDashboardPage() {
           <div className="flex items-center justify-between py-6">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">
-                {currentUser.role === 'admin' && 'Gestión de Materias'}
-                {currentUser.role === 'teacher' && 'Mis Materias'}
-                {currentUser.role === 'student' && 'Mis Cursos'}
+                {currentUser.role === "admin" && "Gestión de Materias"}
+                {currentUser.role === "teacher" && "Mis Materias"}
+                {currentUser.role === "student" && "Mis Cursos"}
               </h1>
               <p className="text-gray-600 mt-1">
-                Bienvenido, {currentUser.name} 
-                {currentUser.role === 'admin' && ' (Administrador)'}
-                {currentUser.role === 'teacher' && ' (Profesor)'}
-                {currentUser.role === 'student' && ` (Estudiante - ${currentUser.year}° Año)`}
+                Bienvenido, {currentUser.name}
+                {currentUser.role === "admin" && " (Administrador)"}
+                {currentUser.role === "teacher" && " (Profesor)"}
+                {currentUser.role === "student" &&
+                  ` (Estudiante - ${currentUser.year}° Año)`}
               </p>
-              {currentUser.role === 'student' && (
+              {currentUser.role === "student" && (
                 <p className="text-sm text-blue-600 mt-1">
                   Materias de {currentUser.year}° año
                 </p>
               )}
-              {currentUser.role === 'teacher' && (
+              {currentUser.role === "teacher" && (
                 <p className="text-sm text-green-600 mt-1">
                   Materias asignadas: {stats.totalSubjects}
                 </p>
               )}
-              {currentUser.role === 'admin' && (
+              {currentUser.role === "admin" && (
                 <p className="text-sm text-purple-600 mt-1">
                   Total de materias en el sistema: {stats.totalSubjects}
                 </p>
               )}
             </div>
-            
+
             <div className="flex items-center space-x-4">
-              {currentUser.role === 'admin' && (
+              {currentUser.role === "admin" && (
                 <button
-                  onClick={() => window.open('/campus/settings/subjects', '_blank')}
+                  onClick={() =>
+                    window.open("/campus/settings/subjects", "_blank")
+                  }
                   className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
                 >
                   <FiPlus className="w-4 h-4" />
@@ -266,7 +299,7 @@ export default function CampusDashboardPage() {
       </div>
 
       {/* Estadísticas */}
-            {/* Estadísticas por rol */}
+      {/* Estadísticas por rol */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {/* Estadística 1 - Materias */}
@@ -275,10 +308,15 @@ export default function CampusDashboardPage() {
               <FiBook className="w-8 h-8 text-blue-600" />
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-500">
-                  {currentUser.role === 'admin' ? 'Total Materias' : 
-                   currentUser.role === 'teacher' ? 'Mis Materias' : 'Mis Cursos'}
+                  {currentUser.role === "admin"
+                    ? "Total Materias"
+                    : currentUser.role === "teacher"
+                    ? "Mis Materias"
+                    : "Mis Cursos"}
                 </p>
-                <p className="text-2xl font-semibold text-gray-900">{stats.totalSubjects}</p>
+                <p className="text-2xl font-semibold text-gray-900">
+                  {stats.totalSubjects}
+                </p>
               </div>
             </div>
           </div>
@@ -289,50 +327,66 @@ export default function CampusDashboardPage() {
               <FiFolder className="w-8 h-8 text-yellow-600" />
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-500">
-                  {currentUser.role === 'admin' ? 'Total Documentos' : 'Documentos'}
+                  {currentUser.role === "admin"
+                    ? "Total Documentos"
+                    : "Documentos"}
                 </p>
-                <p className="text-2xl font-semibold text-gray-900">{stats.totalDocuments}</p>
+                <p className="text-2xl font-semibold text-gray-900">
+                  {stats.totalDocuments}
+                </p>
               </div>
             </div>
           </div>
 
           {/* Estadística 3 - Solo para estudiantes: Tareas Pendientes */}
-          {currentUser.role === 'student' && (
+          {currentUser.role === "student" && (
             <div className="bg-white rounded-lg shadow-sm p-6">
               <div className="flex items-center">
                 <FiFileText className="w-8 h-8 text-green-600" />
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-500">Tareas Pendientes</p>
-                  <p className="text-2xl font-semibold text-gray-900">{stats.pendingAssignments}</p>
+                  <p className="text-sm font-medium text-gray-500">
+                    Tareas Pendientes
+                  </p>
+                  <p className="text-2xl font-semibold text-gray-900">
+                    {stats.pendingAssignments}
+                  </p>
                 </div>
               </div>
             </div>
           )}
 
           {/* Estadística 3 - Para admin/teacher: Total Asignaciones */}
-          {(currentUser.role === 'admin' || currentUser.role === 'teacher') && (
+          {(currentUser.role === "admin" || currentUser.role === "teacher") && (
             <div className="bg-white rounded-lg shadow-sm p-6">
               <div className="flex items-center">
                 <FiFileText className="w-8 h-8 text-green-600" />
                 <div className="ml-4">
                   <p className="text-sm font-medium text-gray-500">
-                    {currentUser.role === 'admin' ? 'Total Asignaciones' : 'Mis Asignaciones'}
+                    {currentUser.role === "admin"
+                      ? "Total Asignaciones"
+                      : "Mis Asignaciones"}
                   </p>
-                  <p className="text-2xl font-semibold text-gray-900">{stats.totalAssignments}</p>
+                  <p className="text-2xl font-semibold text-gray-900">
+                    {stats.totalAssignments}
+                  </p>
                 </div>
               </div>
             </div>
           )}
 
           {/* Estadística 4 - Solo para estudiantes: Promedio General */}
-          {currentUser.role === 'student' && (
+          {currentUser.role === "student" && (
             <div className="bg-white rounded-lg shadow-sm p-6">
               <div className="flex items-center">
                 <FiBarChart className="w-8 h-8 text-purple-600" />
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-500">Promedio General</p>
+                  <p className="text-sm font-medium text-gray-500">
+                    Promedio General
+                  </p>
                   <p className="text-2xl font-semibold text-gray-900">
-                    {stats.averageGrade > 0 ? stats.averageGrade.toFixed(1) : '-'}
+                    {stats.averageGrade > 0
+                      ? stats.averageGrade.toFixed(1)
+                      : "-"}
                   </p>
                 </div>
               </div>
@@ -340,17 +394,18 @@ export default function CampusDashboardPage() {
           )}
 
           {/* Estadística 4 - Para admin/teacher: Estudiantes activos */}
-          {(currentUser.role === 'admin' || currentUser.role === 'teacher') && (
+          {(currentUser.role === "admin" || currentUser.role === "teacher") && (
             <div className="bg-white rounded-lg shadow-sm p-6">
               <div className="flex items-center">
                 <FiBarChart className="w-8 h-8 text-purple-600" />
                 <div className="ml-4">
                   <p className="text-sm font-medium text-gray-500">
-                    {currentUser.role === 'admin' ? 'Usuarios Activos' : 'Estudiantes'}
+                    {currentUser.role === "admin"
+                      ? "Usuarios Activos"
+                      : "Estudiantes"}
                   </p>
                   <p className="text-2xl font-semibold text-gray-900">
-                    {/* Placeholder - podríamos implementar esta métrica */}
-                    -
+                    {/* Placeholder - podríamos implementar esta métrica */}-
                   </p>
                 </div>
               </div>
@@ -368,9 +423,11 @@ export default function CampusDashboardPage() {
                 <input
                   type="text"
                   placeholder={
-                    currentUser.role === 'admin' ? 'Buscar materias...' :
-                    currentUser.role === 'teacher' ? 'Buscar en mis materias...' :
-                    'Buscar en mis cursos...'
+                    currentUser.role === "admin"
+                      ? "Buscar materias..."
+                      : currentUser.role === "teacher"
+                      ? "Buscar en mis materias..."
+                      : "Buscar en mis cursos..."
                   }
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -379,45 +436,74 @@ export default function CampusDashboardPage() {
               </div>
 
               {/* Filtros solo para admin y teacher */}
-              {(currentUser.role === 'admin' || currentUser.role === 'teacher') && (
+              {(currentUser.role === "admin" ||
+                currentUser.role === "teacher") && (
                 <>
                   {/* Filtro por año */}
                   <select
                     value={selectedYear}
-                    onChange={(e) => setSelectedYear(e.target.value === 'all' ? 'all' : parseInt(e.target.value))}
+                    onChange={(e) =>
+                      setSelectedYear(
+                        e.target.value === "all"
+                          ? "all"
+                          : parseInt(e.target.value)
+                      )
+                    }
                     className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
                     <option value="all">Todos los años</option>
                     {AcademicUtils.getYearOptions().map(({ value, label }) => (
-                      <option key={value} value={parseInt(value)}>{label}</option>
+                      <option key={value} value={parseInt(value)}>
+                        {label}
+                      </option>
                     ))}
                   </select>
 
                   {/* Filtro por semestre */}
                   <select
                     value={selectedSemester}
-                    onChange={(e) => setSelectedSemester(e.target.value === 'all' ? 'all' : parseInt(e.target.value))}
+                    onChange={(e) =>
+                      setSelectedSemester(
+                        e.target.value === "all"
+                          ? "all"
+                          : parseInt(e.target.value)
+                      )
+                    }
                     className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
                     <option value="all">Todos los semestres</option>
-                    {AcademicUtils.getSemesterOptions().map(({ value, label }) => (
-                      <option key={value} value={parseInt(value)}>{label}</option>
-                    ))}
+                    {AcademicUtils.getSemesterOptions().map(
+                      ({ value, label }) => (
+                        <option key={value} value={parseInt(value)}>
+                          {label}
+                        </option>
+                      )
+                    )}
                   </select>
                 </>
               )}
 
               {/* Filtro de semestre para estudiantes */}
-              {currentUser.role === 'student' && (
+              {currentUser.role === "student" && (
                 <select
                   value={selectedSemester}
-                  onChange={(e) => setSelectedSemester(e.target.value === 'all' ? 'all' : parseInt(e.target.value))}
+                  onChange={(e) =>
+                    setSelectedSemester(
+                      e.target.value === "all"
+                        ? "all"
+                        : parseInt(e.target.value)
+                    )
+                  }
                   className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   <option value="all">Todos los semestres</option>
-                  {AcademicUtils.getSemesterOptions().map(({ value, label }) => (
-                    <option key={value} value={parseInt(value)}>{label}</option>
-                  ))}
+                  {AcademicUtils.getSemesterOptions().map(
+                    ({ value, label }) => (
+                      <option key={value} value={parseInt(value)}>
+                        {label}
+                      </option>
+                    )
+                  )}
                 </select>
               )}
             </div>
@@ -425,21 +511,21 @@ export default function CampusDashboardPage() {
             {/* Cambio de vista */}
             <div className="flex items-center space-x-2">
               <button
-                onClick={() => setViewMode('grid')}
+                onClick={() => setViewMode("grid")}
                 className={`p-2 rounded-lg ${
-                  viewMode === 'grid'
-                    ? 'bg-blue-100 text-blue-600'
-                    : 'text-gray-400 hover:text-gray-600'
+                  viewMode === "grid"
+                    ? "bg-blue-100 text-blue-600"
+                    : "text-gray-400 hover:text-gray-600"
                 }`}
               >
                 <FiGrid className="w-5 h-5" />
               </button>
               <button
-                onClick={() => setViewMode('list')}
+                onClick={() => setViewMode("list")}
                 className={`p-2 rounded-lg ${
-                  viewMode === 'list'
-                    ? 'bg-blue-100 text-blue-600'
-                    : 'text-gray-400 hover:text-gray-600'
+                  viewMode === "list"
+                    ? "bg-blue-100 text-blue-600"
+                    : "text-gray-400 hover:text-gray-600"
                 }`}
               >
                 <FiList className="w-5 h-5" />
@@ -457,28 +543,35 @@ export default function CampusDashboardPage() {
         ) : filteredSubjects.length === 0 ? (
           <div className="text-center py-12">
             <FiBook className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No hay materias disponibles</h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              No hay materias disponibles
+            </h3>
             <p className="text-gray-600 mb-4">
-              {searchTerm || selectedYear !== 'all' || selectedSemester !== 'all' ? (
-                'No se encontraron materias con los filtros aplicados.'
-              ) : currentUser.role === 'admin' ? (
-                'No hay materias creadas en el sistema. Puedes crear la primera materia.'
-              ) : currentUser.role === 'teacher' ? (
-                'No tienes materias asignadas. Contacta al administrador para recibir asignaciones.'
-              ) : (
-                `No hay materias disponibles para ${currentUser.year}° año.`
-              )}
+              {searchTerm ||
+              selectedYear !== "all" ||
+              selectedSemester !== "all"
+                ? "No se encontraron materias con los filtros aplicados."
+                : currentUser.role === "admin"
+                ? "No hay materias creadas en el sistema. Puedes crear la primera materia."
+                : currentUser.role === "teacher"
+                ? "No tienes materias asignadas. Contacta al administrador para recibir asignaciones."
+                : `No hay materias disponibles para ${currentUser.year}° año.`}
             </p>
-            {currentUser.role === 'admin' && !searchTerm && selectedYear === 'all' && selectedSemester === 'all' && (
-              <button
-                onClick={() => window.open('/campus/settings/subjects', '_blank')}
-                className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                Crear Primera Materia
-              </button>
-            )}
+            {currentUser.role === "admin" &&
+              !searchTerm &&
+              selectedYear === "all" &&
+              selectedSemester === "all" && (
+                <button
+                  onClick={() =>
+                    window.open("/campus/settings/subjects", "_blank")
+                  }
+                  className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Crear Primera Materia
+                </button>
+              )}
           </div>
-        ) : viewMode === 'grid' ? (
+        ) : viewMode === "grid" ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredSubjects.map((subject) => (
               <div
@@ -495,7 +588,9 @@ export default function CampusDashboardPage() {
                 )}
                 <div className="p-6">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-blue-600">{subject.code}</span>
+                    <span className="text-sm font-medium text-blue-600">
+                      {subject.code}
+                    </span>
                     <span className="text-xs text-gray-500">
                       {subject.year}°-{subject.semester}°
                     </span>
@@ -510,9 +605,7 @@ export default function CampusDashboardPage() {
                   )}
                   <div className="flex items-center justify-between text-sm text-gray-500">
                     <span>{subject.credits} créditos</span>
-                    {subject.teacher && (
-                      <span>{subject.teacher.name}</span>
-                    )}
+                    {subject.teacher && <span>{subject.teacher.name}</span>}
                   </div>
                 </div>
               </div>
@@ -550,7 +643,9 @@ export default function CampusDashboardPage() {
                         </p>
                       )}
                       <div className="flex items-center space-x-4 text-sm text-gray-500">
-                        <span>{subject.year}° Año - {subject.semester}° Semestre</span>
+                        <span>
+                          {subject.year}° Año - {subject.semester}° Semestre
+                        </span>
                         <span>{subject.credits} créditos</span>
                         {subject.teacher && (
                           <span>Prof. {subject.teacher.name}</span>

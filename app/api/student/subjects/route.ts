@@ -20,10 +20,10 @@ export async function GET(request: Request) {
 
     // Los estudiantes ven todas las materias de su año lectivo
     const studentYear = year ? parseInt(year) : currentUser.year;
-    
+
     if (!studentYear) {
       return NextResponse.json(
-        { error: 'No se pudo determinar el año del estudiante' },
+        { error: "No se pudo determinar el año del estudiante" },
         { status: 400 }
       );
     }
@@ -31,8 +31,9 @@ export async function GET(request: Request) {
     console.log("Student API: Fetching subjects for year:", studentYear);
 
     const { data: subjects, error } = await supabaseAdmin
-      .from('subjects')
-      .select(`
+      .from("subjects")
+      .select(
+        `
         id,
         name,
         code,
@@ -47,11 +48,12 @@ export async function GET(request: Request) {
         created_at,
         updated_at,
         teacher:users!subjects_teacher_id_fkey(id, name, email)
-      `)
-      .eq('year', studentYear)
-      .eq('is_active', true)
-      .order('semester')
-      .order('name');
+      `
+      )
+      .eq("year", studentYear)
+      .eq("is_active", true)
+      .order("semester")
+      .order("name");
 
     if (error) {
       console.error("Student API: Error fetching subjects:", error);
@@ -111,13 +113,15 @@ export async function GET(request: Request) {
       })
     );
 
-    console.log("Student API: Returning enriched subjects:", enrichedSubjects.length);
+    console.log(
+      "Student API: Returning enriched subjects:",
+      enrichedSubjects.length
+    );
 
     return NextResponse.json({
       success: true,
-      data: enrichedSubjects
+      data: enrichedSubjects,
     });
-
   } catch (error: unknown) {
     console.error("Error in GET /api/student/subjects:", error);
     const errorMessage =

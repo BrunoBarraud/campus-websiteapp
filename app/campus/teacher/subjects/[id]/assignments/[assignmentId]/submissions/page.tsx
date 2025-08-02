@@ -16,12 +16,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   CalendarIcon,
   FileIcon,
@@ -398,16 +393,21 @@ export default function AssignmentSubmissionsPage({
                   <Tabs defaultValue="content" className="w-full">
                     <TabsList className="grid w-full grid-cols-2">
                       <TabsTrigger value="content">Contenido</TabsTrigger>
-                      <TabsTrigger value="comments" className="flex items-center gap-2">
+                      <TabsTrigger
+                        value="comments"
+                        className="flex items-center gap-2"
+                      >
                         <MessageCircleIcon className="h-4 w-4" />
                         Comentarios
                       </TabsTrigger>
                     </TabsList>
-                    
+
                     <TabsContent value="content" className="space-y-4">
                       {submission.submission_text && (
                         <div>
-                          <h4 className="font-medium mb-2">Texto de la entrega:</h4>
+                          <h4 className="font-medium mb-2">
+                            Texto de la entrega:
+                          </h4>
                           <p className="bg-gray-50 p-3 rounded text-sm whitespace-pre-wrap">
                             {submission.submission_text}
                           </p>
@@ -419,7 +419,9 @@ export default function AssignmentSubmissionsPage({
                           <h4 className="font-medium mb-2">Archivo:</h4>
                           <div className="flex items-center gap-2">
                             <FileIcon className="h-4 w-4" />
-                            <span className="text-sm">{submission.file_name}</span>
+                            <span className="text-sm">
+                              {submission.file_name}
+                            </span>
                             <Button
                               variant="outline"
                               size="sm"
@@ -436,7 +438,9 @@ export default function AssignmentSubmissionsPage({
 
                       {submission.feedback && (
                         <div>
-                          <h4 className="font-medium mb-2">Retroalimentación:</h4>
+                          <h4 className="font-medium mb-2">
+                            Retroalimentación:
+                          </h4>
                           <p className="bg-blue-50 p-3 rounded text-sm whitespace-pre-wrap">
                             {submission.feedback}
                           </p>
@@ -466,7 +470,8 @@ export default function AssignmentSubmissionsPage({
                             <form onSubmit={handleGrade} className="space-y-4">
                               <div>
                                 <Label htmlFor="score">
-                                  Puntuación (máximo {assignment.max_score} puntos)
+                                  Puntuación (máximo {assignment.max_score}{" "}
+                                  puntos)
                                 </Label>
                                 <Input
                                   id="score"
@@ -484,7 +489,9 @@ export default function AssignmentSubmissionsPage({
                                 />
                               </div>
                               <div>
-                                <Label htmlFor="feedback">Retroalimentación</Label>
+                                <Label htmlFor="feedback">
+                                  Retroalimentación
+                                </Label>
                                 <Textarea
                                   id="feedback"
                                   value={gradeData.feedback}
@@ -504,18 +511,22 @@ export default function AssignmentSubmissionsPage({
                                     Cancelar
                                   </Button>
                                 </DialogTrigger>
-                                <Button type="submit">Guardar Calificación</Button>
+                                <Button type="submit">
+                                  Guardar Calificación
+                                </Button>
                               </div>
                             </form>
                           </DialogContent>
                         </Dialog>
                       </div>
                     </TabsContent>
-                    
+
                     <TabsContent value="comments" className="space-y-4">
-                      <SubmissionComments 
+                      <SubmissionComments
                         submissionId={submission.id}
-                        submissionText={submission.submission_text || "Sin contenido de texto"}
+                        submissionText={
+                          submission.submission_text || "Sin contenido de texto"
+                        }
                         canComment={true}
                       />
                     </TabsContent>

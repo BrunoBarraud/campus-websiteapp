@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import Image from "next/image";
-import { ACADEMIC_CONFIG } from '@/constant/academic';
+import { ACADEMIC_CONFIG } from "@/constant/academic";
 
 const Nav = () => {
   return (
@@ -35,4 +35,3 @@ const Nav = () => {
 };
 
 export default Nav;
-

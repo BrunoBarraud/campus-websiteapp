@@ -1,15 +1,21 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import { FiBook, FiUsers, FiFileText, FiBarChart, FiFolder } from 'react-icons/fi';
-import DocumentManager from '@/components/documents/DocumentManager';
-import GradeSystem from '@/components/grades/GradeSystem';
-import AssignmentSystem from '@/components/assignments/AssignmentSystem';
-import NotificationCenter from '@/components/notifications/NotificationCenter';
+import React, { useState, useEffect } from "react";
+import {
+  FiBook,
+  FiUsers,
+  FiFileText,
+  FiBarChart,
+  FiFolder,
+} from "react-icons/fi";
+import DocumentManager from "@/components/documents/DocumentManager";
+import GradeSystem from "@/components/grades/GradeSystem";
+import AssignmentSystem from "@/components/assignments/AssignmentSystem";
+import NotificationCenter from "@/components/notifications/NotificationCenter";
 
 interface SubjectDashboardProps {
   subjectId: string;
-  userRole: 'admin' | 'teacher' | 'student';
+  userRole: "admin" | "teacher" | "student";
   currentUserId: string;
 }
 
@@ -44,12 +50,14 @@ interface Subject {
   };
 }
 
-export default function SubjectDashboard({ 
-  subjectId, 
-  userRole, 
-  currentUserId 
+export default function SubjectDashboard({
+  subjectId,
+  userRole,
+  currentUserId,
 }: SubjectDashboardProps) {
-  const [activeTab, setActiveTab] = useState<'overview' | 'documents' | 'assignments' | 'grades' | 'notifications'>('overview');
+  const [activeTab, setActiveTab] = useState<
+    "overview" | "documents" | "assignments" | "grades" | "notifications"
+  >("overview");
   const [subject, setSubject] = useState<Subject | null>(null);
   const [units, setUnits] = useState<Unit[]>([]);
   const [loading, setLoading] = useState(true);
@@ -59,7 +67,7 @@ export default function SubjectDashboard({
     const loadSubjectData = async () => {
       try {
         setLoading(true);
-        
+
         // Cargar información de la materia
         const subjectResponse = await fetch(`/api/subjects/${subjectId}`);
         if (subjectResponse.ok) {
@@ -73,9 +81,8 @@ export default function SubjectDashboard({
           const unitsData = await unitsResponse.json();
           setUnits(unitsData);
         }
-
       } catch (error) {
-        console.error('Error loading subject data:', error);
+        console.error("Error loading subject data:", error);
       } finally {
         setLoading(false);
       }
@@ -85,30 +92,30 @@ export default function SubjectDashboard({
   }, [subjectId]);
 
   const tabs = [
-    { 
-      id: 'overview', 
-      name: 'Resumen', 
+    {
+      id: "overview",
+      name: "Resumen",
       icon: FiBook,
-      description: 'Vista general de la materia'
+      description: "Vista general de la materia",
     },
-    { 
-      id: 'documents', 
-      name: 'Documentos', 
+    {
+      id: "documents",
+      name: "Documentos",
       icon: FiFolder,
-      description: 'Materiales y recursos de estudio'
+      description: "Materiales y recursos de estudio",
     },
-    { 
-      id: 'assignments', 
-      name: 'Tareas', 
+    {
+      id: "assignments",
+      name: "Tareas",
       icon: FiFileText,
-      description: 'Gestión de tareas y entregas'
+      description: "Gestión de tareas y entregas",
     },
-    { 
-      id: 'grades', 
-      name: 'Calificaciones', 
+    {
+      id: "grades",
+      name: "Calificaciones",
       icon: FiBarChart,
-      description: 'Sistema de evaluación y notas'
-    }
+      description: "Sistema de evaluación y notas",
+    },
   ];
 
   if (loading) {
@@ -127,8 +134,12 @@ export default function SubjectDashboard({
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="bg-white p-8 rounded-lg shadow-md">
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">Materia no encontrada</h2>
-            <p className="text-gray-600">La materia que buscas no existe o no tienes acceso a ella.</p>
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">
+              Materia no encontrada
+            </h2>
+            <p className="text-gray-600">
+              La materia que buscas no existe o no tienes acceso a ella.
+            </p>
           </div>
         </div>
       </div>
@@ -143,8 +154,8 @@ export default function SubjectDashboard({
           <div className="flex items-center justify-between py-6">
             <div className="flex items-center space-x-4">
               {subject.image_url && (
-                <img 
-                  src={subject.image_url} 
+                <img
+                  src={subject.image_url}
                   alt={subject.name}
                   className="w-16 h-16 object-cover rounded-lg"
                 />
@@ -156,7 +167,9 @@ export default function SubjectDashboard({
                 <div className="flex items-center space-x-4 text-sm text-gray-500">
                   <span>{subject.code}</span>
                   <span>•</span>
-                  <span>{subject.year}° Año - {subject.semester}° Semestre</span>
+                  <span>
+                    {subject.year}° Año - {subject.semester}° Semestre
+                  </span>
                   {subject.division && (
                     <>
                       <span>•</span>
@@ -175,10 +188,7 @@ export default function SubjectDashboard({
             </div>
 
             {/* Centro de notificaciones */}
-            <NotificationCenter 
-              userId={currentUserId} 
-              className="ml-4"
-            />
+            <NotificationCenter userId={currentUserId} className="ml-4" />
           </div>
         </div>
       </div>
@@ -195,8 +205,8 @@ export default function SubjectDashboard({
                   onClick={() => setActiveTab(tab.id as any)}
                   className={`${
                     activeTab === tab.id
-                      ? 'border-blue-500 text-blue-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                      ? "border-blue-500 text-blue-600"
+                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                   } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 transition-colors duration-200`}
                 >
                   <Icon className="w-4 h-4" />
@@ -210,13 +220,17 @@ export default function SubjectDashboard({
 
       {/* Contenido principal */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {activeTab === 'overview' && (
+        {activeTab === "overview" && (
           <div className="space-y-8">
             {/* Descripción de la materia */}
             {subject.description && (
               <div className="bg-white rounded-lg shadow-sm p-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">Descripción</h2>
-                <p className="text-gray-700 leading-relaxed">{subject.description}</p>
+                <h2 className="text-lg font-semibold text-gray-900 mb-4">
+                  Descripción
+                </h2>
+                <p className="text-gray-700 leading-relaxed">
+                  {subject.description}
+                </p>
               </div>
             )}
 
@@ -226,8 +240,12 @@ export default function SubjectDashboard({
                 <div className="flex items-center">
                   <FiBook className="w-8 h-8 text-blue-600" />
                   <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-500">Unidades</p>
-                    <p className="text-2xl font-semibold text-gray-900">{units.length}</p>
+                    <p className="text-sm font-medium text-gray-500">
+                      Unidades
+                    </p>
+                    <p className="text-2xl font-semibold text-gray-900">
+                      {units.length}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -246,7 +264,9 @@ export default function SubjectDashboard({
                 <div className="flex items-center">
                   <FiFolder className="w-8 h-8 text-yellow-600" />
                   <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-500">Documentos</p>
+                    <p className="text-sm font-medium text-gray-500">
+                      Documentos
+                    </p>
                     <p className="text-2xl font-semibold text-gray-900">-</p>
                   </div>
                 </div>
@@ -257,7 +277,7 @@ export default function SubjectDashboard({
                   <FiUsers className="w-8 h-8 text-purple-600" />
                   <div className="ml-4">
                     <p className="text-sm font-medium text-gray-500">
-                      {userRole === 'student' ? 'Mi Promedio' : 'Estudiantes'}
+                      {userRole === "student" ? "Mi Promedio" : "Estudiantes"}
                     </p>
                     <p className="text-2xl font-semibold text-gray-900">-</p>
                   </div>
@@ -268,11 +288,13 @@ export default function SubjectDashboard({
             {/* Unidades de la materia */}
             {units.length > 0 && (
               <div className="bg-white rounded-lg shadow-sm p-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-6">Unidades del Curso</h2>
+                <h2 className="text-lg font-semibold text-gray-900 mb-6">
+                  Unidades del Curso
+                </h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {units.map((unit) => (
-                    <div 
-                      key={unit.id} 
+                    <div
+                      key={unit.id}
                       className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
                     >
                       <div className="flex items-center justify-between mb-2">
@@ -299,25 +321,47 @@ export default function SubjectDashboard({
 
             {/* Información adicional */}
             <div className="bg-white rounded-lg shadow-sm p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Información del Curso</h2>
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">
+                Información del Curso
+              </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <h3 className="text-sm font-medium text-gray-500 mb-2">Detalles Académicos</h3>
+                  <h3 className="text-sm font-medium text-gray-500 mb-2">
+                    Detalles Académicos
+                  </h3>
                   <ul className="space-y-1 text-sm text-gray-700">
-                    <li><strong>Código:</strong> {subject.code}</li>
-                    <li><strong>Año:</strong> {subject.year}°</li>
-                    <li><strong>Semestre:</strong> {subject.semester}°</li>
-                    <li><strong>Créditos:</strong> {subject.credits}</li>
-                    {subject.division && <li><strong>División:</strong> {subject.division}</li>}
+                    <li>
+                      <strong>Código:</strong> {subject.code}
+                    </li>
+                    <li>
+                      <strong>Año:</strong> {subject.year}°
+                    </li>
+                    <li>
+                      <strong>Semestre:</strong> {subject.semester}°
+                    </li>
+                    <li>
+                      <strong>Créditos:</strong> {subject.credits}
+                    </li>
+                    {subject.division && (
+                      <li>
+                        <strong>División:</strong> {subject.division}
+                      </li>
+                    )}
                   </ul>
                 </div>
-                
+
                 {subject.teacher && (
                   <div>
-                    <h3 className="text-sm font-medium text-gray-500 mb-2">Profesor</h3>
+                    <h3 className="text-sm font-medium text-gray-500 mb-2">
+                      Profesor
+                    </h3>
                     <div className="text-sm text-gray-700">
-                      <p><strong>Nombre:</strong> {subject.teacher.name}</p>
-                      <p><strong>Email:</strong> {subject.teacher.email}</p>
+                      <p>
+                        <strong>Nombre:</strong> {subject.teacher.name}
+                      </p>
+                      <p>
+                        <strong>Email:</strong> {subject.teacher.email}
+                      </p>
                     </div>
                   </div>
                 )}
@@ -326,7 +370,7 @@ export default function SubjectDashboard({
           </div>
         )}
 
-        {activeTab === 'documents' && (
+        {activeTab === "documents" && (
           <DocumentManager
             subjectId={subjectId}
             userRole={userRole}
@@ -337,7 +381,7 @@ export default function SubjectDashboard({
           />
         )}
 
-        {activeTab === 'assignments' && (
+        {activeTab === "assignments" && (
           <AssignmentSystem
             subjectId={subjectId}
             userRole={userRole}
@@ -349,7 +393,7 @@ export default function SubjectDashboard({
           />
         )}
 
-        {activeTab === 'grades' && (
+        {activeTab === "grades" && (
           <GradeSystem
             subjectId={subjectId}
             userRole={userRole}

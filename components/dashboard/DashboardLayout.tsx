@@ -29,9 +29,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   if (isAuthPage) {
     return (
       <div className="min-h-screen w-full bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center p-4">
-        <div className="w-full max-w-md">
-          {children}
-        </div>
+        <div className="w-full max-w-md">{children}</div>
       </div>
     );
   }
@@ -80,8 +78,18 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
                   className="text-gray-400 hover:text-gray-600 transition-colors duration-200"
                   title="Cerrar sesión"
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                    />
                   </svg>
                 </button>
               </div>
@@ -91,9 +99,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
       </div>
 
       {/* Contenido principal */}
-      <div className="lg:ml-64 pb-0 lg:pb-0">
-        {children}
-      </div>
+      <div className="lg:ml-64 pb-0 lg:pb-0">{children}</div>
 
       {/* Bottom navigation para móviles */}
       <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-40">
@@ -112,7 +118,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
               <span className="truncate">{item.name}</span>
             </Link>
           ))}
-          
+
           {/* Logout button para móviles */}
           <button
             onClick={handleLogout}

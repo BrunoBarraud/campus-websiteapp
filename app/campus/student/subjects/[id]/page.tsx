@@ -1,9 +1,9 @@
 // 📚 Vista de Materia para Estudiantes
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useSession } from 'next-auth/react';
-import { useRouter, useParams } from 'next/navigation';
+import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
+import { useRouter, useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -99,14 +99,14 @@ export default function StudentSubjectDetailPage() {
   const [expandedUnits, setExpandedUnits] = useState<Set<string>>(new Set());
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [activeTab, setActiveTab] = useState<'units' | 'documents'>('units');
+  const [error, setError] = useState("");
+  const [activeTab, setActiveTab] = useState<"units" | "documents">("units");
 
   useEffect(() => {
-    if (status === 'loading') return;
-    
-    if (!session || session.user?.role !== 'student') {
-      router.push('/campus/login');
+    if (status === "loading") return;
+
+    if (!session || session.user?.role !== "student") {
+      router.push("/campus/login");
       return;
     }
 
@@ -126,16 +126,15 @@ export default function StudentSubjectDetailPage() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      
+
       // Obtener información de la materia
       await fetchSubject();
-      
+
       // Obtener unidades con contenido y tareas
       await fetchUnits();
-      
+
       // Obtener documentos
       await fetchDocuments();
-
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -149,34 +148,36 @@ export default function StudentSubjectDetailPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Error al cargar la materia');
+        throw new Error(data.error || "Error al cargar la materia");
       }
 
       setSubject(data);
     } catch (err: any) {
-      console.error('Error fetching subject:', err);
+      console.error("Error fetching subject:", err);
     }
   };
 
   const fetchUnits = async () => {
     try {
-      const response = await fetch(`/api/subjects/${subjectId}/units?include=contents,assignments`);
+      const response = await fetch(
+        `/api/subjects/${subjectId}/units?include=contents,assignments`
+      );
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Error al cargar las unidades');
+        throw new Error(data.error || "Error al cargar las unidades");
       }
 
       // Solo mostrar unidades activas a los estudiantes
       const activeUnits = data.filter((unit: Unit) => unit.is_active);
       setUnits(activeUnits);
-      
+
       // Expandir la primera unidad por defecto
       if (activeUnits.length > 0) {
         setExpandedUnits(new Set([activeUnits[0].id]));
       }
     } catch (err: any) {
-      console.error('Error fetching units:', err);
+      console.error("Error fetching units:", err);
     }
   };
 
@@ -186,33 +187,33 @@ export default function StudentSubjectDetailPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Error al cargar los documentos');
+        throw new Error(data.error || "Error al cargar los documentos");
       }
 
       setDocuments(data);
     } catch (err: any) {
-      console.error('Error fetching documents:', err);
+      console.error("Error fetching documents:", err);
     }
   };
 
   const handleDownload = (document: Document) => {
     // Abrir el archivo en una nueva ventana/pestaña
-    window.open(document.file_url, '_blank');
+    window.open(document.file_url, "_blank");
   };
 
   const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return '0 Bytes';
+    if (bytes === 0) return "0 Bytes";
     const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const sizes = ["Bytes", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('es-ES', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
+    return new Date(dateString).toLocaleDateString("es-ES", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     });
   };
 
@@ -262,7 +263,7 @@ export default function StudentSubjectDetailPage() {
             <ArrowLeftIcon className="h-4 w-4 mr-2" />
             Volver a mis materias
           </Button>
-          
+
           {subject && (
             <div className="mb-6">
               <h1 className="text-3xl font-bold text-gray-900 mb-2">
@@ -271,11 +272,13 @@ export default function StudentSubjectDetailPage() {
               <p className="text-gray-600">{subject.description}</p>
             </div>
           )}
-          
+
           {/* Botón de navegación a tareas */}
           <div className="mb-4">
             <Button
-              onClick={() => router.push(`/campus/student/subjects/${subjectId}/assignments`)}
+              onClick={() =>
+                router.push(`/campus/student/subjects/${subjectId}/assignments`)
+              }
               className="flex items-center"
             >
               <BookOpenIcon className="h-4 w-4 mr-2" />
@@ -289,16 +292,16 @@ export default function StudentSubjectDetailPage() {
           <CardHeader>
             <div className="flex space-x-1">
               <Button
-                variant={activeTab === 'units' ? 'default' : 'ghost'}
-                onClick={() => setActiveTab('units')}
+                variant={activeTab === "units" ? "default" : "ghost"}
+                onClick={() => setActiveTab("units")}
                 className="flex items-center"
               >
                 <BookOpenIcon className="h-4 w-4 mr-2" />
                 Unidades y Contenidos
               </Button>
               <Button
-                variant={activeTab === 'documents' ? 'default' : 'ghost'}
-                onClick={() => setActiveTab('documents')}
+                variant={activeTab === "documents" ? "default" : "ghost"}
+                onClick={() => setActiveTab("documents")}
                 className="flex items-center"
               >
                 <FolderIcon className="h-4 w-4 mr-2" />
@@ -308,13 +311,15 @@ export default function StudentSubjectDetailPage() {
           </CardHeader>
 
           <CardContent>
-            {activeTab === 'units' && (
+            {activeTab === "units" && (
               <div className="space-y-4">
                 {units.length === 0 ? (
                   <Card>
                     <CardContent className="text-center py-12">
                       <BookOpenIcon className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                      <p className="text-gray-500">No hay unidades disponibles aún.</p>
+                      <p className="text-gray-500">
+                        No hay unidades disponibles aún.
+                      </p>
                     </CardContent>
                   </Card>
                 ) : (
@@ -376,17 +381,24 @@ export default function StudentSubjectDetailPage() {
                                               {content.title}
                                             </p>
                                             {content.is_pinned && (
-                                              <Badge variant="secondary">Fijado</Badge>
+                                              <Badge variant="secondary">
+                                                Fijado
+                                              </Badge>
                                             )}
                                           </div>
                                           <p className="text-sm text-gray-600 mb-2 whitespace-pre-wrap">
                                             {content.content}
                                           </p>
-                                          {content.content_type === 'link' && (
+                                          {content.content_type === "link" && (
                                             <Button
                                               variant="outline"
                                               size="sm"
-                                              onClick={() => window.open(content.content, '_blank')}
+                                              onClick={() =>
+                                                window.open(
+                                                  content.content,
+                                                  "_blank"
+                                                )
+                                              }
                                               className="mb-2"
                                             >
                                               <ExternalLinkIcon className="h-4 w-4 mr-2" />
@@ -394,7 +406,8 @@ export default function StudentSubjectDetailPage() {
                                             </Button>
                                           )}
                                           <div className="text-xs text-gray-500">
-                                            Por {content.creator.name} • {formatDate(content.created_at)}
+                                            Por {content.creator.name} •{" "}
+                                            {formatDate(content.created_at)}
                                           </div>
                                         </div>
                                       </div>
@@ -408,72 +421,82 @@ export default function StudentSubjectDetailPage() {
                             )}
 
                             {/* Assignments */}
-                            {unit.assignments && unit.assignments.length > 0 && (
-                              <div>
-                                <h4 className="font-semibold text-gray-900 mb-3">
-                                  Tareas
-                                </h4>
-                                <div className="space-y-2">
-                                  {unit.assignments.map((assignment) => (
-                                    <div
-                                      key={assignment.id}
-                                      className="p-4 bg-green-50 rounded-lg"
-                                    >
-                                      <div className="flex items-center justify-between">
-                                        <div className="flex-1">
-                                          <div className="flex items-center space-x-2 mb-2">
-                                            <h5 className="font-medium text-gray-900">
-                                              {assignment.title}
-                                            </h5>
-                                            <Badge
-                                              variant={
-                                                assignment.is_active ? "default" : "secondary"
-                                              }
-                                            >
-                                              {assignment.is_active ? "Activa" : "Inactiva"}
-                                            </Badge>
-                                            {assignment.has_submission && (
-                                              <Badge variant="secondary">
-                                                Entregada
+                            {unit.assignments &&
+                              unit.assignments.length > 0 && (
+                                <div>
+                                  <h4 className="font-semibold text-gray-900 mb-3">
+                                    Tareas
+                                  </h4>
+                                  <div className="space-y-2">
+                                    {unit.assignments.map((assignment) => (
+                                      <div
+                                        key={assignment.id}
+                                        className="p-4 bg-green-50 rounded-lg"
+                                      >
+                                        <div className="flex items-center justify-between">
+                                          <div className="flex-1">
+                                            <div className="flex items-center space-x-2 mb-2">
+                                              <h5 className="font-medium text-gray-900">
+                                                {assignment.title}
+                                              </h5>
+                                              <Badge
+                                                variant={
+                                                  assignment.is_active
+                                                    ? "default"
+                                                    : "secondary"
+                                                }
+                                              >
+                                                {assignment.is_active
+                                                  ? "Activa"
+                                                  : "Inactiva"}
                                               </Badge>
-                                            )}
+                                              {assignment.has_submission && (
+                                                <Badge variant="secondary">
+                                                  Entregada
+                                                </Badge>
+                                              )}
+                                            </div>
+                                            <p className="text-sm text-gray-600 mb-2">
+                                              {assignment.description}
+                                            </p>
+                                            <div className="flex items-center space-x-4 text-sm text-gray-500">
+                                              <span>
+                                                📅 Fecha límite:{" "}
+                                                {formatDate(
+                                                  assignment.due_date
+                                                )}
+                                              </span>
+                                              <span>
+                                                🎯 Puntos:{" "}
+                                                {assignment.max_score}
+                                              </span>
+                                            </div>
                                           </div>
-                                          <p className="text-sm text-gray-600 mb-2">
-                                            {assignment.description}
-                                          </p>
-                                          <div className="flex items-center space-x-4 text-sm text-gray-500">
-                                            <span>
-                                              📅 Fecha límite: {formatDate(assignment.due_date)}
-                                            </span>
-                                            <span>
-                                              🎯 Puntos: {assignment.max_score}
-                                            </span>
-                                          </div>
+                                          <Button
+                                            onClick={() =>
+                                              router.push(
+                                                `/campus/student/subjects/${subjectId}/assignments/${assignment.id}`
+                                              )
+                                            }
+                                            size="sm"
+                                          >
+                                            Ver Tarea
+                                          </Button>
                                         </div>
-                                        <Button
-                                          onClick={() =>
-                                            router.push(
-                                              `/campus/student/subjects/${subjectId}/assignments/${assignment.id}`
-                                            )
-                                          }
-                                          size="sm"
-                                        >
-                                          Ver Tarea
-                                        </Button>
                                       </div>
-                                    </div>
-                                  ))}
+                                    ))}
+                                  </div>
                                 </div>
-                              </div>
-                            )}
+                              )}
 
-                            {(!unit.contents || unit.contents.length === 0) && 
-                             (!unit.assignments || unit.assignments.length === 0) && (
-                              <div className="text-center py-8 text-gray-500">
-                                <FileTextIcon className="h-12 w-12 mx-auto mb-2 text-gray-400" />
-                                <p>No hay contenido en esta unidad todavía</p>
-                              </div>
-                            )}
+                            {(!unit.contents || unit.contents.length === 0) &&
+                              (!unit.assignments ||
+                                unit.assignments.length === 0) && (
+                                <div className="text-center py-8 text-gray-500">
+                                  <FileTextIcon className="h-12 w-12 mx-auto mb-2 text-gray-400" />
+                                  <p>No hay contenido en esta unidad todavía</p>
+                                </div>
+                              )}
                           </CardContent>
                         </CollapsibleContent>
                       </Collapsible>
@@ -483,19 +506,28 @@ export default function StudentSubjectDetailPage() {
               </div>
             )}
 
-            {activeTab === 'documents' && (
+            {activeTab === "documents" && (
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Materiales de Estudio</h3>
-                
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                  Materiales de Estudio
+                </h3>
+
                 <div className="space-y-4">
                   {documents.map((document) => (
-                    <Card key={document.id} className="hover:shadow-md transition-shadow">
+                    <Card
+                      key={document.id}
+                      className="hover:shadow-md transition-shadow"
+                    >
                       <CardContent className="p-4">
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
-                            <h4 className="font-medium text-gray-900 mb-1">{document.title}</h4>
+                            <h4 className="font-medium text-gray-900 mb-1">
+                              {document.title}
+                            </h4>
                             {document.description && (
-                              <p className="text-gray-600 text-sm mb-2">{document.description}</p>
+                              <p className="text-gray-600 text-sm mb-2">
+                                {document.description}
+                              </p>
                             )}
                             <div className="flex items-center space-x-4 text-sm text-gray-500 mb-2">
                               <span className="flex items-center">
@@ -525,7 +557,9 @@ export default function StudentSubjectDetailPage() {
                     <Card>
                       <CardContent className="text-center py-12">
                         <FolderIcon className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                        <p className="text-gray-500">No hay materiales disponibles aún.</p>
+                        <p className="text-gray-500">
+                          No hay materiales disponibles aún.
+                        </p>
                       </CardContent>
                     </Card>
                   )}

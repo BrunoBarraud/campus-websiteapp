@@ -1,14 +1,20 @@
-'use client'
+"use client";
 
 // Forzar rendering dinámico para evitar errores de SSR
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
-import React, { useState, useEffect } from 'react';
-import { User, Subject, UserRole, CreateUserForm, CreateSubjectForm } from '@/lib/types';
+import React, { useState, useEffect } from "react";
+import {
+  User,
+  Subject,
+  UserRole,
+  CreateUserForm,
+  CreateSubjectForm,
+} from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { AcademicUtils } from '@/constant/academic';
+import { AcademicUtils } from "@/constant/academic";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -26,12 +32,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   UsersIcon,
   BookOpenIcon,
@@ -50,7 +51,9 @@ import { toast } from "sonner";
 interface AdminDashboardProps {}
 
 const AdminDashboard: React.FC<AdminDashboardProps> = () => {
-  const [activeTab, setActiveTab] = useState<'users' | 'subjects' | 'stats'>('users');
+  const [activeTab, setActiveTab] = useState<"users" | "subjects" | "stats">(
+    "users"
+  );
   const [users, setUsers] = useState<User[]>([]);
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [teachers, setTeachers] = useState<User[]>([]);
@@ -62,29 +65,29 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
 
   // Formularios
   const [userForm, setUserForm] = useState<CreateUserForm>({
-    name: '',
-    email: '',
-    password: '',
-    role: 'student',
+    name: "",
+    email: "",
+    password: "",
+    role: "student",
     year: 1,
-    phone: '',
-    bio: ''
+    phone: "",
+    bio: "",
   });
 
   const [subjectForm, setSubjectForm] = useState<CreateSubjectForm>({
-    name: '',
-    code: '',
-    description: '',
+    name: "",
+    code: "",
+    description: "",
     year: 1,
     semester: 1,
     credits: 0,
-    teacher_id: ''
+    teacher_id: "",
   });
 
   const [filters, setFilters] = useState({
-    userRole: '' as UserRole | '',
-    userYear: '',
-    subjectYear: ''
+    userRole: "" as UserRole | "",
+    userYear: "",
+    subjectYear: "",
   });
 
   useEffect(() => {
@@ -96,8 +99,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
     try {
       await Promise.all([loadUsers(), loadSubjects(), loadTeachers()]);
     } catch (error) {
-      console.error('Error loading data:', error);
-      toast.error('Error al cargar los datos');
+      console.error("Error loading data:", error);
+      toast.error("Error al cargar los datos");
     } finally {
       setLoading(false);
     }
@@ -105,52 +108,52 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
 
   const loadUsers = async () => {
     try {
-      const response = await fetch('/api/admin/users');
+      const response = await fetch("/api/admin/users");
       const data = await response.json();
       if (data.success) {
         setUsers(data.users);
       }
     } catch (error) {
-      console.error('Error loading users:', error);
+      console.error("Error loading users:", error);
     }
   };
 
   const loadSubjects = async () => {
     try {
-      const response = await fetch('/api/admin/subjects');
+      const response = await fetch("/api/admin/subjects");
       const data = await response.json();
       if (data.success) {
         setSubjects(data.subjects);
       }
     } catch (error) {
-      console.error('Error loading subjects:', error);
+      console.error("Error loading subjects:", error);
     }
   };
 
   const loadTeachers = async () => {
     try {
-      const response = await fetch('/api/admin/users?role=teacher');
+      const response = await fetch("/api/admin/users?role=teacher");
       const data = await response.json();
       if (data.success) {
         setTeachers(data.users);
       }
     } catch (error) {
-      console.error('Error loading teachers:', error);
+      console.error("Error loading teachers:", error);
     }
   };
 
   const handleCreateUser = async () => {
     try {
-      const response = await fetch('/api/admin/users', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(userForm)
+      const response = await fetch("/api/admin/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(userForm),
       });
 
       const data = await response.json();
-      
+
       if (data.success) {
-        toast.success('Usuario creado exitosamente');
+        toast.success("Usuario creado exitosamente");
         setShowUserModal(false);
         resetUserForm();
         loadUsers();
@@ -158,23 +161,31 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
         toast.error(`Error: ${data.error}`);
       }
     } catch (error) {
-      console.error('Error creating user:', error);
-      toast.error('Error al crear usuario');
+      console.error("Error creating user:", error);
+      toast.error("Error al crear usuario");
     }
   };
 
   const handleCreateSubject = async () => {
     try {
-      const response = await fetch('/api/admin/subjects', {
-        method: editingSubject ? 'PUT' : 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(editingSubject ? { ...subjectForm, id: editingSubject.id } : subjectForm)
+      const response = await fetch("/api/admin/subjects", {
+        method: editingSubject ? "PUT" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(
+          editingSubject
+            ? { ...subjectForm, id: editingSubject.id }
+            : subjectForm
+        ),
       });
 
       const data = await response.json();
-      
+
       if (data.success) {
-        toast.success(editingSubject ? 'Materia actualizada exitosamente' : 'Materia creada exitosamente');
+        toast.success(
+          editingSubject
+            ? "Materia actualizada exitosamente"
+            : "Materia creada exitosamente"
+        );
         setShowSubjectModal(false);
         resetSubjectForm();
         loadSubjects();
@@ -182,74 +193,82 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
         toast.error(`Error: ${data.error}`);
       }
     } catch (error) {
-      console.error('Error saving subject:', error);
-      toast.error('Error al guardar materia');
+      console.error("Error saving subject:", error);
+      toast.error("Error al guardar materia");
     }
   };
 
   const handleAssignTeacher = async (subjectId: string, teacherId: string) => {
     try {
       const response = await fetch(`/api/admin/subjects/${subjectId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ teacher_id: teacherId })
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ teacher_id: teacherId }),
       });
 
       const data = await response.json();
-      
+
       if (data.success) {
-        toast.success('Profesor asignado exitosamente');
+        toast.success("Profesor asignado exitosamente");
         loadSubjects();
       } else {
         toast.error(`Error: ${data.error}`);
       }
     } catch (error) {
-      console.error('Error assigning teacher:', error);
-      toast.error('Error al asignar profesor');
+      console.error("Error assigning teacher:", error);
+      toast.error("Error al asignar profesor");
     }
   };
 
   const resetUserForm = () => {
     setUserForm({
-      name: '',
-      email: '',
-      password: '',
-      role: 'student',
+      name: "",
+      email: "",
+      password: "",
+      role: "student",
       year: 1,
-      phone: '',
-      bio: ''
+      phone: "",
+      bio: "",
     });
     setEditingUser(null);
   };
 
   const resetSubjectForm = () => {
     setSubjectForm({
-      name: '',
-      code: '',
-      description: '',
+      name: "",
+      code: "",
+      description: "",
       year: 1,
       semester: 1,
       credits: 0,
-      teacher_id: ''
+      teacher_id: "",
     });
     setEditingSubject(null);
   };
 
   const getRoleIcon = (role: UserRole) => {
     switch (role) {
-      case 'admin': return <ShieldCheckIcon className="h-4 w-4" />;
-      case 'teacher': return <GraduationCapIcon className="h-4 w-4" />;
-      case 'student': return <UserIcon className="h-4 w-4" />;
-      default: return <UserIcon className="h-4 w-4" />;
+      case "admin":
+        return <ShieldCheckIcon className="h-4 w-4" />;
+      case "teacher":
+        return <GraduationCapIcon className="h-4 w-4" />;
+      case "student":
+        return <UserIcon className="h-4 w-4" />;
+      default:
+        return <UserIcon className="h-4 w-4" />;
     }
   };
 
   const getRoleColor = (role: UserRole) => {
     switch (role) {
-      case 'admin': return 'bg-red-100 text-red-800';
-      case 'teacher': return 'bg-blue-100 text-blue-800';
-      case 'student': return 'bg-green-100 text-green-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case "admin":
+        return "bg-red-100 text-red-800";
+      case "teacher":
+        return "bg-blue-100 text-blue-800";
+      case "student":
+        return "bg-green-100 text-green-800";
+      default:
+        return "bg-gray-100 text-gray-800";
     }
   };
 
@@ -258,14 +277,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
   };
 
   // Filtrar datos
-  const filteredUsers = users.filter(user => {
+  const filteredUsers = users.filter((user) => {
     if (filters.userRole && user.role !== filters.userRole) return false;
-    if (filters.userYear && user.year?.toString() !== filters.userYear) return false;
+    if (filters.userYear && user.year?.toString() !== filters.userYear)
+      return false;
     return true;
   });
 
-  const filteredSubjects = subjects.filter(subject => {
-    if (filters.subjectYear && subject.year.toString() !== filters.subjectYear) return false;
+  const filteredSubjects = subjects.filter((subject) => {
+    if (filters.subjectYear && subject.year.toString() !== filters.subjectYear)
+      return false;
     return true;
   });
 
@@ -274,7 +295,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Cargando panel de administración...</p>
+          <p className="mt-4 text-gray-600">
+            Cargando panel de administración...
+          </p>
         </div>
       </div>
     );
@@ -285,12 +308,20 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Panel de Administración</h1>
-          <p className="text-gray-600 mt-2">Gestiona usuarios, materias y configuraciones del campus</p>
+          <h1 className="text-3xl font-bold text-gray-900">
+            Panel de Administración
+          </h1>
+          <p className="text-gray-600 mt-2">
+            Gestiona usuarios, materias y configuraciones del campus
+          </p>
         </div>
 
         {/* Modern Tabs */}
-        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as any)} className="w-full">
+        <Tabs
+          value={activeTab}
+          onValueChange={(value) => setActiveTab(value as any)}
+          className="w-full"
+        >
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="users" className="flex items-center gap-2">
               <UsersIcon className="h-4 w-4" />
@@ -324,7 +355,15 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
               <CardContent>
                 {/* Filtros */}
                 <div className="flex gap-4 mb-6">
-                  <Select value={filters.userRole} onValueChange={(value) => setFilters({...filters, userRole: value as UserRole | ''})}>
+                  <Select
+                    value={filters.userRole}
+                    onValueChange={(value) =>
+                      setFilters({
+                        ...filters,
+                        userRole: value as UserRole | "",
+                      })
+                    }
+                  >
                     <SelectTrigger className="w-48">
                       <SelectValue placeholder="Filtrar por rol" />
                     </SelectTrigger>
@@ -335,16 +374,25 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
                       <SelectItem value="student">Estudiantes</SelectItem>
                     </SelectContent>
                   </Select>
-                  
-                  <Select value={filters.userYear} onValueChange={(value) => setFilters({...filters, userYear: value})}>
+
+                  <Select
+                    value={filters.userYear}
+                    onValueChange={(value) =>
+                      setFilters({ ...filters, userYear: value })
+                    }
+                  >
                     <SelectTrigger className="w-48">
                       <SelectValue placeholder="Filtrar por año" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="">Todos los años</SelectItem>
-                      {AcademicUtils.getYearOptions().map(({ value, label }) => (
-                        <SelectItem key={value} value={value}>{label}</SelectItem>
-                      ))}
+                      {AcademicUtils.getYearOptions().map(
+                        ({ value, label }) => (
+                          <SelectItem key={value} value={value}>
+                            {label}
+                          </SelectItem>
+                        )
+                      )}
                     </SelectContent>
                   </Select>
 
@@ -375,8 +423,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
                                 {getRoleIcon(user.role)}
                               </div>
                               <div>
-                                <div className="font-medium text-gray-900">{user.name}</div>
-                                <div className="text-sm text-gray-500">{user.email}</div>
+                                <div className="font-medium text-gray-900">
+                                  {user.name}
+                                </div>
+                                <div className="text-sm text-gray-500">
+                                  {user.email}
+                                </div>
                               </div>
                             </div>
                           </td>
@@ -386,11 +438,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
                             </Badge>
                           </td>
                           <td className="p-4 text-sm text-gray-900">
-                            {user.year ? `${user.year}° año` : '-'}
+                            {user.year ? `${user.year}° año` : "-"}
                           </td>
                           <td className="p-4">
-                            <Badge variant={user.is_active ? "default" : "secondary"}>
-                              {user.is_active ? 'Activo' : 'Inactivo'}
+                            <Badge
+                              variant={user.is_active ? "default" : "secondary"}
+                            >
+                              {user.is_active ? "Activo" : "Inactivo"}
                             </Badge>
                           </td>
                           <td className="p-4">
@@ -399,7 +453,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
                                 <EditIcon className="h-4 w-4" />
                               </Button>
                               <Button variant="outline" size="sm">
-                                {user.is_active ? <UserXIcon className="h-4 w-4" /> : <UserCheckIcon className="h-4 w-4" />}
+                                {user.is_active ? (
+                                  <UserXIcon className="h-4 w-4" />
+                                ) : (
+                                  <UserCheckIcon className="h-4 w-4" />
+                                )}
                               </Button>
                             </div>
                           </td>
@@ -407,7 +465,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
                       ))}
                     </tbody>
                   </table>
-                  
+
                   {filteredUsers.length === 0 && (
                     <div className="text-center py-8 text-gray-500">
                       No se encontraron usuarios con los filtros aplicados.
@@ -436,15 +494,24 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
               <CardContent>
                 {/* Filtros */}
                 <div className="flex gap-4 mb-6">
-                  <Select value={filters.subjectYear} onValueChange={(value) => setFilters({...filters, subjectYear: value})}>
+                  <Select
+                    value={filters.subjectYear}
+                    onValueChange={(value) =>
+                      setFilters({ ...filters, subjectYear: value })
+                    }
+                  >
                     <SelectTrigger className="w-48">
                       <SelectValue placeholder="Filtrar por año" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="">Todos los años</SelectItem>
-                      {AcademicUtils.getYearOptions().map(({ value, label }) => (
-                        <SelectItem key={value} value={value}>{label}</SelectItem>
-                      ))}
+                      {AcademicUtils.getYearOptions().map(
+                        ({ value, label }) => (
+                          <SelectItem key={value} value={value}>
+                            {label}
+                          </SelectItem>
+                        )
+                      )}
                     </SelectContent>
                   </Select>
 
@@ -457,44 +524,66 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
                 {/* Grid de materias */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {filteredSubjects.map((subject) => (
-                    <Card key={subject.id} className="hover:shadow-md transition-shadow">
+                    <Card
+                      key={subject.id}
+                      className="hover:shadow-md transition-shadow"
+                    >
                       <CardHeader>
                         <div className="flex justify-between items-start">
                           <div className="flex-1">
-                            <CardTitle className="text-lg">{subject.name}</CardTitle>
-                            <p className="text-sm text-gray-500 mt-1">Código: {subject.code}</p>
-                            <p className="text-sm text-gray-500">{subject.year}° año • {subject.credits} créditos</p>
+                            <CardTitle className="text-lg">
+                              {subject.name}
+                            </CardTitle>
+                            <p className="text-sm text-gray-500 mt-1">
+                              Código: {subject.code}
+                            </p>
+                            <p className="text-sm text-gray-500">
+                              {subject.year}° año • {subject.credits} créditos
+                            </p>
                           </div>
-                          <Badge variant="outline">{subject.semester}° sem</Badge>
+                          <Badge variant="outline">
+                            {subject.semester}° sem
+                          </Badge>
                         </div>
                       </CardHeader>
                       <CardContent>
                         {subject.description && (
-                          <p className="text-sm text-gray-600 mb-4">{subject.description}</p>
+                          <p className="text-sm text-gray-600 mb-4">
+                            {subject.description}
+                          </p>
                         )}
 
                         <div className="space-y-3">
                           <div>
-                            <Label className="text-xs text-gray-500">Profesor asignado:</Label>
+                            <Label className="text-xs text-gray-500">
+                              Profesor asignado:
+                            </Label>
                             <p className="text-sm font-medium">
-                              {(subject as any).teacher?.name || 'Sin asignar'}
+                              {(subject as any).teacher?.name || "Sin asignar"}
                             </p>
                           </div>
 
                           <div className="flex gap-2">
-                            <Select onValueChange={(value) => value && handleAssignTeacher(subject.id, value)}>
+                            <Select
+                              onValueChange={(value) =>
+                                value && handleAssignTeacher(subject.id, value)
+                              }
+                            >
                               <SelectTrigger className="flex-1">
                                 <SelectValue placeholder="Asignar profesor" />
                               </SelectTrigger>
                               <SelectContent>
-                                {teachers.map(teacher => (
-                                  <SelectItem key={teacher.id} value={teacher.id}>
+                                {teachers.map((teacher) => (
+                                  <SelectItem
+                                    key={teacher.id}
+                                    value={teacher.id}
+                                  >
                                     {teacher.name}
                                   </SelectItem>
                                 ))}
                               </SelectContent>
                             </Select>
-                            
+
                             <Button variant="outline" size="sm">
                               <EditIcon className="h-4 w-4" />
                             </Button>
@@ -519,56 +608,73 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Usuarios</CardTitle>
+                  <CardTitle className="text-sm font-medium">
+                    Total Usuarios
+                  </CardTitle>
                   <UsersIcon className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">{users.length}</div>
                   <p className="text-xs text-muted-foreground">
-                    {users.filter(u => u.is_active).length} activos
+                    {users.filter((u) => u.is_active).length} activos
                   </p>
                 </CardContent>
               </Card>
 
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Estudiantes</CardTitle>
+                  <CardTitle className="text-sm font-medium">
+                    Estudiantes
+                  </CardTitle>
                   <GraduationCapIcon className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">
-                    {users.filter(u => u.role === 'student').length}
+                    {users.filter((u) => u.role === "student").length}
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    {users.filter(u => u.role === 'student' && u.is_active).length} activos
+                    {
+                      users.filter((u) => u.role === "student" && u.is_active)
+                        .length
+                    }{" "}
+                    activos
                   </p>
                 </CardContent>
               </Card>
 
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Profesores</CardTitle>
+                  <CardTitle className="text-sm font-medium">
+                    Profesores
+                  </CardTitle>
                   <ShieldCheckIcon className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">
-                    {users.filter(u => u.role === 'teacher').length}
+                    {users.filter((u) => u.role === "teacher").length}
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    {users.filter(u => u.role === 'teacher' && u.is_active).length} activos
+                    {
+                      users.filter((u) => u.role === "teacher" && u.is_active)
+                        .length
+                    }{" "}
+                    activos
                   </p>
                 </CardContent>
               </Card>
 
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Materias</CardTitle>
+                  <CardTitle className="text-sm font-medium">
+                    Materias
+                  </CardTitle>
                   <BookOpenIcon className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">{subjects.length}</div>
                   <p className="text-xs text-muted-foreground">
-                    {subjects.filter(s => (s as any).teacher).length} con profesor asignado
+                    {subjects.filter((s) => (s as any).teacher).length} con
+                    profesor asignado
                   </p>
                 </CardContent>
               </Card>
@@ -581,10 +687,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
               <DialogTitle>
-                {editingUser ? 'Editar Usuario' : 'Crear Nuevo Usuario'}
+                {editingUser ? "Editar Usuario" : "Crear Nuevo Usuario"}
               </DialogTitle>
               <DialogDescription>
-                {editingUser ? 'Modifica los datos del usuario.' : 'Completa la información para crear un nuevo usuario.'}
+                {editingUser
+                  ? "Modifica los datos del usuario."
+                  : "Completa la información para crear un nuevo usuario."}
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
@@ -593,7 +701,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
                 <Input
                   id="name"
                   value={userForm.name}
-                  onChange={(e) => setUserForm({...userForm, name: e.target.value})}
+                  onChange={(e) =>
+                    setUserForm({ ...userForm, name: e.target.value })
+                  }
                   placeholder="Ingresa el nombre completo"
                 />
               </div>
@@ -604,7 +714,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
                   id="email"
                   type="email"
                   value={userForm.email}
-                  onChange={(e) => setUserForm({...userForm, email: e.target.value})}
+                  onChange={(e) =>
+                    setUserForm({ ...userForm, email: e.target.value })
+                  }
                   placeholder="usuario@ejemplo.com"
                 />
               </div>
@@ -615,14 +727,21 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
                   id="password"
                   type="password"
                   value={userForm.password}
-                  onChange={(e) => setUserForm({...userForm, password: e.target.value})}
+                  onChange={(e) =>
+                    setUserForm({ ...userForm, password: e.target.value })
+                  }
                   placeholder="Contraseña segura"
                 />
               </div>
 
               <div>
                 <Label htmlFor="role">Rol</Label>
-                <Select value={userForm.role} onValueChange={(value) => setUserForm({...userForm, role: value as UserRole})}>
+                <Select
+                  value={userForm.role}
+                  onValueChange={(value) =>
+                    setUserForm({ ...userForm, role: value as UserRole })
+                  }
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Seleccionar rol" />
                   </SelectTrigger>
@@ -634,16 +753,23 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
                 </Select>
               </div>
 
-              {userForm.role === 'student' && (
+              {userForm.role === "student" && (
                 <div>
                   <Label htmlFor="year">Año de cursado</Label>
-                  <Select value={userForm.year?.toString()} onValueChange={(value) => setUserForm({...userForm, year: parseInt(value)})}>
+                  <Select
+                    value={userForm.year?.toString()}
+                    onValueChange={(value) =>
+                      setUserForm({ ...userForm, year: parseInt(value) })
+                    }
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Seleccionar año" />
                     </SelectTrigger>
                     <SelectContent>
-                      {[1,2,3,4,5,6].map(year => (
-                        <SelectItem key={year} value={year.toString()}>{year}° año</SelectItem>
+                      {[1, 2, 3, 4, 5, 6].map((year) => (
+                        <SelectItem key={year} value={year.toString()}>
+                          {year}° año
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -651,14 +777,17 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
               )}
 
               <div className="flex justify-end space-x-2">
-                <Button variant="outline" onClick={() => {
-                  setShowUserModal(false);
-                  resetUserForm();
-                }}>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setShowUserModal(false);
+                    resetUserForm();
+                  }}
+                >
                   Cancelar
                 </Button>
                 <Button onClick={handleCreateUser}>
-                  {editingUser ? 'Actualizar' : 'Crear'}
+                  {editingUser ? "Actualizar" : "Crear"}
                 </Button>
               </div>
             </div>
@@ -670,10 +799,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
               <DialogTitle>
-                {editingSubject ? 'Editar Materia' : 'Crear Nueva Materia'}
+                {editingSubject ? "Editar Materia" : "Crear Nueva Materia"}
               </DialogTitle>
               <DialogDescription>
-                {editingSubject ? 'Modifica los datos de la materia.' : 'Completa la información para crear una nueva materia.'}
+                {editingSubject
+                  ? "Modifica los datos de la materia."
+                  : "Completa la información para crear una nueva materia."}
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
@@ -682,7 +813,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
                 <Input
                   id="subject-name"
                   value={subjectForm.name}
-                  onChange={(e) => setSubjectForm({...subjectForm, name: e.target.value})}
+                  onChange={(e) =>
+                    setSubjectForm({ ...subjectForm, name: e.target.value })
+                  }
                   placeholder="Ingresa el nombre de la materia"
                 />
               </div>
@@ -692,7 +825,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
                 <Input
                   id="subject-code"
                   value={subjectForm.code}
-                  onChange={(e) => setSubjectForm({...subjectForm, code: e.target.value})}
+                  onChange={(e) =>
+                    setSubjectForm({ ...subjectForm, code: e.target.value })
+                  }
                   placeholder="Ej: MAT101"
                 />
               </div>
@@ -702,7 +837,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
                 <Textarea
                   id="subject-description"
                   value={subjectForm.description}
-                  onChange={(e) => setSubjectForm({...subjectForm, description: e.target.value})}
+                  onChange={(e) =>
+                    setSubjectForm({
+                      ...subjectForm,
+                      description: e.target.value,
+                    })
+                  }
                   placeholder="Descripción de la materia"
                 />
               </div>
@@ -710,13 +850,20 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
               <div className="grid grid-cols-3 gap-4">
                 <div>
                   <Label htmlFor="subject-year">Año</Label>
-                  <Select value={subjectForm.year.toString()} onValueChange={(value) => setSubjectForm({...subjectForm, year: parseInt(value)})}>
+                  <Select
+                    value={subjectForm.year.toString()}
+                    onValueChange={(value) =>
+                      setSubjectForm({ ...subjectForm, year: parseInt(value) })
+                    }
+                  >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {[1,2,3,4,5,6].map(year => (
-                        <SelectItem key={year} value={year.toString()}>{year}°</SelectItem>
+                      {[1, 2, 3, 4, 5, 6].map((year) => (
+                        <SelectItem key={year} value={year.toString()}>
+                          {year}°
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -724,7 +871,15 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
 
                 <div>
                   <Label htmlFor="subject-semester">Semestre</Label>
-                  <Select value={subjectForm.semester?.toString() || ''} onValueChange={(value) => setSubjectForm({...subjectForm, semester: parseInt(value)})}>
+                  <Select
+                    value={subjectForm.semester?.toString() || ""}
+                    onValueChange={(value) =>
+                      setSubjectForm({
+                        ...subjectForm,
+                        semester: parseInt(value),
+                      })
+                    }
+                  >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -741,21 +896,33 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
                     id="subject-credits"
                     type="number"
                     value={subjectForm.credits}
-                    onChange={(e) => setSubjectForm({...subjectForm, credits: parseInt(e.target.value) || 0})}
+                    onChange={(e) =>
+                      setSubjectForm({
+                        ...subjectForm,
+                        credits: parseInt(e.target.value) || 0,
+                      })
+                    }
                     min="0"
                   />
                 </div>
               </div>
 
               <div>
-                <Label htmlFor="subject-teacher">Profesor asignado (opcional)</Label>
-                <Select value={subjectForm.teacher_id} onValueChange={(value) => setSubjectForm({...subjectForm, teacher_id: value})}>
+                <Label htmlFor="subject-teacher">
+                  Profesor asignado (opcional)
+                </Label>
+                <Select
+                  value={subjectForm.teacher_id}
+                  onValueChange={(value) =>
+                    setSubjectForm({ ...subjectForm, teacher_id: value })
+                  }
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Seleccionar profesor" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="">Sin asignar</SelectItem>
-                    {teachers.map(teacher => (
+                    {teachers.map((teacher) => (
                       <SelectItem key={teacher.id} value={teacher.id}>
                         {teacher.name}
                       </SelectItem>
@@ -765,14 +932,17 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
               </div>
 
               <div className="flex justify-end space-x-2">
-                <Button variant="outline" onClick={() => {
-                  setShowSubjectModal(false);
-                  resetSubjectForm();
-                }}>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setShowSubjectModal(false);
+                    resetSubjectForm();
+                  }}
+                >
                   Cancelar
                 </Button>
                 <Button onClick={handleCreateSubject}>
-                  {editingSubject ? 'Actualizar' : 'Crear'}
+                  {editingSubject ? "Actualizar" : "Crear"}
                 </Button>
               </div>
             </div>

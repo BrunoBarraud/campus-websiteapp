@@ -1,7 +1,7 @@
-'use client'
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import { useSession } from 'next-auth/react';
+import React, { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -13,14 +13,14 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { 
-  MessageCircleIcon, 
-  SendIcon, 
-  CheckCircleIcon, 
+import {
+  MessageCircleIcon,
+  SendIcon,
+  CheckCircleIcon,
   XCircleIcon,
   ReplyIcon,
   EditIcon,
-  MessageSquareIcon
+  MessageSquareIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -60,19 +60,19 @@ interface SubmissionCommentsProps {
   canComment?: boolean;
 }
 
-const SubmissionComments: React.FC<SubmissionCommentsProps> = ({ 
-  submissionId, 
+const SubmissionComments: React.FC<SubmissionCommentsProps> = ({
+  submissionId,
   submissionText,
-  canComment = true 
+  canComment = true,
 }) => {
   const { data: session } = useSession();
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
-  const [newComment, setNewComment] = useState('');
+  const [newComment, setNewComment] = useState("");
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
-  const [replyContent, setReplyContent] = useState('');
+  const [replyContent, setReplyContent] = useState("");
   const [editingComment, setEditingComment] = useState<string | null>(null);
-  const [editContent, setEditContent] = useState('');
+  const [editContent, setEditContent] = useState("");
   const [showAddComment, setShowAddComment] = useState(false);
   const [selectedLine, setSelectedLine] = useState<number | null>(null);
 
@@ -85,16 +85,16 @@ const SubmissionComments: React.FC<SubmissionCommentsProps> = ({
       setLoading(true);
       const response = await fetch(`/api/submissions/${submissionId}/comments`);
       const data = await response.json();
-      
+
       if (response.ok) {
         setComments(data);
       } else {
-        console.error('Error loading comments:', data.error);
-        toast.error('Error al cargar comentarios');
+        console.error("Error loading comments:", data.error);
+        toast.error("Error al cargar comentarios");
       }
     } catch (error) {
-      console.error('Error loading comments:', error);
-      toast.error('Error al cargar comentarios');
+      console.error("Error loading comments:", error);
+      toast.error("Error al cargar comentarios");
     } finally {
       setLoading(false);
     }
@@ -102,190 +102,229 @@ const SubmissionComments: React.FC<SubmissionCommentsProps> = ({
 
   const createComment = async () => {
     if (!newComment.trim()) {
-      toast.error('El comentario no puede estar vacío');
+      toast.error("El comentario no puede estar vacío");
       return;
     }
 
     try {
-      const response = await fetch(`/api/submissions/${submissionId}/comments`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          content: newComment,
-          line_number: selectedLine
-        })
-      });
+      const response = await fetch(
+        `/api/submissions/${submissionId}/comments`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            content: newComment,
+            line_number: selectedLine,
+          }),
+        }
+      );
 
       const data = await response.json();
-      
+
       if (response.ok) {
         setComments([...comments, data]);
-        setNewComment('');
+        setNewComment("");
         setSelectedLine(null);
         setShowAddComment(false);
-        toast.success('Comentario agregado');
+        toast.success("Comentario agregado");
       } else {
-        toast.error(data.error || 'Error al crear comentario');
+        toast.error(data.error || "Error al crear comentario");
       }
     } catch (error) {
-      console.error('Error creating comment:', error);
-      toast.error('Error al crear comentario');
+      console.error("Error creating comment:", error);
+      toast.error("Error al crear comentario");
     }
   };
 
   const createReply = async (commentId: string) => {
     if (!replyContent.trim()) {
-      toast.error('La respuesta no puede estar vacía');
+      toast.error("La respuesta no puede estar vacía");
       return;
     }
 
     try {
-      const response = await fetch(`/api/submissions/${submissionId}/comments`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          content: replyContent,
-          parent_comment_id: commentId
-        })
-      });
+      const response = await fetch(
+        `/api/submissions/${submissionId}/comments`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            content: replyContent,
+            parent_comment_id: commentId,
+          }),
+        }
+      );
 
       const data = await response.json();
-      
+
       if (response.ok) {
         // Actualizar el comentario con la nueva respuesta
-        setComments(comments.map(comment => {
-          if (comment.id === commentId) {
-            return {
-              ...comment,
-              replies: [...(comment.replies || []), data]
-            };
-          }
-          return comment;
-        }));
-        
-        setReplyContent('');
+        setComments(
+          comments.map((comment) => {
+            if (comment.id === commentId) {
+              return {
+                ...comment,
+                replies: [...(comment.replies || []), data],
+              };
+            }
+            return comment;
+          })
+        );
+
+        setReplyContent("");
         setReplyingTo(null);
-        toast.success('Respuesta agregada');
+        toast.success("Respuesta agregada");
       } else {
-        toast.error(data.error || 'Error al crear respuesta');
+        toast.error(data.error || "Error al crear respuesta");
       }
     } catch (error) {
-      console.error('Error creating reply:', error);
-      toast.error('Error al crear respuesta');
+      console.error("Error creating reply:", error);
+      toast.error("Error al crear respuesta");
     }
   };
 
-  const toggleResolved = async (commentId: string, currentResolved: boolean) => {
+  const toggleResolved = async (
+    commentId: string,
+    currentResolved: boolean
+  ) => {
     try {
-      const response = await fetch(`/api/submissions/${submissionId}/comments`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          comment_id: commentId,
-          is_resolved: !currentResolved
-        })
-      });
+      const response = await fetch(
+        `/api/submissions/${submissionId}/comments`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            comment_id: commentId,
+            is_resolved: !currentResolved,
+          }),
+        }
+      );
 
       const data = await response.json();
-      
+
       if (response.ok) {
-        setComments(comments.map(comment => 
-          comment.id === commentId ? { ...comment, is_resolved: !currentResolved } : comment
-        ));
-        toast.success(currentResolved ? 'Comentario marcado como no resuelto' : 'Comentario marcado como resuelto');
+        setComments(
+          comments.map((comment) =>
+            comment.id === commentId
+              ? { ...comment, is_resolved: !currentResolved }
+              : comment
+          )
+        );
+        toast.success(
+          currentResolved
+            ? "Comentario marcado como no resuelto"
+            : "Comentario marcado como resuelto"
+        );
       } else {
-        toast.error(data.error || 'Error al actualizar comentario');
+        toast.error(data.error || "Error al actualizar comentario");
       }
     } catch (error) {
-      console.error('Error updating comment:', error);
-      toast.error('Error al actualizar comentario');
+      console.error("Error updating comment:", error);
+      toast.error("Error al actualizar comentario");
     }
   };
 
   const updateComment = async (commentId: string) => {
     if (!editContent.trim()) {
-      toast.error('El comentario no puede estar vacío');
+      toast.error("El comentario no puede estar vacío");
       return;
     }
 
     try {
-      const response = await fetch(`/api/submissions/${submissionId}/comments`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          comment_id: commentId,
-          content: editContent
-        })
-      });
+      const response = await fetch(
+        `/api/submissions/${submissionId}/comments`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            comment_id: commentId,
+            content: editContent,
+          }),
+        }
+      );
 
       const data = await response.json();
-      
+
       if (response.ok) {
-        setComments(comments.map(comment => 
-          comment.id === commentId ? data : comment
-        ));
+        setComments(
+          comments.map((comment) => (comment.id === commentId ? data : comment))
+        );
         setEditingComment(null);
-        setEditContent('');
-        toast.success('Comentario actualizado');
+        setEditContent("");
+        toast.success("Comentario actualizado");
       } else {
-        toast.error(data.error || 'Error al actualizar comentario');
+        toast.error(data.error || "Error al actualizar comentario");
       }
     } catch (error) {
-      console.error('Error updating comment:', error);
-      toast.error('Error al actualizar comentario');
+      console.error("Error updating comment:", error);
+      toast.error("Error al actualizar comentario");
     }
   };
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('es-ES', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+    return date.toLocaleDateString("es-ES", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
 
   const getRoleColor = (role: string) => {
     switch (role) {
-      case 'teacher': return 'bg-blue-100 text-blue-800';
-      case 'admin': return 'bg-red-100 text-red-800';
-      case 'student': return 'bg-green-100 text-green-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case "teacher":
+        return "bg-blue-100 text-blue-800";
+      case "admin":
+        return "bg-red-100 text-red-800";
+      case "student":
+        return "bg-green-100 text-green-800";
+      default:
+        return "bg-gray-100 text-gray-800";
     }
   };
 
   const getRoleLabel = (role: string) => {
     switch (role) {
-      case 'teacher': return 'Profesor';
-      case 'admin': return 'Admin';
-      case 'student': return 'Estudiante';
-      default: return role;
+      case "teacher":
+        return "Profesor";
+      case "admin":
+        return "Admin";
+      case "student":
+        return "Estudiante";
+      default:
+        return role;
     }
   };
 
   const renderSubmissionWithComments = () => {
-    const lines = submissionText.split('\n');
-    
+    const lines = submissionText.split("\n");
+
     return (
       <div className="bg-gray-50 p-4 rounded-lg border">
         <h4 className="font-medium text-gray-900 mb-3">Texto de la entrega:</h4>
         <div className="space-y-1">
           {lines.map((line, index) => {
             const lineNumber = index + 1;
-            const lineComments = comments.filter(c => c.line_number === lineNumber);
-            
+            const lineComments = comments.filter(
+              (c) => c.line_number === lineNumber
+            );
+
             return (
               <div key={index} className="flex group">
                 <div className="w-8 text-xs text-gray-400 select-none flex-shrink-0 pt-1">
                   {lineNumber}
                 </div>
                 <div className="flex-1">
-                  <div 
-                    className={`px-2 py-1 rounded ${lineComments.length > 0 ? 'bg-yellow-100 border-l-2 border-yellow-400' : ''}`}
+                  <div
+                    className={`px-2 py-1 rounded ${
+                      lineComments.length > 0
+                        ? "bg-yellow-100 border-l-2 border-yellow-400"
+                        : ""
+                    }`}
                   >
-                    {line || '\u00A0'}
+                    {line || "\u00A0"}
                     {canComment && (
                       <Button
                         variant="ghost"
@@ -302,20 +341,31 @@ const SubmissionComments: React.FC<SubmissionCommentsProps> = ({
                   </div>
                   {lineComments.length > 0 && (
                     <div className="ml-2 mt-1 space-y-2">
-                      {lineComments.map(comment => (
+                      {lineComments.map((comment) => (
                         <div key={comment.id} className="text-sm">
                           <Card className="border-l-4 border-blue-400">
                             <CardContent className="p-2">
                               <div className="flex items-center justify-between mb-1">
                                 <div className="flex items-center space-x-2">
-                                  <Badge className={getRoleColor(comment.author.role)}>
+                                  <Badge
+                                    className={getRoleColor(
+                                      comment.author.role
+                                    )}
+                                  >
                                     {getRoleLabel(comment.author.role)}
                                   </Badge>
-                                  <span className="font-medium text-xs">{comment.author.name}</span>
-                                  <span className="text-xs text-gray-500">{formatDate(comment.created_at)}</span>
+                                  <span className="font-medium text-xs">
+                                    {comment.author.name}
+                                  </span>
+                                  <span className="text-xs text-gray-500">
+                                    {formatDate(comment.created_at)}
+                                  </span>
                                 </div>
                                 {comment.is_resolved && (
-                                  <Badge variant="outline" className="text-green-600">
+                                  <Badge
+                                    variant="outline"
+                                    className="text-green-600"
+                                  >
                                     <CheckCircleIcon className="h-3 w-3 mr-1" />
                                     Resuelto
                                   </Badge>
@@ -341,13 +391,15 @@ const SubmissionComments: React.FC<SubmissionCommentsProps> = ({
     return (
       <Card>
         <CardContent className="p-6">
-          <div className="text-center text-gray-500">Cargando comentarios...</div>
+          <div className="text-center text-gray-500">
+            Cargando comentarios...
+          </div>
         </CardContent>
       </Card>
     );
   }
 
-  const generalComments = comments.filter(c => !c.line_number);
+  const generalComments = comments.filter((c) => !c.line_number);
 
   return (
     <div className="space-y-6">
@@ -373,7 +425,9 @@ const SubmissionComments: React.FC<SubmissionCommentsProps> = ({
                 <DialogContent>
                   <DialogHeader>
                     <DialogTitle>
-                      {selectedLine ? `Comentario en línea ${selectedLine}` : 'Nuevo Comentario General'}
+                      {selectedLine
+                        ? `Comentario en línea ${selectedLine}`
+                        : "Nuevo Comentario General"}
                     </DialogTitle>
                   </DialogHeader>
                   <div className="space-y-4">
@@ -384,11 +438,11 @@ const SubmissionComments: React.FC<SubmissionCommentsProps> = ({
                       rows={4}
                     />
                     <div className="flex justify-end gap-2">
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         onClick={() => {
                           setShowAddComment(false);
-                          setNewComment('');
+                          setNewComment("");
                           setSelectedLine(null);
                         }}
                       >
@@ -411,13 +465,18 @@ const SubmissionComments: React.FC<SubmissionCommentsProps> = ({
               <MessageCircleIcon className="h-12 w-12 mx-auto mb-2 text-gray-400" />
               <p>No hay comentarios generales aún</p>
               {canComment && (
-                <p className="text-sm">Sé el primero en agregar un comentario</p>
+                <p className="text-sm">
+                  Sé el primero en agregar un comentario
+                </p>
               )}
             </div>
           ) : (
             <div className="space-y-4">
               {generalComments.map((comment) => (
-                <Card key={comment.id} className={`${comment.is_resolved ? 'opacity-75' : ''}`}>
+                <Card
+                  key={comment.id}
+                  className={`${comment.is_resolved ? "opacity-75" : ""}`}
+                >
                   <CardContent className="p-4">
                     {/* Header del comentario */}
                     <div className="flex items-center justify-between mb-3">
@@ -425,11 +484,18 @@ const SubmissionComments: React.FC<SubmissionCommentsProps> = ({
                         <Badge className={getRoleColor(comment.author.role)}>
                           {getRoleLabel(comment.author.role)}
                         </Badge>
-                        <span className="font-medium">{comment.author.name}</span>
-                        <span className="text-sm text-gray-500">{formatDate(comment.created_at)}</span>
-                        {comment.updated_at && comment.updated_at !== comment.created_at && (
-                          <span className="text-xs text-gray-400">(editado)</span>
-                        )}
+                        <span className="font-medium">
+                          {comment.author.name}
+                        </span>
+                        <span className="text-sm text-gray-500">
+                          {formatDate(comment.created_at)}
+                        </span>
+                        {comment.updated_at &&
+                          comment.updated_at !== comment.created_at && (
+                            <span className="text-xs text-gray-400">
+                              (editado)
+                            </span>
+                          )}
                       </div>
                       <div className="flex items-center space-x-2">
                         {comment.is_resolved ? (
@@ -455,25 +521,30 @@ const SubmissionComments: React.FC<SubmissionCommentsProps> = ({
                           rows={3}
                         />
                         <div className="flex justify-end gap-2">
-                          <Button 
-                            variant="outline" 
+                          <Button
+                            variant="outline"
                             size="sm"
                             onClick={() => {
                               setEditingComment(null);
-                              setEditContent('');
+                              setEditContent("");
                             }}
                           >
                             Cancelar
                           </Button>
-                          <Button size="sm" onClick={() => updateComment(comment.id)}>
+                          <Button
+                            size="sm"
+                            onClick={() => updateComment(comment.id)}
+                          >
                             Guardar
                           </Button>
                         </div>
                       </div>
                     ) : (
                       <div>
-                        <p className="text-gray-700 mb-3 whitespace-pre-wrap">{comment.content}</p>
-                        
+                        <p className="text-gray-700 mb-3 whitespace-pre-wrap">
+                          {comment.content}
+                        </p>
+
                         {/* Acciones del comentario */}
                         <div className="flex items-center justify-between">
                           <div className="flex space-x-2">
@@ -487,12 +558,18 @@ const SubmissionComments: React.FC<SubmissionCommentsProps> = ({
                                   <ReplyIcon className="h-3 w-3 mr-1" />
                                   Responder
                                 </Button>
-                                
-                                {(session?.user?.role === 'teacher' || session?.user?.role === 'admin') && (
+
+                                {(session?.user?.role === "teacher" ||
+                                  session?.user?.role === "admin") && (
                                   <Button
                                     variant="ghost"
                                     size="sm"
-                                    onClick={() => toggleResolved(comment.id, comment.is_resolved)}
+                                    onClick={() =>
+                                      toggleResolved(
+                                        comment.id,
+                                        comment.is_resolved
+                                      )
+                                    }
                                   >
                                     {comment.is_resolved ? (
                                       <>
@@ -507,8 +584,11 @@ const SubmissionComments: React.FC<SubmissionCommentsProps> = ({
                                     )}
                                   </Button>
                                 )}
-                                
-                                {(comment.author_id === session?.user?.id || ['admin', 'teacher'].includes(session?.user?.role || '')) && (
+
+                                {(comment.author_id === session?.user?.id ||
+                                  ["admin", "teacher"].includes(
+                                    session?.user?.role || ""
+                                  )) && (
                                   <Button
                                     variant="ghost"
                                     size="sm"
@@ -532,15 +612,26 @@ const SubmissionComments: React.FC<SubmissionCommentsProps> = ({
                     {comment.replies && comment.replies.length > 0 && (
                       <div className="mt-4 pl-4 border-l-2 border-gray-200 space-y-3">
                         {comment.replies.map((reply) => (
-                          <div key={reply.id} className="bg-gray-50 p-3 rounded">
+                          <div
+                            key={reply.id}
+                            className="bg-gray-50 p-3 rounded"
+                          >
                             <div className="flex items-center space-x-2 mb-2">
-                              <Badge className={getRoleColor(reply.author.role)}>
+                              <Badge
+                                className={getRoleColor(reply.author.role)}
+                              >
                                 {getRoleLabel(reply.author.role)}
                               </Badge>
-                              <span className="font-medium text-sm">{reply.author.name}</span>
-                              <span className="text-xs text-gray-500">{formatDate(reply.created_at)}</span>
+                              <span className="font-medium text-sm">
+                                {reply.author.name}
+                              </span>
+                              <span className="text-xs text-gray-500">
+                                {formatDate(reply.created_at)}
+                              </span>
                             </div>
-                            <p className="text-sm text-gray-700 whitespace-pre-wrap">{reply.content}</p>
+                            <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                              {reply.content}
+                            </p>
                           </div>
                         ))}
                       </div>
@@ -557,17 +648,20 @@ const SubmissionComments: React.FC<SubmissionCommentsProps> = ({
                             rows={3}
                           />
                           <div className="flex justify-end gap-2">
-                            <Button 
-                              variant="outline" 
+                            <Button
+                              variant="outline"
                               size="sm"
                               onClick={() => {
                                 setReplyingTo(null);
-                                setReplyContent('');
+                                setReplyContent("");
                               }}
                             >
                               Cancelar
                             </Button>
-                            <Button size="sm" onClick={() => createReply(comment.id)}>
+                            <Button
+                              size="sm"
+                              onClick={() => createReply(comment.id)}
+                            >
                               <SendIcon className="h-3 w-3 mr-1" />
                               Responder
                             </Button>

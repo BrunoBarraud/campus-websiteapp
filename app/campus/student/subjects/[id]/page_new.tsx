@@ -230,8 +230,10 @@ export default function StudentSubjectPage() {
                 {subject?.code} • Año {subject?.year}
               </p>
             </div>
-            <Button 
-              onClick={() => router.push(`/campus/student/subjects/${subjectId}/assignments`)}
+            <Button
+              onClick={() =>
+                router.push(`/campus/student/subjects/${subjectId}/assignments`)
+              }
               className="bg-blue-600 hover:bg-blue-700"
             >
               <FileTextIcon className="h-4 w-4 mr-2" />
@@ -317,7 +319,10 @@ export default function StudentSubjectPage() {
                                   </div>
                                   <div className="flex items-center space-x-2">
                                     {content.is_pinned && (
-                                      <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
+                                      <Badge
+                                        variant="secondary"
+                                        className="bg-yellow-100 text-yellow-800"
+                                      >
                                         <PinIcon className="h-3 w-3 mr-1" />
                                         Fijado
                                       </Badge>
@@ -327,17 +332,19 @@ export default function StudentSubjectPage() {
                                     </Badge>
                                   </div>
                                 </div>
-                                
+
                                 <div className="text-gray-700 mb-3 whitespace-pre-wrap">
                                   {content.content}
                                 </div>
-                                
+
                                 {content.content_type === "link" && (
                                   <div className="mb-3">
                                     <Button
                                       variant="outline"
                                       size="sm"
-                                      onClick={() => window.open(content.content, "_blank")}
+                                      onClick={() =>
+                                        window.open(content.content, "_blank")
+                                      }
                                       className="text-blue-600 hover:text-blue-700"
                                     >
                                       <ExternalLinkIcon className="h-4 w-4 mr-1" />
@@ -345,7 +352,7 @@ export default function StudentSubjectPage() {
                                     </Button>
                                   </div>
                                 )}
-                                
+
                                 <div className="text-sm text-gray-500">
                                   <CalendarIcon className="h-3 w-3 inline mr-1" />
                                   {formatDate(content.created_at)}
@@ -381,8 +388,12 @@ export default function StudentSubjectPage() {
                                     )}
                                     <div className="flex items-center space-x-4 text-sm text-gray-500">
                                       <span>📄 {document.file_name}</span>
-                                      <span>📦 {formatFileSize(document.file_size)}</span>
-                                      <span>📅 {formatDate(document.created_at)}</span>
+                                      <span>
+                                        📦 {formatFileSize(document.file_size)}
+                                      </span>
+                                      <span>
+                                        📅 {formatDate(document.created_at)}
+                                      </span>
                                     </div>
                                     <div className="text-sm text-gray-500 mt-1">
                                       Subido por: {document.uploader.name}
@@ -404,12 +415,13 @@ export default function StudentSubjectPage() {
                         </div>
                       )}
 
-                      {unit.contents.length === 0 && unit.documents.length === 0 && (
-                        <div className="text-center py-8 text-gray-500">
-                          <FileTextIcon className="h-12 w-12 mx-auto mb-2 text-gray-400" />
-                          <p>No hay contenido disponible en esta unidad</p>
-                        </div>
-                      )}
+                      {unit.contents.length === 0 &&
+                        unit.documents.length === 0 && (
+                          <div className="text-center py-8 text-gray-500">
+                            <FileTextIcon className="h-12 w-12 mx-auto mb-2 text-gray-400" />
+                            <p>No hay contenido disponible en esta unidad</p>
+                          </div>
+                        )}
                     </CardContent>
                   </CollapsibleContent>
                 </Collapsible>

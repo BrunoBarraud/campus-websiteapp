@@ -1,8 +1,8 @@
 "use client";
 
-import React from 'react';
-import CampusLayout from '@/components/layouts/CampusLayout';
-import Calendar from '@/components/dashboard/Calendar';
+import React from "react";
+import CampusLayout from "@/components/layouts/CampusLayout";
+import Calendar from "@/components/dashboard/Calendar";
 
 export default function CalendarPage() {
   return (

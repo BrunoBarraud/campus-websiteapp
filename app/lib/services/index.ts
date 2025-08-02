@@ -307,8 +307,10 @@ export const calendarService = {
       // Los estudiantes ven:
       // 1. Eventos públicos (creados por admins/profesores)
       // 2. Sus propios eventos personales
-      query = query.or(`visibility.eq.public,visibility.eq.students,and(created_by.eq.${userId},visibility.eq.private)`);
-      
+      query = query.or(
+        `visibility.eq.public,visibility.eq.students,and(created_by.eq.${userId},visibility.eq.private)`
+      );
+
       // Filtrar por año si está disponible
       if (year) {
         query = query.or(`year.is.null,year.eq.${year}`);

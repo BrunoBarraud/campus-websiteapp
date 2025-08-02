@@ -1,6 +1,6 @@
 // 📋 Tipos TypeScript para el sistema de roles del Campus Virtual
 
-export type UserRole = 'admin' | 'teacher' | 'student';
+export type UserRole = "admin" | "teacher" | "student";
 
 export interface User {
   id: string;
@@ -49,7 +49,7 @@ export interface SubjectUnit {
   updated_at: string;
 }
 
-export type ContentType = 'announcement' | 'resource' | 'assignment' | 'note';
+export type ContentType = "announcement" | "resource" | "assignment" | "note";
 
 export interface SubjectContent {
   id: string;
@@ -66,9 +66,15 @@ export interface SubjectContent {
   updated_at: string;
 }
 
-export type EventType = 'exam' | 'assignment' | 'class' | 'holiday' | 'meeting' | 'personal';
+export type EventType =
+  | "exam"
+  | "assignment"
+  | "class"
+  | "holiday"
+  | "meeting"
+  | "personal";
 
-export type EventVisibility = 'public' | 'students' | 'teachers' | 'private';
+export type EventVisibility = "public" | "students" | "teachers" | "private";
 
 export interface CalendarEvent {
   id: string;
@@ -139,7 +145,7 @@ export interface AssignmentSubmission {
   submitted_at?: string;
   score?: number;
   feedback?: string;
-  status: 'submitted' | 'graded' | 'late';
+  status: "submitted" | "graded" | "late";
   graded_by?: string;
   grader?: User; // Relación con quien calificó
   graded_at?: string;
@@ -161,7 +167,7 @@ export interface StudentSubject {
 
 export interface Conversation {
   id: string;
-  type: 'direct' | 'group';
+  type: "direct" | "group";
   title?: string;
   description?: string;
   created_by: string;
@@ -185,7 +191,7 @@ export interface ConversationParticipant {
   is_active: boolean;
   is_muted: boolean;
   last_read_at: string;
-  role: 'admin' | 'moderator' | 'member';
+  role: "admin" | "moderator" | "member";
   user?: User;
 }
 
@@ -194,7 +200,7 @@ export interface Message {
   conversation_id: string;
   sender_id: string;
   content: string;
-  type: 'text' | 'file' | 'image' | 'system';
+  type: "text" | "file" | "image" | "system";
   file_url?: string;
   file_name?: string;
   file_size?: number;
@@ -220,7 +226,7 @@ export interface MessageReport {
   reported_by: string;
   reason: string;
   description?: string;
-  status: 'pending' | 'reviewed' | 'resolved' | 'dismissed';
+  status: "pending" | "reviewed" | "resolved" | "dismissed";
   reviewed_by?: string;
   reviewed_at?: string;
   created_at: string;
@@ -363,40 +369,40 @@ export interface PaginatedResponse<T> {
 // 🎯 Utilidades para roles
 export const getRoleDisplayName = (role: UserRole): string => {
   const roleNames = {
-    admin: 'Administrador',
-    teacher: 'Profesor',
-    student: 'Estudiante'
+    admin: "Administrador",
+    teacher: "Profesor",
+    student: "Estudiante",
   };
   return roleNames[role];
 };
 
 export const getEventTypeDisplayName = (type: EventType): string => {
   const typeNames = {
-    exam: 'Examen',
-    assignment: 'Tarea/TP',
-    class: 'Clase',
-    holiday: 'Feriado',
-    meeting: 'Reunión',
-    personal: 'Personal'
+    exam: "Examen",
+    assignment: "Tarea/TP",
+    class: "Clase",
+    holiday: "Feriado",
+    meeting: "Reunión",
+    personal: "Personal",
   };
   return typeNames[type];
 };
 
 export const getEventTypeColor = (type: EventType): string => {
   const colors = {
-    exam: 'bg-red-500',
-    assignment: 'bg-yellow-500',
-    class: 'bg-blue-500',
-    holiday: 'bg-green-500',
-    meeting: 'bg-purple-500',
-    personal: 'bg-indigo-500'
+    exam: "bg-red-500",
+    assignment: "bg-yellow-500",
+    class: "bg-blue-500",
+    holiday: "bg-green-500",
+    meeting: "bg-purple-500",
+    personal: "bg-indigo-500",
   };
   return colors[type];
 };
 
 export const getUserPermissions = (role: UserRole): UserPermissions => {
   switch (role) {
-    case 'admin':
+    case "admin":
       return {
         canEditCalendar: true,
         canEditSubjects: true,
@@ -404,9 +410,9 @@ export const getUserPermissions = (role: UserRole): UserPermissions => {
         canUploadDocuments: true,
         canDeleteDocuments: true,
         canViewAllYears: true,
-        canAssignTeachers: true
+        canAssignTeachers: true,
       };
-    case 'teacher':
+    case "teacher":
       return {
         canEditCalendar: true, // Solo para sus materias
         canEditSubjects: false, // Solo ver
@@ -414,9 +420,9 @@ export const getUserPermissions = (role: UserRole): UserPermissions => {
         canUploadDocuments: true,
         canDeleteDocuments: true, // Solo sus documentos
         canViewAllYears: false, // Solo sus materias
-        canAssignTeachers: false
+        canAssignTeachers: false,
       };
-    case 'student':
+    case "student":
       return {
         canEditCalendar: false,
         canEditSubjects: false,
@@ -424,7 +430,7 @@ export const getUserPermissions = (role: UserRole): UserPermissions => {
         canUploadDocuments: true,
         canDeleteDocuments: false,
         canViewAllYears: false, // Solo su año
-        canAssignTeachers: false
+        canAssignTeachers: false,
       };
     default:
       return {
@@ -434,7 +440,7 @@ export const getUserPermissions = (role: UserRole): UserPermissions => {
         canUploadDocuments: false,
         canDeleteDocuments: false,
         canViewAllYears: false,
-        canAssignTeachers: false
+        canAssignTeachers: false,
       };
   }
 };

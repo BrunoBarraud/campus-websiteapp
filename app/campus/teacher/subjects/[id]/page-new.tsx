@@ -559,7 +559,9 @@ export default function UnifiedSubjectPage() {
                             onClick={(e) => {
                               e.stopPropagation();
                               // TODO: Implementar edición de unidades
-                              toast.info('Funcionalidad de edición próximamente');
+                              toast.info(
+                                "Funcionalidad de edición próximamente"
+                              );
                             }}
                           >
                             <EditIcon className="h-4 w-4" />

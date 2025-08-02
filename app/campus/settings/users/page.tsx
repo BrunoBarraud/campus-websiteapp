@@ -3,7 +3,7 @@
 export const dynamic = "force-dynamic";
 
 import React, { useState, useEffect } from "react";
-import CampusLayout from '@/components/layouts/CampusLayout';
+import CampusLayout from "@/components/layouts/CampusLayout";
 import {
   FiUsers,
   FiPlus,
@@ -470,336 +470,342 @@ export default function UsersPage() {
           padding: "2rem",
         }}
       >
-      <div style={{ maxWidth: "80rem", margin: "0 auto" }}>
-        {/* Header */}
-        <div style={{ marginBottom: "2rem" }}>
-          <h1
-            style={{
-              fontSize: "2rem",
-              fontWeight: "bold",
-              color: "#1f2937",
-              marginBottom: "0.5rem",
-            }}
-          >
-            <span
+        <div style={{ maxWidth: "80rem", margin: "0 auto" }}>
+          {/* Header */}
+          <div style={{ marginBottom: "2rem" }}>
+            <h1
               style={{
-                background: "#f59e0b",
-                color: "#881337",
-                padding: "0.5rem 1rem",
-                borderRadius: "0.5rem",
-                marginRight: "0.5rem",
+                fontSize: "2rem",
+                fontWeight: "bold",
+                color: "#1f2937",
+                marginBottom: "0.5rem",
               }}
             >
-              Gestión
-            </span>
-            <span
-              style={{
-                background: "#881337",
-                color: "#f59e0b",
-                padding: "0.5rem 1rem",
-                borderRadius: "0.5rem",
-              }}
-            >
-              Usuarios
-            </span>
-          </h1>
-          <p style={{ color: "#6b7280" }}>
-            Administra profesores, estudiantes y administradores del campus
-          </p>
-        </div>
+              <span
+                style={{
+                  background: "#f59e0b",
+                  color: "#881337",
+                  padding: "0.5rem 1rem",
+                  borderRadius: "0.5rem",
+                  marginRight: "0.5rem",
+                }}
+              >
+                Gestión
+              </span>
+              <span
+                style={{
+                  background: "#881337",
+                  color: "#f59e0b",
+                  padding: "0.5rem 1rem",
+                  borderRadius: "0.5rem",
+                }}
+              >
+                Usuarios
+              </span>
+            </h1>
+            <p style={{ color: "#6b7280" }}>
+              Administra profesores, estudiantes y administradores del campus
+            </p>
+          </div>
 
-        {/* Controls */}
-        <div
-          style={{
-            background: "rgba(255, 255, 255, 0.8)",
-            borderRadius: "0.75rem",
-            padding: "1.5rem",
-            marginBottom: "1.5rem",
-            boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
-          }}
-        >
+          {/* Controls */}
           <div
             style={{
-              display: "flex",
-              flexWrap: "wrap",
-              gap: "1rem",
-              alignItems: "center",
-              justifyContent: "space-between",
+              background: "rgba(255, 255, 255, 0.8)",
+              borderRadius: "0.75rem",
+              padding: "1.5rem",
+              marginBottom: "1.5rem",
+              boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
             }}
           >
             <div
               style={{
                 display: "flex",
+                flexWrap: "wrap",
                 gap: "1rem",
                 alignItems: "center",
-                flex: 1,
+                justifyContent: "space-between",
               }}
             >
-              <div style={{ position: "relative", minWidth: "20rem" }}>
-                <FiSearch
+              <div
+                style={{
+                  display: "flex",
+                  gap: "1rem",
+                  alignItems: "center",
+                  flex: 1,
+                }}
+              >
+                <div style={{ position: "relative", minWidth: "20rem" }}>
+                  <FiSearch
+                    style={{
+                      position: "absolute",
+                      left: "0.75rem",
+                      top: "50%",
+                      transform: "translateY(-50%)",
+                      color: "#6b7280",
+                    }}
+                  />
+                  <input
+                    type="text"
+                    placeholder="Buscar por nombre o email..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    style={{
+                      width: "100%",
+                      paddingLeft: "2.5rem",
+                      padding: "0.5rem",
+                      border: "1px solid #d1d5db",
+                      borderRadius: "0.5rem",
+                    }}
+                  />
+                </div>
+
+                <select
+                  value={filterRole}
+                  onChange={(e) => setFilterRole(e.target.value)}
                   style={{
-                    position: "absolute",
-                    left: "0.75rem",
-                    top: "50%",
-                    transform: "translateY(-50%)",
-                    color: "#6b7280",
-                  }}
-                />
-                <input
-                  type="text"
-                  placeholder="Buscar por nombre o email..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  style={{
-                    width: "100%",
-                    paddingLeft: "2.5rem",
                     padding: "0.5rem",
                     border: "1px solid #d1d5db",
                     borderRadius: "0.5rem",
+                    minWidth: "8rem",
                   }}
-                />
+                >
+                  <option value="all">Todos los roles</option>
+                  <option value="student">Estudiantes</option>
+                  <option value="teacher">Profesores</option>
+                  <option value="admin">Administradores</option>
+                </select>
               </div>
 
-              <select
-                value={filterRole}
-                onChange={(e) => setFilterRole(e.target.value)}
+              <button
+                onClick={() => {
+                  setEditingUser(null);
+                  setIsModalOpen(true);
+                }}
                 style={{
-                  padding: "0.5rem",
-                  border: "1px solid #d1d5db",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.5rem",
+                  padding: "0.5rem 1rem",
+                  background: "linear-gradient(to right, #f59e0b, #881337)",
+                  color: "white",
+                  border: "none",
                   borderRadius: "0.5rem",
-                  minWidth: "8rem",
-                }}
-              >
-                <option value="all">Todos los roles</option>
-                <option value="student">Estudiantes</option>
-                <option value="teacher">Profesores</option>
-                <option value="admin">Administradores</option>
-              </select>
-            </div>
-
-            <button
-              onClick={() => {
-                setEditingUser(null);
-                setIsModalOpen(true);
-              }}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "0.5rem",
-                padding: "0.5rem 1rem",
-                background: "linear-gradient(to right, #f59e0b, #881337)",
-                color: "white",
-                border: "none",
-                borderRadius: "0.5rem",
-                cursor: "pointer",
-                fontWeight: "500",
-              }}
-            >
-              <FiPlus size={16} />
-              Agregar Usuario
-            </button>
-          </div>
-        </div>
-
-        {/* Users Table */}
-        <div
-          style={{
-            background: "rgba(255, 255, 255, 0.8)",
-            borderRadius: "0.75rem",
-            overflow: "hidden",
-            boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
-          }}
-        >
-          <div style={{ overflowX: "auto" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
-              <thead style={{ background: "#f9fafb" }}>
-                <tr>
-                  <th
-                    style={{
-                      textAlign: "left",
-                      padding: "0.75rem",
-                      fontWeight: "600",
-                      color: "#374151",
-                    }}
-                  >
-                    Usuario
-                  </th>
-                  <th
-                    style={{
-                      textAlign: "left",
-                      padding: "0.75rem",
-                      fontWeight: "600",
-                      color: "#374151",
-                    }}
-                  >
-                    Rol
-                  </th>
-                  <th
-                    style={{
-                      textAlign: "left",
-                      padding: "0.75rem",
-                      fontWeight: "600",
-                      color: "#374151",
-                    }}
-                  >
-                    Año
-                  </th>
-                  <th
-                    style={{
-                      textAlign: "left",
-                      padding: "0.75rem",
-                      fontWeight: "600",
-                      color: "#374151",
-                    }}
-                  >
-                    Estado
-                  </th>
-                  <th
-                    style={{
-                      textAlign: "center",
-                      padding: "0.75rem",
-                      fontWeight: "600",
-                      color: "#374151",
-                    }}
-                  >
-                    Acciones
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredUsers.map((user) => {
-                  const roleBadge = getRoleBadge(user.role);
-                  return (
-                    <tr
-                      key={user.id}
-                      style={{ borderTop: "1px solid #e5e7eb" }}
-                    >
-                      <td style={{ padding: "0.75rem" }}>
-                        <div>
-                          <div style={{ fontWeight: "500", color: "#1f2937" }}>
-                            {user.name}
-                          </div>
-                          <div
-                            style={{ fontSize: "0.875rem", color: "#6b7280" }}
-                          >
-                            {user.email}
-                          </div>
-                        </div>
-                      </td>
-                      <td style={{ padding: "0.75rem" }}>
-                        <span
-                          style={{
-                            ...roleBadge.style,
-                            padding: "0.25rem 0.5rem",
-                            borderRadius: "0.375rem",
-                            fontSize: "0.75rem",
-                            fontWeight: "500",
-                          }}
-                        >
-                          {roleBadge.label}
-                        </span>
-                      </td>
-                      <td style={{ padding: "0.75rem", color: "#6b7280" }}>
-                        {user.year ? `${user.year}° Año` : "-"}
-                      </td>
-                      <td style={{ padding: "0.75rem" }}>
-                        <span
-                          style={{
-                            padding: "0.25rem 0.5rem",
-                            borderRadius: "0.375rem",
-                            fontSize: "0.75rem",
-                            fontWeight: "500",
-                            ...(user.is_active
-                              ? { background: "#dcfce7", color: "#166534" }
-                              : { background: "#fef2f2", color: "#dc2626" }),
-                          }}
-                        >
-                          {user.is_active ? "Activo" : "Inactivo"}
-                        </span>
-                      </td>
-                      <td style={{ padding: "0.75rem", textAlign: "center" }}>
-                        <div
-                          style={{
-                            display: "flex",
-                            justifyContent: "center",
-                            gap: "0.5rem",
-                          }}
-                        >
-                          <button
-                            onClick={() => {
-                              setEditingUser(user);
-                              setIsModalOpen(true);
-                            }}
-                            style={{
-                              padding: "0.25rem",
-                              background: "#f59e0b",
-                              color: "white",
-                              border: "none",
-                              borderRadius: "0.25rem",
-                              cursor: "pointer",
-                            }}
-                          >
-                            <FiEdit2 size={14} />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteUser(user.id)}
-                            style={{
-                              padding: "0.25rem",
-                              background: "#dc2626",
-                              color: "white",
-                              border: "none",
-                              borderRadius: "0.25rem",
-                              cursor: "pointer",
-                            }}
-                          >
-                            <FiTrash2 size={14} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-
-          {filteredUsers.length === 0 && (
-            <div
-              style={{ padding: "3rem", textAlign: "center", color: "#6b7280" }}
-            >
-              <FiUsers
-                size={48}
-                style={{ margin: "0 auto 1rem", opacity: 0.5 }}
-              />
-              <h3
-                style={{
-                  fontSize: "1.125rem",
+                  cursor: "pointer",
                   fontWeight: "500",
-                  marginBottom: "0.5rem",
                 }}
               >
-                No se encontraron usuarios
-              </h3>
-              <p>
-                Intenta ajustar los filtros de búsqueda o agrega un nuevo
-                usuario.
-              </p>
+                <FiPlus size={16} />
+                Agregar Usuario
+              </button>
             </div>
-          )}
-        </div>
+          </div>
 
-        {/* Modal */}
-        <EditUserModal
-          user={editingUser}
-          isOpen={isModalOpen}
-          onClose={() => {
-            setIsModalOpen(false);
-            setEditingUser(null);
-          }}
-          onSave={handleSaveUser}
-        />
+          {/* Users Table */}
+          <div
+            style={{
+              background: "rgba(255, 255, 255, 0.8)",
+              borderRadius: "0.75rem",
+              overflow: "hidden",
+              boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+            }}
+          >
+            <div style={{ overflowX: "auto" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                <thead style={{ background: "#f9fafb" }}>
+                  <tr>
+                    <th
+                      style={{
+                        textAlign: "left",
+                        padding: "0.75rem",
+                        fontWeight: "600",
+                        color: "#374151",
+                      }}
+                    >
+                      Usuario
+                    </th>
+                    <th
+                      style={{
+                        textAlign: "left",
+                        padding: "0.75rem",
+                        fontWeight: "600",
+                        color: "#374151",
+                      }}
+                    >
+                      Rol
+                    </th>
+                    <th
+                      style={{
+                        textAlign: "left",
+                        padding: "0.75rem",
+                        fontWeight: "600",
+                        color: "#374151",
+                      }}
+                    >
+                      Año
+                    </th>
+                    <th
+                      style={{
+                        textAlign: "left",
+                        padding: "0.75rem",
+                        fontWeight: "600",
+                        color: "#374151",
+                      }}
+                    >
+                      Estado
+                    </th>
+                    <th
+                      style={{
+                        textAlign: "center",
+                        padding: "0.75rem",
+                        fontWeight: "600",
+                        color: "#374151",
+                      }}
+                    >
+                      Acciones
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredUsers.map((user) => {
+                    const roleBadge = getRoleBadge(user.role);
+                    return (
+                      <tr
+                        key={user.id}
+                        style={{ borderTop: "1px solid #e5e7eb" }}
+                      >
+                        <td style={{ padding: "0.75rem" }}>
+                          <div>
+                            <div
+                              style={{ fontWeight: "500", color: "#1f2937" }}
+                            >
+                              {user.name}
+                            </div>
+                            <div
+                              style={{ fontSize: "0.875rem", color: "#6b7280" }}
+                            >
+                              {user.email}
+                            </div>
+                          </div>
+                        </td>
+                        <td style={{ padding: "0.75rem" }}>
+                          <span
+                            style={{
+                              ...roleBadge.style,
+                              padding: "0.25rem 0.5rem",
+                              borderRadius: "0.375rem",
+                              fontSize: "0.75rem",
+                              fontWeight: "500",
+                            }}
+                          >
+                            {roleBadge.label}
+                          </span>
+                        </td>
+                        <td style={{ padding: "0.75rem", color: "#6b7280" }}>
+                          {user.year ? `${user.year}° Año` : "-"}
+                        </td>
+                        <td style={{ padding: "0.75rem" }}>
+                          <span
+                            style={{
+                              padding: "0.25rem 0.5rem",
+                              borderRadius: "0.375rem",
+                              fontSize: "0.75rem",
+                              fontWeight: "500",
+                              ...(user.is_active
+                                ? { background: "#dcfce7", color: "#166534" }
+                                : { background: "#fef2f2", color: "#dc2626" }),
+                            }}
+                          >
+                            {user.is_active ? "Activo" : "Inactivo"}
+                          </span>
+                        </td>
+                        <td style={{ padding: "0.75rem", textAlign: "center" }}>
+                          <div
+                            style={{
+                              display: "flex",
+                              justifyContent: "center",
+                              gap: "0.5rem",
+                            }}
+                          >
+                            <button
+                              onClick={() => {
+                                setEditingUser(user);
+                                setIsModalOpen(true);
+                              }}
+                              style={{
+                                padding: "0.25rem",
+                                background: "#f59e0b",
+                                color: "white",
+                                border: "none",
+                                borderRadius: "0.25rem",
+                                cursor: "pointer",
+                              }}
+                            >
+                              <FiEdit2 size={14} />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteUser(user.id)}
+                              style={{
+                                padding: "0.25rem",
+                                background: "#dc2626",
+                                color: "white",
+                                border: "none",
+                                borderRadius: "0.25rem",
+                                cursor: "pointer",
+                              }}
+                            >
+                              <FiTrash2 size={14} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {filteredUsers.length === 0 && (
+              <div
+                style={{
+                  padding: "3rem",
+                  textAlign: "center",
+                  color: "#6b7280",
+                }}
+              >
+                <FiUsers
+                  size={48}
+                  style={{ margin: "0 auto 1rem", opacity: 0.5 }}
+                />
+                <h3
+                  style={{
+                    fontSize: "1.125rem",
+                    fontWeight: "500",
+                    marginBottom: "0.5rem",
+                  }}
+                >
+                  No se encontraron usuarios
+                </h3>
+                <p>
+                  Intenta ajustar los filtros de búsqueda o agrega un nuevo
+                  usuario.
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Modal */}
+          <EditUserModal
+            user={editingUser}
+            isOpen={isModalOpen}
+            onClose={() => {
+              setIsModalOpen(false);
+              setEditingUser(null);
+            }}
+            onSave={handleSaveUser}
+          />
+        </div>
       </div>
-    </div>
     </CampusLayout>
   );
 }

@@ -27,7 +27,10 @@ export async function GET(
     }
 
     // Verificar permisos: estudiante solo ve su entrega, profesores ven todas
-    if (currentUser.role === "student" && submission.student_id !== currentUser.id) {
+    if (
+      currentUser.role === "student" &&
+      submission.student_id !== currentUser.id
+    ) {
       return NextResponse.json(
         { error: "No tienes permisos para ver estos comentarios" },
         { status: 403 }
@@ -37,7 +40,8 @@ export async function GET(
     // Obtener comentarios con información del autor
     const { data: comments, error } = await supabaseAdmin
       .from("submission_comments")
-      .select(`
+      .select(
+        `
         id,
         submission_id,
         author_id,
@@ -55,7 +59,8 @@ export async function GET(
           created_at,
           author:users!submission_comment_replies_author_id_fkey(id, name, role)
         )
-      `)
+      `
+      )
       .eq("submission_id", submissionId)
       .order("created_at", { ascending: true });
 
@@ -84,7 +89,7 @@ export async function POST(
   try {
     const currentUser = await requireRole(["admin", "teacher", "student"]);
     const { submissionId } = await params;
-    
+
     const { content, line_number, parent_comment_id } = await request.json();
 
     if (!content || content.trim() === "") {
@@ -109,7 +114,10 @@ export async function POST(
     }
 
     // Verificar permisos: estudiante solo puede comentar en su entrega
-    if (currentUser.role === "student" && submission.student_id !== currentUser.id) {
+    if (
+      currentUser.role === "student" &&
+      submission.student_id !== currentUser.id
+    ) {
       return NextResponse.json(
         { error: "No tienes permisos para comentar en esta entrega" },
         { status: 403 }
@@ -122,19 +130,23 @@ export async function POST(
       // Es una respuesta a un comentario existente
       const { data, error } = await supabaseAdmin
         .from("submission_comment_replies")
-        .insert([{
-          comment_id: parent_comment_id,
-          author_id: currentUser.id,
-          content: content.trim()
-        }])
-        .select(`
+        .insert([
+          {
+            comment_id: parent_comment_id,
+            author_id: currentUser.id,
+            content: content.trim(),
+          },
+        ])
+        .select(
+          `
           id,
           comment_id,
           author_id,
           content,
           created_at,
           author:users!submission_comment_replies_author_id_fkey(id, name, role)
-        `)
+        `
+        )
         .single();
 
       if (error) {
@@ -150,13 +162,16 @@ export async function POST(
       // Es un comentario principal
       const { data, error } = await supabaseAdmin
         .from("submission_comments")
-        .insert([{
-          submission_id: submissionId,
-          author_id: currentUser.id,
-          content: content.trim(),
-          line_number: line_number || null
-        }])
-        .select(`
+        .insert([
+          {
+            submission_id: submissionId,
+            author_id: currentUser.id,
+            content: content.trim(),
+            line_number: line_number || null,
+          },
+        ])
+        .select(
+          `
           id,
           submission_id,
           author_id,
@@ -165,7 +180,8 @@ export async function POST(
           is_resolved,
           created_at,
           author:users!submission_comments_author_id_fkey(id, name, role)
-        `)
+        `
+        )
         .single();
 
       if (error) {
@@ -196,7 +212,7 @@ export async function PUT(
   try {
     const currentUser = await requireRole(["admin", "teacher", "student"]);
     const { submissionId } = await params;
-    
+
     const { comment_id, is_resolved, content } = await request.json();
 
     if (!comment_id) {
@@ -222,7 +238,10 @@ export async function PUT(
     }
 
     // Solo el autor del comentario o un profesor/admin puede editarlo
-    if (comment.author_id !== currentUser.id && !["admin", "teacher"].includes(currentUser.role)) {
+    if (
+      comment.author_id !== currentUser.id &&
+      !["admin", "teacher"].includes(currentUser.role)
+    ) {
       return NextResponse.json(
         { error: "No tienes permisos para editar este comentario" },
         { status: 403 }
@@ -242,7 +261,8 @@ export async function PUT(
       .from("submission_comments")
       .update(updateData)
       .eq("id", comment_id)
-      .select(`
+      .select(
+        `
         id,
         submission_id,
         author_id,
@@ -252,7 +272,8 @@ export async function PUT(
         created_at,
         updated_at,
         author:users!submission_comments_author_id_fkey(id, name, role)
-      `)
+      `
+      )
       .single();
 
     if (error) {

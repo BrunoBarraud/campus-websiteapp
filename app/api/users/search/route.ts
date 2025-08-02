@@ -8,16 +8,16 @@ export async function GET(request: NextRequest) {
   try {
     const currentUser = await requireRole(["admin", "teacher", "student"]);
     const { searchParams } = new URL(request.url);
-    
-    const search = searchParams.get('search') || '';
-    const role = searchParams.get('role');
-    const limit = parseInt(searchParams.get('limit') || '20');
+
+    const search = searchParams.get("search") || "";
+    const role = searchParams.get("role");
+    const limit = parseInt(searchParams.get("limit") || "20");
 
     let query = supabaseAdmin
-      .from('users')
-      .select('id, name, email, role')
-      .neq('id', currentUser.id) // Excluir usuario actual
-      .eq('is_active', true);
+      .from("users")
+      .select("id, name, email, role")
+      .neq("id", currentUser.id) // Excluir usuario actual
+      .eq("is_active", true);
 
     // Filtros de búsqueda
     if (search.trim()) {
@@ -25,35 +25,31 @@ export async function GET(request: NextRequest) {
     }
 
     // Filtro por rol
-    if (role && ['admin', 'teacher', 'student'].includes(role)) {
-      query = query.eq('role', role);
+    if (role && ["admin", "teacher", "student"].includes(role)) {
+      query = query.eq("role", role);
     }
 
     // Aplicar restricciones según el rol del usuario actual
-    if (currentUser.role === 'student') {
+    if (currentUser.role === "student") {
       // Los estudiantes solo pueden ver profesores y administradores
-      query = query.in('role', ['teacher', 'admin']);
+      query = query.in("role", ["teacher", "admin"]);
     }
 
-    query = query.limit(limit).order('name');
+    query = query.limit(limit).order("name");
 
     const { data: users, error } = await query;
 
     if (error) {
-      console.error('Error searching users:', error);
+      console.error("Error searching users:", error);
       return NextResponse.json(
-        { error: 'Error al buscar usuarios' },
+        { error: "Error al buscar usuarios" },
         { status: 500 }
       );
     }
 
     return NextResponse.json(users || []);
-
   } catch (error) {
-    console.error('Error in users search GET:', error);
-    return NextResponse.json(
-      { error: 'Error del servidor' },
-      { status: 500 }
-    );
+    console.error("Error in users search GET:", error);
+    return NextResponse.json({ error: "Error del servidor" }, { status: 500 });
   }
 }

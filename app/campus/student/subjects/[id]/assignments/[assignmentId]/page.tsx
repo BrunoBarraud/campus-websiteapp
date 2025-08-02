@@ -1,20 +1,15 @@
 // 📝 Vista de Tarea Individual para Estudiantes
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useSession } from 'next-auth/react';
-import { useRouter, useParams } from 'next/navigation';
+import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
+import { useRouter, useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   ArrowLeftIcon,
   CalendarIcon,
@@ -60,16 +55,16 @@ export default function StudentAssignmentDetailPage() {
 
   const [assignment, setAssignment] = useState<Assignment | null>(null);
   const [submission, setSubmission] = useState<Submission | null>(null);
-  const [submissionText, setSubmissionText] = useState('');
+  const [submissionText, setSubmissionText] = useState("");
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    if (status === 'loading') return;
-    
-    if (!session || session.user?.role !== 'student') {
-      router.push('/campus/login');
+    if (status === "loading") return;
+
+    if (!session || session.user?.role !== "student") {
+      router.push("/campus/login");
       return;
     }
 
@@ -79,13 +74,12 @@ export default function StudentAssignmentDetailPage() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      
+
       // Obtener información de la tarea
       await fetchAssignment();
-      
+
       // Obtener la entrega del estudiante si existe
       await fetchSubmission();
-
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -95,13 +89,15 @@ export default function StudentAssignmentDetailPage() {
 
   const fetchAssignment = async () => {
     try {
-      const response = await fetch(`/api/subjects/${subjectId}/assignments/${assignmentId}`);
-      
+      const response = await fetch(
+        `/api/subjects/${subjectId}/assignments/${assignmentId}`
+      );
+
       if (!response.ok) {
         const text = await response.text();
-        console.error('Assignment fetch error:', response.status, text);
-        let errorMessage = 'Error al cargar la tarea';
-        
+        console.error("Assignment fetch error:", response.status, text);
+        let errorMessage = "Error al cargar la tarea";
+
         try {
           const data = JSON.parse(text);
           errorMessage = data.error || errorMessage;
@@ -109,71 +105,80 @@ export default function StudentAssignmentDetailPage() {
           // Si no es JSON válido, usar el texto directamente
           errorMessage = text || errorMessage;
         }
-        
+
         throw new Error(errorMessage);
       }
 
       const data = await response.json();
       setAssignment(data);
     } catch (err: any) {
-      console.error('Error fetching assignment:', err);
+      console.error("Error fetching assignment:", err);
       throw err;
     }
   };
 
   const fetchSubmission = async () => {
     try {
-      const response = await fetch(`/api/subjects/${subjectId}/assignments/${assignmentId}/submissions`);
-      
+      const response = await fetch(
+        `/api/subjects/${subjectId}/assignments/${assignmentId}/submissions`
+      );
+
       if (response.ok) {
         const data = await response.json();
         setSubmission(data);
         if (data) {
-          setSubmissionText(data.submission_text || '');
+          setSubmissionText(data.submission_text || "");
         }
       } else if (response.status === 404) {
         // Es normal que no haya entrega, no hacer nada
         setSubmission(null);
       } else {
         const text = await response.text();
-        console.error('Submission fetch error:', response.status, text);
+        console.error("Submission fetch error:", response.status, text);
         // No lanzar error aquí porque es opcional
       }
     } catch (err: any) {
-      console.error('Error fetching submission:', err);
+      console.error("Error fetching submission:", err);
       // No lanzar error aquí porque es normal que no haya entrega
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!submissionText.trim()) {
-      toast.error('Debes escribir tu respuesta');
+      toast.error("Debes escribir tu respuesta");
       return;
     }
 
     try {
       setSubmitting(true);
 
-      const response = await fetch(`/api/subjects/${subjectId}/assignments/${assignmentId}/submissions`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          content: submissionText,
-        }),
-      });
+      const response = await fetch(
+        `/api/subjects/${subjectId}/assignments/${assignmentId}/submissions`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            content: submissionText,
+          }),
+        }
+      );
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Error al enviar la entrega');
+        throw new Error(data.error || "Error al enviar la entrega");
       }
 
-      toast.success(submission ? 'Entrega actualizada exitosamente' : 'Entrega enviada exitosamente');
-      
+      toast.success(
+        submission
+          ? "Entrega actualizada exitosamente"
+          : "Entrega enviada exitosamente"
+      );
+
       // Actualizar la entrega
       setSubmission(data);
     } catch (err: any) {
@@ -184,12 +189,12 @@ export default function StudentAssignmentDetailPage() {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('es-ES', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
+    return new Date(dateString).toLocaleDateString("es-ES", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
 
@@ -303,7 +308,7 @@ export default function StudentAssignmentDetailPage() {
                   {assignment.title}
                 </CardTitle>
                 <p className="text-gray-600 mb-4">{assignment.description}</p>
-                
+
                 <div className="flex items-center space-x-4 text-sm text-gray-500">
                   <span className="flex items-center">
                     <CalendarIcon className="h-4 w-4 mr-1" />
@@ -319,7 +324,7 @@ export default function StudentAssignmentDetailPage() {
                   </div>
                 )}
               </div>
-              
+
               <div className="flex flex-col items-end gap-2">
                 {getStatusBadge()}
                 {assignment.is_active ? (
@@ -333,16 +338,22 @@ export default function StudentAssignmentDetailPage() {
 
           {assignment.instructions && (
             <CardContent>
-              <h4 className="font-semibold text-gray-900 mb-2">Instrucciones</h4>
+              <h4 className="font-semibold text-gray-900 mb-2">
+                Instrucciones
+              </h4>
               <div className="bg-blue-50 p-4 rounded-lg">
-                <p className="text-gray-700 whitespace-pre-wrap">{assignment.instructions}</p>
+                <p className="text-gray-700 whitespace-pre-wrap">
+                  {assignment.instructions}
+                </p>
               </div>
             </CardContent>
           )}
         </Card>
 
         {/* Submission Section */}
-        {submission && submission.score !== null && submission.score !== undefined ? (
+        {submission &&
+        submission.score !== null &&
+        submission.score !== undefined ? (
           // Show graded submission
           <Card>
             <CardHeader>
@@ -355,30 +366,41 @@ export default function StudentAssignmentDetailPage() {
               <Tabs defaultValue="submission" className="w-full">
                 <TabsList className="grid w-full grid-cols-2">
                   <TabsTrigger value="submission">Mi Entrega</TabsTrigger>
-                  <TabsTrigger value="comments" className="flex items-center gap-2">
+                  <TabsTrigger
+                    value="comments"
+                    className="flex items-center gap-2"
+                  >
                     <MessageCircleIcon className="h-4 w-4" />
                     Comentarios
                   </TabsTrigger>
                 </TabsList>
-                
+
                 <TabsContent value="submission" className="space-y-4">
                   <div>
-                    <Label className="text-sm font-medium text-gray-700">Tu respuesta:</Label>
+                    <Label className="text-sm font-medium text-gray-700">
+                      Tu respuesta:
+                    </Label>
                     <div className="mt-1 p-3 bg-gray-50 rounded-lg">
-                      <p className="whitespace-pre-wrap">{submission.submission_text}</p>
+                      <p className="whitespace-pre-wrap">
+                        {submission.submission_text}
+                      </p>
                     </div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <Label className="text-sm font-medium text-gray-700">Calificación:</Label>
+                      <Label className="text-sm font-medium text-gray-700">
+                        Calificación:
+                      </Label>
                       <div className="mt-1 text-2xl font-bold text-green-600">
                         {submission.score} / {assignment.max_score}
                       </div>
                     </div>
 
                     <div>
-                      <Label className="text-sm font-medium text-gray-700">Entregado el:</Label>
+                      <Label className="text-sm font-medium text-gray-700">
+                        Entregado el:
+                      </Label>
                       <div className="mt-1 text-sm text-gray-600">
                         {formatDate(submission.submitted_at)}
                       </div>
@@ -387,18 +409,24 @@ export default function StudentAssignmentDetailPage() {
 
                   {submission.feedback && (
                     <div>
-                      <Label className="text-sm font-medium text-gray-700">Retroalimentación del profesor:</Label>
+                      <Label className="text-sm font-medium text-gray-700">
+                        Retroalimentación del profesor:
+                      </Label>
                       <div className="mt-1 p-3 bg-yellow-50 border-l-4 border-yellow-400 rounded-lg">
-                        <p className="whitespace-pre-wrap">{submission.feedback}</p>
+                        <p className="whitespace-pre-wrap">
+                          {submission.feedback}
+                        </p>
                       </div>
                     </div>
                   )}
                 </TabsContent>
-                
+
                 <TabsContent value="comments" className="space-y-4">
-                  <SubmissionComments 
+                  <SubmissionComments
                     submissionId={submission.id}
-                    submissionText={submission.submission_text || "Sin contenido de texto"}
+                    submissionText={
+                      submission.submission_text || "Sin contenido de texto"
+                    }
                     canComment={true}
                   />
                 </TabsContent>
@@ -410,7 +438,7 @@ export default function StudentAssignmentDetailPage() {
           <Card>
             <CardHeader>
               <CardTitle>
-                {submission ? 'Actualizar entrega' : 'Entregar tarea'}
+                {submission ? "Actualizar entrega" : "Entregar tarea"}
               </CardTitle>
               {submission && (
                 <p className="text-sm text-gray-600">
@@ -442,17 +470,22 @@ export default function StudentAssignmentDetailPage() {
                     >
                       Cancelar
                     </Button>
-                    <Button 
-                      type="submit" 
+                    <Button
+                      type="submit"
                       disabled={submitting || (overdue && !submission)}
                     >
-                      {submitting ? 'Enviando...' : (submission ? 'Actualizar entrega' : 'Enviar entrega')}
+                      {submitting
+                        ? "Enviando..."
+                        : submission
+                        ? "Actualizar entrega"
+                        : "Enviar entrega"}
                     </Button>
                   </div>
 
                   {overdue && !submission && (
                     <div className="text-red-600 text-sm">
-                      ⚠️ Esta tarea está vencida y no se pueden hacer nuevas entregas.
+                      ⚠️ Esta tarea está vencida y no se pueden hacer nuevas
+                      entregas.
                     </div>
                   )}
                 </form>

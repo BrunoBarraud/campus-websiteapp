@@ -13,7 +13,7 @@
     --background: #ffffff;
     --foreground: #171717;
   }
-  
+
   * {
     color-scheme: light !important;
   }
@@ -25,7 +25,8 @@
 }
 
 /* Layout principal para sticky footer */
-html, body {
+html,
+body {
   height: 100%;
   margin: 0;
   padding: 0;
@@ -38,13 +39,17 @@ body {
 }
 
 /* Forzar colores claros en inputs y selects */
-input, select, textarea {
+input,
+select,
+textarea {
   background-color: white !important;
   color: #171717 !important;
   border-color: #d1d5db !important;
 }
 
-input:focus, select:focus, textarea:focus {
+input:focus,
+select:focus,
+textarea:focus {
   background-color: white !important;
   color: #171717 !important;
 }

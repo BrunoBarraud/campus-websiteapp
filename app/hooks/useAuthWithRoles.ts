@@ -1,6 +1,6 @@
-'use client';
-import { useSession } from 'next-auth/react';
-import { UserRole, ROLE_CONFIG } from '@/app/types/auth';
+"use client";
+import { useSession } from "next-auth/react";
+import { UserRole, ROLE_CONFIG } from "@/app/types/auth";
 
 export interface UserWithRole {
   id: string;
@@ -16,19 +16,19 @@ export interface UserWithRole {
 
 export const useAuthWithRoles = () => {
   const { data: session, status } = useSession();
-  
+
   const user = session?.user as UserWithRole | undefined;
-  
+
   const hasPermission = (permission: string): boolean => {
     if (!user || !user.role) return false;
-    
+
     // Los administradores tienen todos los permisos
-    if (user.role === 'administrador') return true;
-    
+    if (user.role === "administrador") return true;
+
     // Verificar permisos específicos por rol
     const roleConfig = ROLE_CONFIG[user.role];
     if (!roleConfig) return false;
-    
+
     return roleConfig.permissions.includes(permission as any);
   };
 
@@ -37,30 +37,30 @@ export const useAuthWithRoles = () => {
   };
 
   const getRoleDisplayName = (): string => {
-    if (!user?.role) return 'Usuario';
-    return ROLE_CONFIG[user.role]?.displayName || 'Usuario';
+    if (!user?.role) return "Usuario";
+    return ROLE_CONFIG[user.role]?.displayName || "Usuario";
   };
 
   const getRoleColor = (): string => {
-    if (!user?.role) return 'gray';
-    return ROLE_CONFIG[user.role]?.color || 'gray';
+    if (!user?.role) return "gray";
+    return ROLE_CONFIG[user.role]?.color || "gray";
   };
 
   const getRedirectPath = (): string => {
-    if (!user?.role) return '/campus/dashboard';
-    return ROLE_CONFIG[user.role]?.redirectTo || '/campus/dashboard';
+    if (!user?.role) return "/campus/dashboard";
+    return ROLE_CONFIG[user.role]?.redirectTo || "/campus/dashboard";
   };
 
   return {
     user,
     session,
     status,
-    isLoading: status === 'loading',
-    isAuthenticated: status === 'authenticated',
+    isLoading: status === "loading",
+    isAuthenticated: status === "authenticated",
     hasPermission,
     isRole,
     getRoleDisplayName,
     getRoleColor,
-    getRedirectPath
+    getRedirectPath,
   };
 };

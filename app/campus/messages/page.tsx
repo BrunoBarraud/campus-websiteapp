@@ -1,10 +1,11 @@
-import { Metadata } from 'next';
-import CampusLayout from '@/components/layouts/CampusLayout';
-import MessagingSystem from '@/components/messaging/MessagingSystem';
+import { Metadata } from "next";
+import CampusLayout from "@/components/layouts/CampusLayout";
+import MessagingSystem from "@/components/messaging/MessagingSystem";
 
 export const metadata: Metadata = {
-  title: 'Mensajes - Campus IPDVS',
-  description: 'Sistema de mensajería para comunicación entre estudiantes, profesores y administradores',
+  title: "Mensajes - Campus IPDVS",
+  description:
+    "Sistema de mensajería para comunicación entre estudiantes, profesores y administradores",
 };
 
 export default function MessagesPage() {
@@ -25,7 +26,7 @@ export default function MessagesPage() {
             </div>
           </div>
         </div>
-        
+
         {/* Content Section */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
           <MessagingSystem className="min-h-[600px]" />

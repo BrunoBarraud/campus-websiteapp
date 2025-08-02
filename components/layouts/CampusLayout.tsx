@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useSession, signOut } from "next-auth/react";
 import { usePathname } from "next/navigation";
 import Footer from "@/components/Home/Footer/Footer";
-import { ACADEMIC_CONFIG } from '@/constant/academic';
+import { ACADEMIC_CONFIG } from "@/constant/academic";
 
 const CampusLayout = ({ children }: { children: React.ReactNode }) => {
   const { data: session } = useSession();
@@ -63,8 +63,11 @@ const CampusLayout = ({ children }: { children: React.ReactNode }) => {
                     {session.user.name}
                   </p>
                   <p className="text-xs text-amber-300">
-                    {session.user.role === 'admin' ? 'Administrador' : 
-                     session.user.role === 'teacher' ? 'Profesor' : 'Estudiante'}
+                    {session.user.role === "admin"
+                      ? "Administrador"
+                      : session.user.role === "teacher"
+                      ? "Profesor"
+                      : "Estudiante"}
                   </p>
                 </div>
                 <div className="w-10 h-10 bg-gradient-to-r from-amber-400 to-amber-500 rounded-full flex items-center justify-center hover:scale-110 transition-transform duration-300">
