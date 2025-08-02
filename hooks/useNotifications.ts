@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from 'react';
+import { useSession } from 'next-auth/react';
 import { supabase } from '@/app/lib/supabaseClient';
 
 interface Notification {
@@ -22,6 +23,7 @@ interface NotificationStats {
 }
 
 export const useNotifications = () => {
+  const { data: session } = useSession();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [stats, setStats] = useState<NotificationStats>({
     total_notifications: 0,
@@ -33,6 +35,12 @@ export const useNotifications = () => {
 
   // Función para cargar notificaciones
   const loadNotifications = useCallback(async () => {
+    // Solo cargar notificaciones si hay usuario autenticado
+    if (!session?.user) {
+      setLoading(false);
+      return;
+    }
+
     try {
       const response = await fetch('/api/notifications?limit=20');
       if (!response.ok) throw new Error('Error al cargar notificaciones');
@@ -45,7 +53,7 @@ export const useNotifications = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [session?.user]);
 
   // Función para marcar como leída
   const markAsRead = useCallback(async (notificationIds: string[]) => {

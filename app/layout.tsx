@@ -3,8 +3,8 @@ import {Poppins} from "next/font/google";
 import "./globals.css";
 import { NextAuthProvider } from "../app/components/auth/AuthProvider";
 import ConditionalNav from "@/app/ConditionalNav";
+import ConditionalFooter from "@/app/ConditionalFooter";
 import { ToastProvider } from "@/components/ui/toast-provider";
-import Footer from "@/components/Home/Footer/Footer";
 
 const font =  Poppins({
   variable: "--font-poppins",
@@ -31,18 +31,20 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="light">
+    <html lang="en" className="light h-full">
       <head>
         <link 
           rel="stylesheet" 
           href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" 
         />
       </head>
-      <body className={`${font.className} antialiased bg-white text-gray-900 dark:bg-white dark:text-gray-900`}>
+      <body className={`${font.className} antialiased bg-white text-gray-900 dark:bg-white dark:text-gray-900 h-full flex flex-col`}>
         <NextAuthProvider>
           <ConditionalNav />
-          {children}
-          <Footer />
+          <main className="flex-1 min-h-0">
+            {children}
+          </main>
+          <ConditionalFooter />
           <ToastProvider />
         </NextAuthProvider>
       </body>

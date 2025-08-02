@@ -4,6 +4,7 @@
 export const dynamic = 'force-dynamic';
 
 import React, { useState, useEffect } from "react";
+import CampusLayout from '@/components/layouts/CampusLayout';
 
 interface UserData {
   id: string;
@@ -159,7 +160,8 @@ const ProfilePage = () => {
   const roleInfo = getRoleInfo(userData);
 
   return (
-    <div className="bg-gray-50 min-h-screen container mx-auto px-4 py-8">
+    <CampusLayout>
+      <div className="bg-gray-50 min-h-screen container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
           {/* Header del perfil */}
           <div className="bg-white rounded-lg shadow-md p-6 mb-6">
@@ -377,6 +379,7 @@ const ProfilePage = () => {
           </div>
         </div>
       </div>
+    </CampusLayout>
   );
 };
 

@@ -1,5 +1,5 @@
-import AuthForm from '../../../components/auth/AuthForm';
+import AuthFormFixed from '../../../components/auth/AuthFormFixed';
 
 export default function LoginPage() {
-  return <AuthForm mode="login" />;
+  return <AuthFormFixed mode="login" />;
 }

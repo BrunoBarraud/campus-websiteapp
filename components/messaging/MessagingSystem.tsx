@@ -182,14 +182,15 @@ export default function MessagingSystem({ className }: MessagingSystemProps) {
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   };
 
-  if (!session?.user) {
-    return (
-      <div className={`p-6 text-center border rounded-lg ${className}`}>
-        <MessageCircleIcon className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-        <p className="text-gray-600">Inicia sesión para acceder a los mensajes</p>
-      </div>
-    );
-  }
+  // Comentando validación temporal para debugging
+  // if (!session?.user) {
+  //   return (
+  //     <div className={`p-6 text-center border rounded-lg ${className}`}>
+  //       <MessageCircleIcon className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+  //       <p className="text-gray-600">Inicia sesión para acceder a los mensajes</p>
+  //     </div>
+  //   );
+  // }
 
   return (
     <div className={`flex h-[600px] bg-background rounded-lg border ${className}`}>
