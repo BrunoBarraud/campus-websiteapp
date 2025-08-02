@@ -1,8 +1,9 @@
 'use client'
 
 import React, { useState, useEffect } from 'react';
-import { CalendarEvent, User, Subject, EventType, CreateEventForm } from '@/app/lib/types';
-// import { calendarService, userService, subjectService } from '@/app/lib/services';
+import { CalendarEvent, User, Subject, EventType, CreateEventForm } from '@/lib/types';
+import { calendarService, subjectService } from '@/app/lib/services';
+import { useSession } from 'next-auth/react';
 
 interface CalendarProps {
   events?: CalendarEvent[];
@@ -21,13 +22,12 @@ const Calendar: React.FC<CalendarProps> = ({
   onEventEdit,
   onEventDelete 
 }) => {
-  // const canEdit = canEdit; // Already passed as prop
+  const { data: session } = useSession();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>(events);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [userSubjects] = useState<Subject[]>([]);
-  // const [userSubjects, setUserSubjects] = useState<Subject[]>([]);
+  const [userSubjects, setUserSubjects] = useState<Subject[]>([]);
   const [showEventModal, setShowEventModal] = useState(false);
   const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
   const [loading, setLoading] = useState(true);
@@ -39,64 +39,37 @@ const Calendar: React.FC<CalendarProps> = ({
     date: '',
     time: '',
     type: 'class',
+    visibility: 'private',
     subject_id: '',
     year: userYear
   });
 
   // Cargar datos iniciales
   useEffect(() => {
-    loadInitialData();
-  }, []);
+    if (session?.user) {
+      loadInitialData();
+    }
+  }, [session]);
 
   const loadInitialData = async () => {
+    if (!session?.user) return;
+    
     try {
       setLoading(true);
       
-      // Por ahora usar datos mock hasta que la BD esté configurada
-      // TODO: Descomentar cuando la migración esté completa
-      
-      // Simulamos un usuario admin para testing
-      const mockUser: User = {
-        id: '1',
-        email: 'brunobarraud13@gmail.com',
-        name: 'Bruno Admin',
-        role: 'admin',
-        is_active: true,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      };
-      
-      setCurrentUser(mockUser);
-      
-      // Usar eventos por defecto por ahora
-      setCalendarEvents(defaultEvents);
-      
-      /* 
-      // Código original para cuando la BD esté lista:
-      const user = await userService.getCurrentUser();
+      // Usar usuario de la sesión
+      const user = session.user as User;
       setCurrentUser(user);
 
-      if (user) {
-        const userEvents = await calendarService.getEvents(user.role, user.id, user.year);
-        setCalendarEvents(userEvents);
+      // Cargar eventos del calendario
+      const userEvents = await calendarService.getEvents(user.role, user.id, user.year || undefined);
+      setCalendarEvents(userEvents);
 
-        const subjects = await subjectService.getSubjects(user.role, user.id, user.year);
-        setUserSubjects(subjects);
-      }
-      */
+      // Cargar materias del usuario
+      const subjects = await subjectService.getSubjects(user.role, user.id, user.year || undefined);
+      setUserSubjects(subjects);
     } catch (error) {
       console.error('Error loading initial data:', error);
-      // En caso de error, usar datos mock
-      setCurrentUser({
-        id: '1',
-        email: 'brunobarraud13@gmail.com',
-        name: 'Bruno Admin',
-        role: 'admin',
-        is_active: true,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      });
-      setCalendarEvents(defaultEvents);
     } finally {
       setLoading(false);
     }
@@ -109,6 +82,7 @@ const Calendar: React.FC<CalendarProps> = ({
       title: 'Examen de Matemática',
       date: '2025-07-25',
       type: 'exam',
+      visibility: 'public',
       description: 'Examen parcial - Unidades 1 y 2',
       is_active: true,
       created_at: '',
@@ -119,6 +93,7 @@ const Calendar: React.FC<CalendarProps> = ({
       title: 'Entrega de ensayo',
       date: '2025-07-28',
       type: 'assignment',
+      visibility: 'public',
       description: 'Ensayo sobre literatura contemporánea',
       is_active: true,
       created_at: '',
@@ -129,6 +104,7 @@ const Calendar: React.FC<CalendarProps> = ({
       title: 'Práctica de laboratorio',
       date: '2025-07-30',
       type: 'class',
+      visibility: 'public',
       description: 'Laboratorio de química orgánica',
       is_active: true,
       created_at: '',
@@ -139,6 +115,7 @@ const Calendar: React.FC<CalendarProps> = ({
       title: 'Día del Estudiante',
       date: '2025-09-21',
       type: 'holiday',
+      visibility: 'public',
       description: 'Feriado nacional',
       is_active: true,
       created_at: '',
@@ -184,31 +161,6 @@ const Calendar: React.FC<CalendarProps> = ({
     if (!currentUser || !canUserEdit()) return;
 
     try {
-      // Por ahora crear evento mock localmente
-      // TODO: Usar API cuando esté lista
-      
-      const newEvent: CalendarEvent = {
-        id: Date.now().toString(), // ID temporal
-        title: eventForm.title,
-        description: eventForm.description,
-        date: eventForm.date,
-        time: eventForm.time,
-        type: eventForm.type,
-        subject_id: eventForm.subject_id,
-        year: eventForm.year,
-        is_active: true,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      };
-      
-      setCalendarEvents([...calendarEvents, newEvent]);
-      setShowEventModal(false);
-      resetEventForm();
-      
-      if (onEventCreate) onEventCreate(eventForm);
-      
-      /*
-      // Código original para cuando la API esté lista:
       const newEvent = await calendarService.createEvent(eventForm, currentUser.id);
       if (newEvent) {
         setCalendarEvents([...calendarEvents, newEvent]);
@@ -216,7 +168,6 @@ const Calendar: React.FC<CalendarProps> = ({
         resetEventForm();
         if (onEventCreate) onEventCreate(eventForm);
       }
-      */
     } catch (error) {
       console.error('Error creating event:', error);
       alert('Error al crear el evento');
@@ -227,32 +178,6 @@ const Calendar: React.FC<CalendarProps> = ({
     if (!editingEvent || !currentUser || !canUserEdit()) return;
 
     try {
-      // Por ahora editar evento mock localmente
-      // TODO: Usar API cuando esté lista
-      
-      const updatedEvent: CalendarEvent = {
-        ...editingEvent,
-        title: eventForm.title,
-        description: eventForm.description,
-        date: eventForm.date,
-        time: eventForm.time,
-        type: eventForm.type,
-        subject_id: eventForm.subject_id,
-        year: eventForm.year,
-        updated_at: new Date().toISOString()
-      };
-      
-      setCalendarEvents(calendarEvents.map(event => 
-        event.id === editingEvent.id ? updatedEvent : event
-      ));
-      setShowEventModal(false);
-      setEditingEvent(null);
-      resetEventForm();
-      
-      if (onEventEdit) onEventEdit(editingEvent.id, updatedEvent);
-      
-      /*
-      // Código original para cuando la API esté lista:
       const updatedEvent = await calendarService.updateEvent(editingEvent.id, eventForm);
       if (updatedEvent) {
         setCalendarEvents(calendarEvents.map(event => 
@@ -263,7 +188,6 @@ const Calendar: React.FC<CalendarProps> = ({
         resetEventForm();
         if (onEventEdit) onEventEdit(editingEvent.id, updatedEvent);
       }
-      */
     } catch (error) {
       console.error('Error updating event:', error);
       alert('Error al actualizar el evento');
@@ -275,20 +199,11 @@ const Calendar: React.FC<CalendarProps> = ({
     
     if (confirm('¿Estás seguro de que quieres eliminar este evento?')) {
       try {
-        // Por ahora eliminar evento mock localmente
-        // TODO: Usar API cuando esté lista
-        
-        setCalendarEvents(calendarEvents.filter(event => event.id !== eventId));
-        if (onEventDelete) onEventDelete(eventId);
-        
-        /*
-        // Código original para cuando la API esté lista:
         const success = await calendarService.deleteEvent(eventId);
         if (success) {
           setCalendarEvents(calendarEvents.filter(event => event.id !== eventId));
           if (onEventDelete) onEventDelete(eventId);
         }
-        */
       } catch (error) {
         console.error('Error deleting event:', error);
         alert('Error al eliminar el evento');
@@ -308,6 +223,7 @@ const Calendar: React.FC<CalendarProps> = ({
         date: event.date,
         time: event.time || '',
         type: event.type,
+        visibility: event.visibility || 'private',
         subject_id: event.subject_id || '',
         year: event.year || userYear
       });
@@ -320,6 +236,7 @@ const Calendar: React.FC<CalendarProps> = ({
         date: date || selectedDate || '',
         time: '',
         type: 'class',
+        visibility: 'private',
         subject_id: '',
         year: userYear
       });
@@ -334,6 +251,7 @@ const Calendar: React.FC<CalendarProps> = ({
       date: '',
       time: '',
       type: 'class',
+      visibility: 'private',
       subject_id: '',
       year: userYear
     });

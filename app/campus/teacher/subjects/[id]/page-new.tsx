@@ -11,7 +11,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -40,7 +39,6 @@ import {
   EyeIcon,
   EyeOffIcon,
   CalendarIcon,
-  ClockIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -103,11 +101,11 @@ export default function UnifiedSubjectPage() {
   const [createUnitOpen, setCreateUnitOpen] = useState(false);
   const [createContentOpen, setCreateContentOpen] = useState(false);
   const [createAssignmentOpen, setCreateAssignmentOpen] = useState(false);
-  const [editUnitOpen, setEditUnitOpen] = useState(false);
+  // const [editUnitOpen, setEditUnitOpen] = useState(false); // TODO: Implementar edición
 
   // Estados para formularios
   const [selectedUnitId, setSelectedUnitId] = useState<string>("");
-  const [editingUnit, setEditingUnit] = useState<Unit | null>(null);
+  // const [editingUnit, setEditingUnit] = useState<Unit | null>(null); // TODO: Implementar edición
   const [newUnit, setNewUnit] = useState({
     unit_number: "",
     title: "",
@@ -560,8 +558,8 @@ export default function UnifiedSubjectPage() {
                             size="sm"
                             onClick={(e) => {
                               e.stopPropagation();
-                              setEditingUnit(unit);
-                              setEditUnitOpen(true);
+                              // TODO: Implementar edición de unidades
+                              toast.info('Funcionalidad de edición próximamente');
                             }}
                           >
                             <EditIcon className="h-4 w-4" />

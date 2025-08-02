@@ -1,7 +1,7 @@
 // 👥 API para gestión de usuarios con roles
 import { NextResponse } from 'next/server';
 import { userService } from '@/app/lib/services';
-import { CreateUserForm } from '@/app/lib/types';
+import { CreateUserForm } from '@/lib/types';
 
 // GET - Obtener todos los usuarios (solo admins)
 export async function GET(request: Request) {

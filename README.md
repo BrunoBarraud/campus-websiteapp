@@ -5,6 +5,7 @@ Una plataforma educativa moderna desarrollada con Next.js 15, diseñada para fac
 ## 🚀 Características
 
 ### ✅ Implementado
+
 - **Sistema de autenticación completo** con NextAuth.js y Supabase
 - **Dashboard interactivo** con 14 materias académicas
 - **Calendario académico** con eventos, exámenes y tareas
@@ -15,6 +16,7 @@ Una plataforma educativa moderna desarrollada con Next.js 15, diseñada para fac
 - **Tests unitarios** configurados con Jest
 
 ### 🔄 En Desarrollo
+
 - Sistema de comunicación docente-estudiante
 - Carga y descarga de materiales académicos
 - Sistema de calificaciones en tiempo real
@@ -23,6 +25,7 @@ Una plataforma educativa moderna desarrollada con Next.js 15, diseñada para fac
 ## 🛠️ Tecnologías
 
 **Frontend:**
+
 - Next.js 15.3.4 (App Router)
 - React 19
 - TypeScript
@@ -30,12 +33,14 @@ Una plataforma educativa moderna desarrollada con Next.js 15, diseñada para fac
 - React Hook Form + Zod
 
 **Backend & Base de Datos:**
+
 - Supabase (PostgreSQL)
 - NextAuth.js para autenticación
 - Prisma ORM
 - API Routes de Next.js
 
 **Testing:**
+
 - Jest
 - React Testing Library
 - Jest Environment JSDOM
@@ -43,22 +48,26 @@ Una plataforma educativa moderna desarrollada con Next.js 15, diseñada para fac
 ## 📦 Instalación
 
 1. **Clonar el repositorio**
+
 ```bash
 git clone https://github.com/BrunoBarraud/campus-websiteapp.git
 cd campus-websiteapp
 ```
 
 2. **Instalar dependencias**
+
 ```bash
 npm install
 ```
 
 3. **Configurar variables de entorno**
+
 ```bash
 cp .env.template .env.local
 ```
 
 Completar las variables en `.env.local`:
+
 ```env
 # Database Configuration
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url_here
@@ -73,12 +82,45 @@ NEXT_PUBLIC_FIREBASE_API_KEY=your_firebase_api_key_here
 ```
 
 4. **Configurar base de datos**
+
 ```bash
 # Ejecutar las migraciones en Supabase
 # El archivo supabase-migration.sql contiene la estructura necesaria
 ```
 
-5. **Ejecutar en desarrollo**
+## 🛡️ Configuración de Seguridad RLS
+
+Este proyecto incluye políticas de Row Level Security (RLS) para proteger los datos:
+
+### 🚀 Configuración Rápida:
+
+**Solo necesitas un archivo: `database/rls-setup-complete.sql`**
+
+1. Ve a [Supabase Dashboard](https://supabase.com/dashboard/projects) → Tu Proyecto
+2. Navega a **"SQL Editor"**
+3. Crea una nueva consulta
+4. Copia y pega todo el contenido de `database/rls-setup-complete.sql`
+5. Ejecuta el script ▶️
+
+### ✅ Características de Seguridad Implementadas:
+
+- 🔐 **Acceso basado en roles** (admin/teacher/student)
+- 🛡️ **Protección de datos personales** - Los estudiantes solo ven sus datos
+- 📝 **Políticas explícitas** para todas las operaciones
+- 🗂️ **Seguridad en Storage** para avatares y archivos
+- 🎯 **Función optimizada** para obtener roles de usuario
+- 👥 **Protección de usuarios** - Acceso restringido por rol
+
+### 🔍 Verificación Post-Instalación:
+
+Después de ejecutar el script, verifica en Supabase:
+
+1. **Database** → **Policies** → Deben aparecer las políticas RLS
+2. **Storage** → **Policies** → Deben aparecer políticas de buckets
+3. **SQL Editor** → Ejecutar `SELECT public.get_user_role();` debe funcionar
+
+4. **Ejecutar en desarrollo**
+
 ```bash
 npm run dev
 ```
@@ -121,12 +163,14 @@ campus-websiteapp/
 ## 🎓 Funcionalidades Académicas
 
 ### Dashboard de Cursos
+
 - **14 Materias disponibles**: Matemática, Lengua, Historia, Biología, Física, Química, Literatura, Artes Visuales, Filosofía, Educación Física, Música, Geografía, Programación, Economía
 - **Información de profesores** actualizada
 - **Búsqueda y filtros** para encontrar materias fácilmente
 - **Acceso directo** a recursos de cada materia
 
 ### Calendario Académico
+
 - **Vista mensual** interactiva
 - **Tipos de eventos**: Exámenes, tareas, clases, feriados
 - **Detalles de eventos** con información adicional
@@ -134,12 +178,14 @@ campus-websiteapp/
 - **Navegación** entre meses
 
 ### Gestión de Perfil
+
 - **Información personal** editable
 - **Datos académicos**: curso, ID de estudiante, estado
 - **Estadísticas**: promedio, asistencia, materias pendientes
 - **Avatar personalizable**
 
 ### Configuración del Sistema
+
 - **Preferencias de apariencia**: modo oscuro, idioma, zona horaria
 - **Notificaciones**: generales, email, push
 - **Privacidad**: perfil privado
@@ -161,10 +207,12 @@ npm run test:coverage
 ## 📚 API Routes
 
 ### Autenticación
+
 - `POST /api/auth/register` - Registro de nuevos usuarios
 - `GET/POST /api/auth/[...nextauth]` - NextAuth.js endpoints
 
 ### Usuarios
+
 - `POST /api/sync-user` - Sincronización de datos de usuario
 
 ## 🔐 Seguridad
@@ -178,12 +226,15 @@ npm run test:coverage
 ## 🚀 Deployment
 
 ### Vercel (Recomendado)
+
 1. Conectar repositorio con Vercel
 2. Configurar variables de entorno en el dashboard
 3. Deploy automático en cada push a main
 
 ### Otros proveedores
+
 El proyecto es compatible con cualquier plataforma que soporte Next.js:
+
 - Netlify
 - AWS Amplify
 - Railway
@@ -200,6 +251,7 @@ El proyecto es compatible con cualquier plataforma que soporte Next.js:
 ## 📝 Roadmap
 
 ### Próximas funcionalidades
+
 - [ ] Sistema de mensajería docente-estudiante
 - [ ] Biblioteca digital con materiales descargables
 - [ ] Sistema de evaluaciones online
@@ -221,6 +273,7 @@ Este proyecto está bajo la Licencia MIT. Ver `LICENSE` para más detalles.
 ## 📞 Soporte
 
 Para soporte técnico o consultas:
+
 - Email: soporte@ipdvs.edu.ar
 - GitHub Issues: [Crear un issue](https://github.com/BrunoBarraud/campus-websiteapp/issues)
 

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Subject, SubjectUnit, SubjectContent, User, Assignment } from '@/app/lib/types';
+import { Subject, SubjectUnit, SubjectContent, User, Assignment } from '@/lib/types';
 import { UnitModal, ContentModal, DocumentModal, AssignmentModal } from '@/components/modals/SubjectModals';
 import { FiPlus, FiEdit, FiTrash2, FiFile, FiBookOpen, FiCalendar, FiUsers, FiArrowLeft, FiUpload, FiFolder, FiClipboard } from 'react-icons/fi';
 import { BsPinFill } from 'react-icons/bs';

@@ -6,12 +6,32 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { CalendarIcon, FileIcon, UserIcon, DownloadIcon, StarIcon } from "lucide-react";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
+import {
+  CalendarIcon,
+  FileIcon,
+  UserIcon,
+  DownloadIcon,
+  StarIcon,
+  MessageCircleIcon,
+} from "lucide-react";
 import { toast } from "sonner";
+import SubmissionComments from "@/components/dashboard/SubmissionComments";
 
 interface Assignment {
   id: string;
@@ -38,20 +58,25 @@ interface Submission {
   };
 }
 
-export default function AssignmentSubmissionsPage({ 
-  params 
-}: { 
-  params: Promise<{ id: string; assignmentId: string }> 
+export default function AssignmentSubmissionsPage({
+  params,
+}: {
+  params: Promise<{ id: string; assignmentId: string }>;
 }) {
   const { data: session } = useSession();
   const router = useRouter();
   const [assignment, setAssignment] = useState<Assignment | null>(null);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [loading, setLoading] = useState(true);
-  const [gradingSubmission, setGradingSubmission] = useState<Submission | null>(null);
+  const [gradingSubmission, setGradingSubmission] = useState<Submission | null>(
+    null
+  );
   const [gradeData, setGradeData] = useState({ score: "", feedback: "" });
-  const [subjectId, setSubjectId] = useState<string>('');
-  const [assignmentId, setAssignmentId] = useState<string>('');
+  const [subjectId, setSubjectId] = useState<string>("");
+  const [assignmentId, setAssignmentId] = useState<string>("");
+  const [filter, setFilter] = useState<"all" | "graded" | "pending" | "late">(
+    "all"
+  );
 
   useEffect(() => {
     const loadParams = async () => {
@@ -64,7 +89,9 @@ export default function AssignmentSubmissionsPage({
 
   const fetchAssignment = useCallback(async () => {
     try {
-      const response = await fetch(`/api/subjects/${subjectId}/assignments?assignmentId=${assignmentId}`);
+      const response = await fetch(
+        `/api/subjects/${subjectId}/assignments?assignmentId=${assignmentId}`
+      );
       if (response.ok) {
         const data = await response.json();
         setAssignment(data[0]); // Assuming it returns an array with one item
@@ -77,7 +104,9 @@ export default function AssignmentSubmissionsPage({
 
   const fetchSubmissions = useCallback(async () => {
     try {
-      const response = await fetch(`/api/subjects/${subjectId}/assignments/${assignmentId}/submissions`);
+      const response = await fetch(
+        `/api/subjects/${subjectId}/assignments/${assignmentId}/submissions`
+      );
       if (response.ok) {
         const data = await response.json();
         setSubmissions(data);
@@ -102,17 +131,20 @@ export default function AssignmentSubmissionsPage({
     if (!gradingSubmission) return;
 
     try {
-      const response = await fetch(`/api/subjects/${subjectId}/assignments/${assignmentId}/submissions`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          submissionId: gradingSubmission.id,
-          score: parseInt(gradeData.score),
-          feedback: gradeData.feedback,
-        }),
-      });
+      const response = await fetch(
+        `/api/subjects/${subjectId}/assignments/${assignmentId}/submissions`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            submission_id: gradingSubmission.id,
+            score: parseInt(gradeData.score),
+            feedback: gradeData.feedback,
+          }),
+        }
+      );
 
       if (response.ok) {
         toast.success("Calificación guardada exitosamente");
@@ -137,12 +169,12 @@ export default function AssignmentSubmissionsPage({
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('es-ES', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+    return new Date(dateString).toLocaleDateString("es-ES", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
 
@@ -150,14 +182,36 @@ export default function AssignmentSubmissionsPage({
     if (submission.score !== null && submission.score !== undefined) {
       return <Badge variant="default">Calificada</Badge>;
     }
-    
-    const isLate = new Date(submission.submitted_at) > new Date(assignment?.due_date || '');
+
+    const isLate =
+      new Date(submission.submitted_at) > new Date(assignment?.due_date || "");
     if (isLate) {
       return <Badge variant="destructive">Tarde</Badge>;
     }
-    
+
     return <Badge variant="secondary">Pendiente</Badge>;
   };
+
+  const getFilteredSubmissions = () => {
+    switch (filter) {
+      case "graded":
+        return submissions.filter(
+          (s) => s.score !== null && s.score !== undefined
+        );
+      case "pending":
+        return submissions.filter(
+          (s) => s.score === null || s.score === undefined
+        );
+      case "late":
+        return submissions.filter(
+          (s) => new Date(s.submitted_at) > new Date(assignment?.due_date || "")
+        );
+      default:
+        return submissions;
+    }
+  };
+
+  const filteredSubmissions = getFilteredSubmissions();
 
   if (loading) {
     return (
@@ -185,7 +239,7 @@ export default function AssignmentSubmissionsPage({
         >
           ← Volver
         </Button>
-        
+
         <Card>
           <CardHeader>
             <CardTitle>{assignment.title}</CardTitle>
@@ -209,18 +263,113 @@ export default function AssignmentSubmissionsPage({
       </div>
 
       <div className="space-y-4">
-        <h2 className="text-xl font-semibold">Entregas de Estudiantes</h2>
-        
-        {submissions.length === 0 ? (
+        <div className="flex justify-between items-center">
+          <h2 className="text-xl font-semibold">Entregas de Estudiantes</h2>
+          {submissions.length > 0 && (
+            <div className="flex gap-4 text-sm">
+              <span className="text-green-600 font-medium">
+                Calificadas:{" "}
+                {
+                  submissions.filter(
+                    (s) => s.score !== null && s.score !== undefined
+                  ).length
+                }
+              </span>
+              <span className="text-orange-600 font-medium">
+                Pendientes:{" "}
+                {
+                  submissions.filter(
+                    (s) => s.score === null || s.score === undefined
+                  ).length
+                }
+              </span>
+              <span className="text-red-600 font-medium">
+                Tardías:{" "}
+                {
+                  submissions.filter(
+                    (s) =>
+                      new Date(s.submitted_at) >
+                      new Date(assignment?.due_date || "")
+                  ).length
+                }
+              </span>
+            </div>
+          )}
+        </div>
+
+        {submissions.length > 0 && (
+          <div className="flex gap-2 mb-4">
+            <Button
+              variant={filter === "all" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setFilter("all")}
+            >
+              Todas ({submissions.length})
+            </Button>
+            <Button
+              variant={filter === "pending" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setFilter("pending")}
+            >
+              Pendientes (
+              {
+                submissions.filter(
+                  (s) => s.score === null || s.score === undefined
+                ).length
+              }
+              )
+            </Button>
+            <Button
+              variant={filter === "graded" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setFilter("graded")}
+            >
+              Calificadas (
+              {
+                submissions.filter(
+                  (s) => s.score !== null && s.score !== undefined
+                ).length
+              }
+              )
+            </Button>
+            <Button
+              variant={filter === "late" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setFilter("late")}
+            >
+              Tardías (
+              {
+                submissions.filter(
+                  (s) =>
+                    new Date(s.submitted_at) >
+                    new Date(assignment?.due_date || "")
+                ).length
+              }
+              )
+            </Button>
+          </div>
+        )}
+
+        {filteredSubmissions.length === 0 ? (
           <Card>
             <CardContent className="p-6 text-center">
               <FileIcon className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-              <p className="text-gray-600">No hay entregas aún</p>
+              <p className="text-gray-600">
+                {filter === "all"
+                  ? "No hay entregas aún"
+                  : `No hay entregas ${
+                      filter === "pending"
+                        ? "pendientes"
+                        : filter === "graded"
+                        ? "calificadas"
+                        : "tardías"
+                    }`}
+              </p>
             </CardContent>
           </Card>
         ) : (
           <div className="grid gap-4">
-            {submissions.map((submission) => (
+            {filteredSubmissions.map((submission) => (
               <Card key={submission.id}>
                 <CardHeader>
                   <div className="flex justify-between items-start">
@@ -230,114 +379,147 @@ export default function AssignmentSubmissionsPage({
                         {submission.student.name}
                         {getStatusBadge(submission)}
                       </CardTitle>
-                      <p className="text-sm text-gray-600">{submission.student.email}</p>
+                      <p className="text-sm text-gray-600">
+                        {submission.student.email}
+                      </p>
                     </div>
                     <div className="text-right text-sm">
                       <p>Entregado: {formatDate(submission.submitted_at)}</p>
-                      {submission.score !== null && submission.score !== undefined && (
-                        <p className="font-semibold text-lg">
-                          {submission.score}/{assignment.max_score} puntos
-                        </p>
-                      )}
+                      {submission.score !== null &&
+                        submission.score !== undefined && (
+                          <p className="font-semibold text-lg">
+                            {submission.score}/{assignment.max_score} puntos
+                          </p>
+                        )}
                     </div>
                   </div>
                 </CardHeader>
                 <CardContent>
-                  {submission.submission_text && (
-                    <div className="mb-4">
-                      <h4 className="font-medium mb-2">Texto de la entrega:</h4>
-                      <p className="bg-gray-50 p-3 rounded text-sm">
-                        {submission.submission_text}
-                      </p>
-                    </div>
-                  )}
-                  
-                  {submission.file_url && (
-                    <div className="mb-4">
-                      <h4 className="font-medium mb-2">Archivo:</h4>
-                      <div className="flex items-center gap-2">
-                        <FileIcon className="h-4 w-4" />
-                        <span className="text-sm">{submission.file_name}</span>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => window.open(submission.file_url, '_blank')}
-                        >
-                          <DownloadIcon className="h-4 w-4 mr-1" />
-                          Descargar
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-                  
-                  {submission.feedback && (
-                    <div className="mb-4">
-                      <h4 className="font-medium mb-2">Retroalimentación:</h4>
-                      <p className="bg-blue-50 p-3 rounded text-sm">
-                        {submission.feedback}
-                      </p>
-                    </div>
-                  )}
-                  
-                  <div className="flex justify-end">
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button
-                          variant="outline"
-                          onClick={() => openGradingDialog(submission)}
-                        >
-                          <StarIcon className="h-4 w-4 mr-2" />
-                          {submission.score !== null && submission.score !== undefined 
-                            ? "Editar Calificación" 
-                            : "Calificar"
-                          }
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>
-                            Calificar entrega de {submission.student.name}
-                          </DialogTitle>
-                        </DialogHeader>
-                        <form onSubmit={handleGrade} className="space-y-4">
-                          <div>
-                            <Label htmlFor="score">
-                              Puntuación (máximo {assignment.max_score} puntos)
-                            </Label>
-                            <Input
-                              id="score"
-                              type="number"
-                              min="0"
-                              max={assignment.max_score}
-                              value={gradeData.score}
-                              onChange={(e) => setGradeData({ ...gradeData, score: e.target.value })}
-                              required
-                            />
-                          </div>
-                          <div>
-                            <Label htmlFor="feedback">Retroalimentación</Label>
-                            <Textarea
-                              id="feedback"
-                              value={gradeData.feedback}
-                              onChange={(e) => setGradeData({ ...gradeData, feedback: e.target.value })}
-                              rows={4}
-                              placeholder="Comentarios para el estudiante..."
-                            />
-                          </div>
-                          <div className="flex justify-end gap-2">
-                            <DialogTrigger asChild>
-                              <Button type="button" variant="outline">
-                                Cancelar
-                              </Button>
-                            </DialogTrigger>
-                            <Button type="submit">
-                              Guardar Calificación
+                  <Tabs defaultValue="content" className="w-full">
+                    <TabsList className="grid w-full grid-cols-2">
+                      <TabsTrigger value="content">Contenido</TabsTrigger>
+                      <TabsTrigger value="comments" className="flex items-center gap-2">
+                        <MessageCircleIcon className="h-4 w-4" />
+                        Comentarios
+                      </TabsTrigger>
+                    </TabsList>
+                    
+                    <TabsContent value="content" className="space-y-4">
+                      {submission.submission_text && (
+                        <div>
+                          <h4 className="font-medium mb-2">Texto de la entrega:</h4>
+                          <p className="bg-gray-50 p-3 rounded text-sm whitespace-pre-wrap">
+                            {submission.submission_text}
+                          </p>
+                        </div>
+                      )}
+
+                      {submission.file_url && (
+                        <div>
+                          <h4 className="font-medium mb-2">Archivo:</h4>
+                          <div className="flex items-center gap-2">
+                            <FileIcon className="h-4 w-4" />
+                            <span className="text-sm">{submission.file_name}</span>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() =>
+                                window.open(submission.file_url, "_blank")
+                              }
+                            >
+                              <DownloadIcon className="h-4 w-4 mr-1" />
+                              Descargar
                             </Button>
                           </div>
-                        </form>
-                      </DialogContent>
-                    </Dialog>
-                  </div>
+                        </div>
+                      )}
+
+                      {submission.feedback && (
+                        <div>
+                          <h4 className="font-medium mb-2">Retroalimentación:</h4>
+                          <p className="bg-blue-50 p-3 rounded text-sm whitespace-pre-wrap">
+                            {submission.feedback}
+                          </p>
+                        </div>
+                      )}
+
+                      <div className="flex justify-end pt-4">
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button
+                              variant="outline"
+                              onClick={() => openGradingDialog(submission)}
+                            >
+                              <StarIcon className="h-4 w-4 mr-2" />
+                              {submission.score !== null &&
+                              submission.score !== undefined
+                                ? "Editar Calificación"
+                                : "Calificar"}
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>
+                                Calificar entrega de {submission.student.name}
+                              </DialogTitle>
+                            </DialogHeader>
+                            <form onSubmit={handleGrade} className="space-y-4">
+                              <div>
+                                <Label htmlFor="score">
+                                  Puntuación (máximo {assignment.max_score} puntos)
+                                </Label>
+                                <Input
+                                  id="score"
+                                  type="number"
+                                  min="0"
+                                  max={assignment.max_score}
+                                  value={gradeData.score}
+                                  onChange={(e) =>
+                                    setGradeData({
+                                      ...gradeData,
+                                      score: e.target.value,
+                                    })
+                                  }
+                                  required
+                                />
+                              </div>
+                              <div>
+                                <Label htmlFor="feedback">Retroalimentación</Label>
+                                <Textarea
+                                  id="feedback"
+                                  value={gradeData.feedback}
+                                  onChange={(e) =>
+                                    setGradeData({
+                                      ...gradeData,
+                                      feedback: e.target.value,
+                                    })
+                                  }
+                                  rows={4}
+                                  placeholder="Comentarios para el estudiante..."
+                                />
+                              </div>
+                              <div className="flex justify-end gap-2">
+                                <DialogTrigger asChild>
+                                  <Button type="button" variant="outline">
+                                    Cancelar
+                                  </Button>
+                                </DialogTrigger>
+                                <Button type="submit">Guardar Calificación</Button>
+                              </div>
+                            </form>
+                          </DialogContent>
+                        </Dialog>
+                      </div>
+                    </TabsContent>
+                    
+                    <TabsContent value="comments" className="space-y-4">
+                      <SubmissionComments 
+                        submissionId={submission.id}
+                        submissionText={submission.submission_text || "Sin contenido de texto"}
+                        canComment={true}
+                      />
+                    </TabsContent>
+                  </Tabs>
                 </CardContent>
               </Card>
             ))}

@@ -1,7 +1,7 @@
 // 📅 API para gestión de eventos del calendario
 import { NextResponse } from 'next/server';
 import { calendarService } from '@/app/lib/services';
-import { CreateEventForm, EventType } from '@/app/lib/types';
+import { CreateEventForm, EventType } from '@/lib/types';
 import { requireRole } from '@/app/lib/permissions';
 
 // GET - Obtener eventos según el rol del usuario
@@ -55,32 +55,46 @@ export async function GET(request: Request) {
   }
 }
 
-// POST - Crear nuevo evento (admins y profesores)
+// POST - Crear nuevo evento (todos los roles pueden crear)
 export async function POST(request: Request) {
   try {
     const eventData: CreateEventForm = await request.json();
 
     // Get authenticated user using role-based authentication
-    const currentUser = await requireRole(['admin', 'teacher']);
-
-    // Verificar permisos
-    if (currentUser.role === 'student') {
-      return NextResponse.json(
-        { success: false, error: 'Los estudiantes no pueden crear eventos' },
-        { status: 403 }
-      );
-    }
+    const currentUser = await requireRole(['admin', 'teacher', 'student']);
 
     // Validar datos requeridos
-    if (!eventData.title || !eventData.date || !eventData.type) {
+    if (!eventData.title || !eventData.date || !eventData.type || !eventData.visibility) {
       return NextResponse.json(
         { 
           success: false, 
-          error: 'Faltan campos requeridos: title, date, type' 
+          error: 'Faltan campos requeridos: title, date, type, visibility' 
         },
         { status: 400 }
       );
     }
+
+    // Validar permisos de visibilidad según el rol
+    if (currentUser.role === 'student') {
+      // Los estudiantes solo pueden crear eventos privados
+      if (eventData.visibility !== 'private') {
+        return NextResponse.json(
+          { success: false, error: 'Los estudiantes solo pueden crear eventos personales (privados)' },
+          { status: 403 }
+        );
+      }
+      // Forzar tipo personal para estudiantes
+      eventData.type = 'personal';
+    } else if (currentUser.role === 'teacher') {
+      // Los profesores pueden crear eventos públicos, para estudiantes o privados
+      if (!['public', 'students', 'private'].includes(eventData.visibility)) {
+        return NextResponse.json(
+          { success: false, error: 'Visibilidad no válida para profesores' },
+          { status: 400 }
+        );
+      }
+    }
+    // Los admins pueden crear eventos con cualquier visibilidad
 
     // Validar fecha
     const eventDate = new Date(eventData.date);

@@ -12,6 +12,12 @@ export async function GET(
     const currentUser = await requireRole(['admin', 'teacher', 'student']);
     const { id: subjectId } = await params;
 
+    // Obtener parámetros de consulta
+    const { searchParams } = new URL(request.url);
+    const includeParam = searchParams.get('include');
+    const shouldIncludeContents = includeParam?.includes('contents');
+    const shouldIncludeAssignments = includeParam?.includes('assignments');
+
     // Verificar que la materia existe
     const { data: subject, error: subjectError } = await supabaseAdmin
       .from('subjects')
@@ -34,8 +40,11 @@ export async function GET(
       );
     }
 
+    // Para estudiantes, solo mostrar unidades activas
+    const isActiveFilter = currentUser.role === 'student' ? true : undefined;
+
     // Obtener las unidades
-    const { data: units, error } = await supabaseAdmin
+    let query = supabaseAdmin
       .from('subject_units')
       .select(`
         id,
@@ -49,8 +58,13 @@ export async function GET(
         updated_at
       `)
       .eq('subject_id', subjectId)
-      .eq('is_active', true)
       .order('order_index');
+
+    if (isActiveFilter !== undefined) {
+      query = query.eq('is_active', isActiveFilter);
+    }
+
+    const { data: units, error } = await query;
 
     if (error) {
       console.error('Error fetching units:', error);
@@ -60,7 +74,93 @@ export async function GET(
       );
     }
 
-    return NextResponse.json(units || []);
+    if (!units) {
+      return NextResponse.json([]);
+    }
+
+    // Si se solicita incluir contenidos y/o tareas, obtenerlos
+    if (shouldIncludeContents || shouldIncludeAssignments) {
+      const enrichedUnits = await Promise.all(
+        units.map(async (unit) => {
+          const enrichedUnit: any = { ...unit, contents: [], assignments: [] };
+
+          // Obtener contenidos si se solicita
+          if (shouldIncludeContents) {
+            const { data: contents } = await supabaseAdmin
+              .from('unit_contents')
+              .select(`
+                id,
+                title,
+                content_type,
+                content,
+                file_url,
+                file_name,
+                is_pinned,
+                created_at,
+                creator:users!unit_contents_created_by_fkey(id, name, email)
+              `)
+              .eq('unit_id', unit.id)
+              .order('created_at', { ascending: false });
+
+            enrichedUnit.contents = contents || [];
+          }
+
+          // Obtener tareas si se solicita
+          if (shouldIncludeAssignments) {
+            let assignmentQuery = supabaseAdmin
+              .from('assignments')
+              .select(`
+                id,
+                title,
+                description,
+                due_date,
+                max_score,
+                instructions,
+                is_active,
+                unit_id
+              `)
+              .eq('unit_id', unit.id)
+              .order('created_at', { ascending: false });
+
+            // Para estudiantes, solo mostrar tareas activas
+            if (currentUser.role === 'student') {
+              assignmentQuery = assignmentQuery.eq('is_active', true);
+            }
+
+            const { data: assignments } = await assignmentQuery;
+
+            // Para estudiantes, agregar información de si han entregado la tarea
+            if (currentUser.role === 'student' && assignments) {
+              const enrichedAssignments = await Promise.all(
+                assignments.map(async (assignment) => {
+                  const { data: submission } = await supabaseAdmin
+                    .from('assignment_submissions')
+                    .select('id, status')
+                    .eq('assignment_id', assignment.id)
+                    .eq('student_id', currentUser.id)
+                    .single();
+
+                  return {
+                    ...assignment,
+                    has_submission: !!submission,
+                    submission_status: submission?.status || null,
+                  };
+                })
+              );
+              enrichedUnit.assignments = enrichedAssignments;
+            } else {
+              enrichedUnit.assignments = assignments || [];
+            }
+          }
+
+          return enrichedUnit;
+        })
+      );
+
+      return NextResponse.json(enrichedUnits);
+    }
+
+    return NextResponse.json(units);
 
   } catch (error: any) {
     console.error('Error in GET /api/subjects/[id]/units:', error);

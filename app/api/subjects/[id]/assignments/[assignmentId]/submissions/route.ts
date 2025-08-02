@@ -257,7 +257,7 @@ export async function PUT(
     const currentUser = await requireRole(["admin", "teacher"]);
     const { assignmentId } = await params;
 
-    const { submission_id, grade, feedback } = await request.json();
+    const { submission_id, score, feedback } = await request.json();
 
     if (!submission_id) {
       return NextResponse.json(
@@ -298,7 +298,7 @@ export async function PUT(
 
     // Validar calificación
     const maxScore = assignmentInfo.max_score;
-    if (grade !== null && maxScore && (grade < 0 || grade > maxScore)) {
+    if (score !== null && maxScore && (score < 0 || score > maxScore)) {
       return NextResponse.json(
         { error: `La calificación debe estar entre 0 y ${maxScore}` },
         { status: 400 }
@@ -309,7 +309,7 @@ export async function PUT(
     const { data, error } = await supabaseAdmin
       .from("assignment_submissions")
       .update({
-        grade: grade,
+        score: score,
         feedback: feedback || null,
         graded_at: new Date().toISOString(),
         graded_by: currentUser.id,
@@ -320,11 +320,11 @@ export async function PUT(
         id,
         assignment_id,
         student_id,
-        content,
+        submission_text,
         submitted_at,
-        grade,
+        score,
         feedback,
-        is_late,
+        status,
         graded_at,
         graded_by,
         student:users!assignment_submissions_student_id_fkey(id, name, email)

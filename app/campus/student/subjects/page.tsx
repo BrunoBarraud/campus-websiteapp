@@ -4,6 +4,7 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import { AcademicUtils } from '@/constant/academic';
 
 interface Subject {
   id: string;
@@ -120,12 +121,9 @@ export default function StudentSubjectsPage() {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">Todos los años</option>
-                <option value="1">1er Año</option>
-                <option value="2">2do Año</option>
-                <option value="3">3er Año</option>
-                <option value="4">4to Año</option>
-                <option value="5">5to Año</option>
-                <option value="6">6to Año</option>
+                {AcademicUtils.getYearOptions().map(({ value, label }) => (
+                  <option key={value} value={value}>{label}</option>
+                ))}
               </select>
             </div>
           </div>

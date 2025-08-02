@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { signIn } from 'next-auth/react';
+import { AcademicUtils, ACADEMIC_CONFIG } from '@/constant/academic';
 
 export default function AuthForm({ mode }: { mode: 'login' | 'register' }) {
   const [email, setEmail] = useState('');
@@ -117,7 +118,7 @@ export default function AuthForm({ mode }: { mode: 'login' | 'register' }) {
           {/* Logo local */}
           <div className="flex justify-center mb-6 sm:mb-8">
             <Image
-              src="/images/ipdvs-logo.png"
+              src={ACADEMIC_CONFIG.INSTITUTION.logo}
               alt="Logo del Campus - IPDVS"
               width={60}
               height={60}
@@ -150,7 +151,9 @@ export default function AuthForm({ mode }: { mode: 'login' | 'register' }) {
                   />
                   <label
                     htmlFor="name"
-                    className="absolute left-2 sm:left-3 top-2 sm:top-3 text-gray-400 peer-focus:text-yellow-500 peer-focus:-translate-y-6 peer-focus:scale-90 peer-focus:bg-white peer-focus:px-2 transition-all peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100 text-sm sm:text-base"
+                    className={`absolute left-2 sm:left-3 text-gray-400 peer-focus:text-yellow-500 transition-all text-sm sm:text-base pointer-events-none ${
+                      name ? '-translate-y-6 scale-90 bg-white px-2 top-0' : 'top-2 sm:top-3 peer-focus:-translate-y-6 peer-focus:scale-90 peer-focus:bg-white peer-focus:px-2 peer-focus:top-0'
+                    }`}
                   >
                     Nombre completo
                   </label>
@@ -161,16 +164,20 @@ export default function AuthForm({ mode }: { mode: 'login' | 'register' }) {
                   <select
                     id="year"
                     value={year}
-                    onChange={(e) => setYear(e.target.value ? parseInt(e.target.value) : '')}
+                    onChange={(e) => {
+                      const selectedYear = e.target.value ? parseInt(e.target.value) : '';
+                      setYear(selectedYear);
+                      // Limpiar división si es 5° o 6° año (no tienen divisiones)
+                      if (selectedYear === 5 || selectedYear === 6) {
+                        setDivision('');
+                      }
+                    }}
                     className="text-black w-full px-3 py-2 sm:px-4 sm:py-3 md:px-5 md:py-3 lg:px-6 lg:py-4 rounded-md border border-gray-300 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-300 outline-none transition-all appearance-none bg-white text-sm sm:text-base"
                   >
                     <option value="">Selecciona tu año de estudio</option>
-                    <option value="1">1er Año</option>
-                    <option value="2">2do Año</option>
-                    <option value="3">3er Año</option>
-                    <option value="4">4to Año</option>
-                    <option value="5">5to Año</option>
-                    <option value="6">6to Año</option>
+                    {AcademicUtils.getYearOptions().map(({ value, label }) => (
+                      <option key={value} value={value}>{label}</option>
+                    ))}
                   </select>
                   <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
                     <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -179,24 +186,29 @@ export default function AuthForm({ mode }: { mode: 'login' | 'register' }) {
                   </div>
                 </div>
 
-                {/* Campo División (solo para registro) */}
-                <div className="relative">
-                  <select
-                    id="division"
-                    value={division}
-                    onChange={(e) => setDivision(e.target.value)}
-                    className="text-black w-full px-3 py-2 sm:px-4 sm:py-3 md:px-5 md:py-3 lg:px-6 lg:py-4 rounded-md border border-gray-300 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-300 outline-none transition-all appearance-none bg-white text-sm sm:text-base"
-                  >
-                    <option value="">Selecciona tu división</option>
-                    <option value="A">División A</option>
-                    <option value="B">División B</option>
-                  </select>
-                  <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
-                    <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                    </svg>
+                {/* Campo División (solo para registro y solo para años 1-4) */}
+                {year && year >= 1 && year <= 4 && (
+                  <div className="relative">
+                    <select
+                      id="division"
+                      value={division}
+                      onChange={(e) => setDivision(e.target.value)}
+                      className="text-black w-full px-3 py-2 sm:px-4 sm:py-3 md:px-5 md:py-3 lg:px-6 lg:py-4 rounded-md border border-gray-300 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-300 outline-none transition-all appearance-none bg-white text-sm sm:text-base"
+                    >
+                      <option value="">Selecciona tu división</option>
+                      {AcademicUtils.getDivisionOptionsByYear(Number(year)).map((divisionOption) => (
+                        <option key={divisionOption.value} value={divisionOption.value}>
+                          {divisionOption.label}
+                        </option>
+                      ))}
+                    </select>
+                    <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                      <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </div>
                   </div>
-                </div>
+                )}
               </>
             )}
 
@@ -213,7 +225,9 @@ export default function AuthForm({ mode }: { mode: 'login' | 'register' }) {
               />
               <label
                 htmlFor="email"
-                className="absolute left-2 sm:left-3 top-2 sm:top-3 text-gray-400 peer-focus:text-yellow-500 peer-focus:-translate-y-6 peer-focus:scale-90 peer-focus:bg-white peer-focus:px-2 transition-all peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100 text-sm sm:text-base"
+                className={`absolute left-2 sm:left-3 text-gray-400 peer-focus:text-yellow-500 transition-all text-sm sm:text-base pointer-events-none ${
+                  email ? '-translate-y-6 scale-90 bg-white px-2 top-0' : 'top-2 sm:top-3 peer-focus:-translate-y-6 peer-focus:scale-90 peer-focus:bg-white peer-focus:px-2 peer-focus:top-0'
+                }`}
               >
                 Correo electrónico
               </label>
@@ -232,7 +246,9 @@ export default function AuthForm({ mode }: { mode: 'login' | 'register' }) {
               />
               <label
                 htmlFor="password"
-                className="absolute left-2 sm:left-3 top-2 sm:top-3 text-gray-400 peer-focus:text-yellow-500 peer-focus:-translate-y-6 peer-focus:scale-90 peer-focus:bg-white peer-focus:px-2 transition-all peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100 text-sm sm:text-base"
+                className={`absolute left-2 sm:left-3 text-gray-400 peer-focus:text-yellow-500 transition-all text-sm sm:text-base pointer-events-none ${
+                  password ? '-translate-y-6 scale-90 bg-white px-2 top-0' : 'top-2 sm:top-3 peer-focus:-translate-y-6 peer-focus:scale-90 peer-focus:bg-white peer-focus:px-2 peer-focus:top-0'
+                }`}
               >
                 Contraseña
               </label>

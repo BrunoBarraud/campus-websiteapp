@@ -351,13 +351,16 @@ export default function UnifiedSubjectPage() {
     e.preventDefault();
 
     try {
-      const response = await fetch(`/api/subjects/${subjectId}/units/${selectedUnitId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(newUnit),
-      });
+      const response = await fetch(
+        `/api/subjects/${subjectId}/units/${selectedUnitId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(newUnit),
+        }
+      );
 
       if (!response.ok) {
         throw new Error("Error al actualizar la unidad");
@@ -380,14 +383,21 @@ export default function UnifiedSubjectPage() {
   };
 
   const handleDeleteUnit = async (unitId: string) => {
-    if (!confirm("¿Estás seguro de que quieres eliminar esta unidad? Esta acción no se puede deshacer.")) {
+    if (
+      !confirm(
+        "¿Estás seguro de que quieres eliminar esta unidad? Esta acción no se puede deshacer."
+      )
+    ) {
       return;
     }
 
     try {
-      const response = await fetch(`/api/subjects/${subjectId}/units/${unitId}`, {
-        method: "DELETE",
-      });
+      const response = await fetch(
+        `/api/subjects/${subjectId}/units/${unitId}`,
+        {
+          method: "DELETE",
+        }
+      );
 
       if (!response.ok) {
         throw new Error("Error al eliminar la unidad");
@@ -416,13 +426,16 @@ export default function UnifiedSubjectPage() {
     e.preventDefault();
 
     try {
-      const response = await fetch(`/api/subjects/${subjectId}/units/${selectedUnitId}/contents/${selectedContentId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(newContent),
-      });
+      const response = await fetch(
+        `/api/subjects/${subjectId}/units/${selectedUnitId}/contents/${selectedContentId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(newContent),
+        }
+      );
 
       if (!response.ok) {
         throw new Error("Error al actualizar el contenido");
@@ -450,9 +463,12 @@ export default function UnifiedSubjectPage() {
     }
 
     try {
-      const response = await fetch(`/api/subjects/${subjectId}/units/${unitId}/contents/${contentId}`, {
-        method: "DELETE",
-      });
+      const response = await fetch(
+        `/api/subjects/${subjectId}/units/${unitId}/contents/${contentId}`,
+        {
+          method: "DELETE",
+        }
+      );
 
       if (!response.ok) {
         throw new Error("Error al eliminar el contenido");
@@ -489,13 +505,16 @@ export default function UnifiedSubjectPage() {
         unit_id: selectedUnitId,
       };
 
-      const response = await fetch(`/api/subjects/${subjectId}/assignments/${selectedAssignmentId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(assignmentData),
-      });
+      const response = await fetch(
+        `/api/subjects/${subjectId}/assignments/${selectedAssignmentId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(assignmentData),
+        }
+      );
 
       if (!response.ok) {
         throw new Error("Error al actualizar la tarea");
@@ -526,9 +545,12 @@ export default function UnifiedSubjectPage() {
     }
 
     try {
-      const response = await fetch(`/api/subjects/${subjectId}/assignments/${assignmentId}`, {
-        method: "DELETE",
-      });
+      const response = await fetch(
+        `/api/subjects/${subjectId}/assignments/${assignmentId}`,
+        {
+          method: "DELETE",
+        }
+      );
 
       if (!response.ok) {
         throw new Error("Error al eliminar la tarea");
@@ -542,22 +564,32 @@ export default function UnifiedSubjectPage() {
     }
   };
 
-  const toggleUnitVisibility = async (unitId: string, currentVisibility: boolean) => {
+  const toggleUnitVisibility = async (
+    unitId: string,
+    currentVisibility: boolean
+  ) => {
     try {
-      const response = await fetch(`/api/subjects/${subjectId}/units/${unitId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ is_active: !currentVisibility }),
-      });
+      const response = await fetch(
+        `/api/subjects/${subjectId}/units/${unitId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ is_active: !currentVisibility }),
+        }
+      );
 
       if (!response.ok) {
         throw new Error("Error al cambiar la visibilidad");
       }
 
       await fetchUnitsWithContent();
-      toast.success(`Unidad ${!currentVisibility ? 'publicada' : 'despublicada'} exitosamente`);
+      toast.success(
+        `Unidad ${
+          !currentVisibility ? "publicada" : "despublicada"
+        } exitosamente`
+      );
     } catch (error) {
       console.error("Error:", error);
       toast.error("Error al cambiar la visibilidad");
@@ -699,7 +731,11 @@ export default function UnifiedSubjectPage() {
                               e.stopPropagation();
                               toggleUnitVisibility(unit.id, unit.is_active);
                             }}
-                            title={unit.is_active ? "Despublicar unidad" : "Publicar unidad"}
+                            title={
+                              unit.is_active
+                                ? "Despublicar unidad"
+                                : "Publicar unidad"
+                            }
                           >
                             {unit.is_active ? (
                               <EyeOffIcon className="h-4 w-4" />
@@ -833,21 +869,19 @@ export default function UnifiedSubjectPage() {
                                     </div>
                                   </div>
                                   <div className="flex space-x-2">
-                                    {assignment.submissions_count > 0 && (
-                                      <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() =>
-                                          router.push(
-                                            `/campus/teacher/subjects/${subjectId}/assignments/${assignment.id}/submissions`
-                                          )
-                                        }
-                                      >
-                                        <UsersIcon className="h-4 w-4 mr-1" />
-                                        Ver Entregas (
-                                        {assignment.submissions_count})
-                                      </Button>
-                                    )}
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() =>
+                                        router.push(
+                                          `/campus/teacher/subjects/${subjectId}/assignments/${assignment.id}/submissions`
+                                        )
+                                      }
+                                    >
+                                      <UsersIcon className="h-4 w-4 mr-1" />
+                                      Ver Entregas (
+                                      {assignment.submissions_count || 0})
+                                    </Button>
                                     <Button
                                       variant="outline"
                                       size="sm"
@@ -940,7 +974,9 @@ export default function UnifiedSubjectPage() {
                     setNewUnit({ ...newUnit, is_active: e.target.checked })
                   }
                 />
-                <Label htmlFor="is_active">Publicar unidad (visible para estudiantes)</Label>
+                <Label htmlFor="is_active">
+                  Publicar unidad (visible para estudiantes)
+                </Label>
               </div>
               <div className="flex space-x-2">
                 <Button type="submit" className="flex-1">
@@ -1205,7 +1241,9 @@ export default function UnifiedSubjectPage() {
                     setNewUnit({ ...newUnit, is_active: e.target.checked })
                   }
                 />
-                <Label htmlFor="edit_is_active">Publicar unidad (visible para estudiantes)</Label>
+                <Label htmlFor="edit_is_active">
+                  Publicar unidad (visible para estudiantes)
+                </Label>
               </div>
               <div className="flex space-x-2">
                 <Button type="submit" className="flex-1">
@@ -1306,10 +1344,7 @@ export default function UnifiedSubjectPage() {
         </Dialog>
 
         {/* Edit Assignment Dialog */}
-        <Dialog
-          open={editAssignmentOpen}
-          onOpenChange={setEditAssignmentOpen}
-        >
+        <Dialog open={editAssignmentOpen} onOpenChange={setEditAssignmentOpen}>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Editar Tarea</DialogTitle>

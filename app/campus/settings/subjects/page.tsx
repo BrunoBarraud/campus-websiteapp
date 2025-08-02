@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic';
 
 import React, { useState, useEffect } from 'react';
 import { FiPlus, FiEdit, FiTrash2, FiBook, FiUser, FiCalendar } from 'react-icons/fi';
-import { User, Subject } from '@/app/lib/types';
+import { User, Subject } from '@/lib/types';
 import SimpleModal from '@/components/common/SimpleModal';
 
 interface EditSubjectModalProps {

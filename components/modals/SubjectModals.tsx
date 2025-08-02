@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { SubjectUnit, SubjectContent, ContentType, Assignment } from '@/app/lib/types';
+import { SubjectUnit, SubjectContent, ContentType, Assignment } from '@/lib/types';
 import { FiX, FiUpload, FiFile } from 'react-icons/fi';
 
 interface UnitModalProps {

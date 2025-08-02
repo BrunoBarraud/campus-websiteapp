@@ -29,9 +29,7 @@ export async function GET(request: Request) {
         is_active,
         created_at,
         updated_at,
-        units_count:subject_units(count),
-        contents_count:subject_content(count),
-        documents_count:documents(count)
+        teacher:users!subjects_teacher_id_fkey(id, name, email)
       `)
       .eq('teacher_id', currentUser.id)
       .eq('is_active', true)
@@ -52,38 +50,31 @@ export async function GET(request: Request) {
       );
     }
 
-    // Enriquecer con información adicional
+    console.log('Teacher subjects found:', subjects?.length || 0);
+
+    // Enriquecer con estadísticas de manera opcional
     const enrichedSubjects = await Promise.all(
       (subjects || []).map(async (subject) => {
-        // Contar unidades
-        const { count: unitsCount } = await supabaseAdmin
-          .from('subject_units')
-          .select('*', { count: 'exact', head: true })
-          .eq('subject_id', subject.id)
-          .eq('is_active', true);
-
-        // Contar contenidos
-        const { count: contentsCount } = await supabaseAdmin
-          .from('subject_content')
-          .select('*', { count: 'exact', head: true })
-          .eq('subject_id', subject.id)
-          .eq('is_active', true);
-
-        // Contar documentos
-        const { count: documentsCount } = await supabaseAdmin
-          .from('documents')
-          .select('*', { count: 'exact', head: true })
-          .eq('subject_id', subject.id)
-          .eq('is_active', true);
-
-        return {
-          ...subject,
-          stats: {
-            units_count: unitsCount || 0,
-            contents_count: contentsCount || 0,
-            documents_count: documentsCount || 0
-          }
-        };
+        try {
+          return {
+            ...subject,
+            stats: {
+              units_count: 0,
+              contents_count: 0,
+              documents_count: 0
+            }
+          };
+        } catch (enrichError) {
+          console.error('Error enriching subject:', subject.id, enrichError);
+          return {
+            ...subject,
+            stats: {
+              units_count: 0,
+              contents_count: 0,
+              documents_count: 0
+            }
+          };
+        }
       })
     );
 

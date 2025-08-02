@@ -4,6 +4,33 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter, useParams } from 'next/navigation';
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import {
+  ChevronDownIcon,
+  ChevronRightIcon,
+  FileTextIcon,
+  ExternalLinkIcon,
+  DownloadIcon,
+  ArrowLeftIcon,
+  BookOpenIcon,
+  FolderIcon,
+} from "lucide-react";
+
+interface Subject {
+  id: string;
+  name: string;
+  code: string;
+  description: string;
+  year: number;
+  image_url: string | null;
+}
 
 interface Unit {
   id: string;
@@ -11,7 +38,10 @@ interface Unit {
   title: string;
   description: string;
   order_index: number;
+  is_active: boolean;
   created_at: string;
+  contents: Content[];
+  assignments: Assignment[];
 }
 
 interface Content {
@@ -19,12 +49,27 @@ interface Content {
   title: string;
   content_type: string;
   content: string;
+  file_url?: string;
+  file_name?: string;
   is_pinned: boolean;
   created_at: string;
   creator: {
     name: string;
     email: string;
   };
+}
+
+interface Assignment {
+  id: string;
+  title: string;
+  description: string;
+  due_date: string;
+  max_score: number;
+  instructions?: string;
+  is_active: boolean;
+  unit_id?: string;
+  has_submission: boolean;
+  submission_status?: string;
 }
 
 interface Document {
@@ -49,9 +94,9 @@ export default function StudentSubjectDetailPage() {
   const params = useParams();
   const subjectId = params.id as string;
 
+  const [subject, setSubject] = useState<Subject | null>(null);
   const [units, setUnits] = useState<Unit[]>([]);
-  const [selectedUnitId, setSelectedUnitId] = useState<string>('');
-  const [contents, setContents] = useState<Content[]>([]);
+  const [expandedUnits, setExpandedUnits] = useState<Set<string>>(new Set());
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -68,11 +113,24 @@ export default function StudentSubjectDetailPage() {
     fetchData();
   }, [session, status, subjectId]);
 
+  const toggleUnit = (unitId: string) => {
+    const newExpanded = new Set(expandedUnits);
+    if (newExpanded.has(unitId)) {
+      newExpanded.delete(unitId);
+    } else {
+      newExpanded.add(unitId);
+    }
+    setExpandedUnits(newExpanded);
+  };
+
   const fetchData = async () => {
     try {
       setLoading(true);
       
-      // Obtener unidades
+      // Obtener información de la materia
+      await fetchSubject();
+      
+      // Obtener unidades con contenido y tareas
       await fetchUnits();
       
       // Obtener documentos
@@ -85,37 +143,40 @@ export default function StudentSubjectDetailPage() {
     }
   };
 
+  const fetchSubject = async () => {
+    try {
+      const response = await fetch(`/api/subjects/${subjectId}`);
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Error al cargar la materia');
+      }
+
+      setSubject(data);
+    } catch (err: any) {
+      console.error('Error fetching subject:', err);
+    }
+  };
+
   const fetchUnits = async () => {
     try {
-      const response = await fetch(`/api/subjects/${subjectId}/units`);
+      const response = await fetch(`/api/subjects/${subjectId}/units?include=contents,assignments`);
       const data = await response.json();
 
       if (!response.ok) {
         throw new Error(data.error || 'Error al cargar las unidades');
       }
 
-      setUnits(data);
-      if (data.length > 0 && !selectedUnitId) {
-        setSelectedUnitId(data[0].id);
-        fetchContents(data[0].id);
+      // Solo mostrar unidades activas a los estudiantes
+      const activeUnits = data.filter((unit: Unit) => unit.is_active);
+      setUnits(activeUnits);
+      
+      // Expandir la primera unidad por defecto
+      if (activeUnits.length > 0) {
+        setExpandedUnits(new Set([activeUnits[0].id]));
       }
     } catch (err: any) {
       console.error('Error fetching units:', err);
-    }
-  };
-
-  const fetchContents = async (unitId: string) => {
-    try {
-      const response = await fetch(`/api/subjects/${subjectId}/units/${unitId}/contents`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Error al cargar los contenidos');
-      }
-
-      setContents(data);
-    } catch (err: any) {
-      console.error('Error fetching contents:', err);
     }
   };
 
@@ -134,11 +195,6 @@ export default function StudentSubjectDetailPage() {
     }
   };
 
-  const handleUnitSelect = (unitId: string) => {
-    setSelectedUnitId(unitId);
-    fetchContents(unitId);
-  };
-
   const handleDownload = (document: Document) => {
     // Abrir el archivo en una nueva ventana/pestaña
     window.open(document.file_url, '_blank');
@@ -152,19 +208,12 @@ export default function StudentSubjectDetailPage() {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
-  const getContentTypeIcon = (type: string) => {
-    switch (type) {
-      case 'video':
-        return '🎥';
-      case 'document':
-        return '📄';
-      case 'link':
-        return '🔗';
-      case 'assignment':
-        return '📝';
-      default:
-        return '📖';
-    }
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('es-ES', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
   };
 
   if (loading) {
@@ -187,12 +236,13 @@ export default function StudentSubjectDetailPage() {
           <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
             <h2 className="text-xl font-semibold text-red-800 mb-2">Error</h2>
             <p className="text-red-600">{error}</p>
-            <button
+            <Button
               onClick={() => router.back()}
-              className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+              className="mt-4"
+              variant="destructive"
             >
               Volver
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -204,160 +254,232 @@ export default function StudentSubjectDetailPage() {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <button
+          <Button
             onClick={() => router.back()}
-            className="mb-4 text-blue-600 hover:text-blue-800 flex items-center"
+            variant="ghost"
+            className="mb-4"
           >
-            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
+            <ArrowLeftIcon className="h-4 w-4 mr-2" />
             Volver a mis materias
-          </button>
+          </Button>
+          
+          {subject && (
+            <div className="mb-6">
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                {subject.name}
+              </h1>
+              <p className="text-gray-600">{subject.description}</p>
+            </div>
+          )}
           
           {/* Botón de navegación a tareas */}
           <div className="mb-4">
-            <button
+            <Button
               onClick={() => router.push(`/campus/student/subjects/${subjectId}/assignments`)}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center"
+              className="flex items-center"
             >
-              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
+              <BookOpenIcon className="h-4 w-4 mr-2" />
               Ver Mis Tareas
-            </button>
+            </Button>
           </div>
         </div>
 
         {/* Tabs */}
-        <div className="bg-white rounded-lg shadow-sm mb-6">
-          <div className="border-b border-gray-200">
-            <nav className="flex">
-              <button
+        <Card className="mb-6">
+          <CardHeader>
+            <div className="flex space-x-1">
+              <Button
+                variant={activeTab === 'units' ? 'default' : 'ghost'}
                 onClick={() => setActiveTab('units')}
-                className={`px-6 py-3 font-medium text-sm border-b-2 ${
-                  activeTab === 'units'
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700'
-                }`}
+                className="flex items-center"
               >
+                <BookOpenIcon className="h-4 w-4 mr-2" />
                 Unidades y Contenidos
-              </button>
-              <button
+              </Button>
+              <Button
+                variant={activeTab === 'documents' ? 'default' : 'ghost'}
                 onClick={() => setActiveTab('documents')}
-                className={`px-6 py-3 font-medium text-sm border-b-2 ${
-                  activeTab === 'documents'
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700'
-                }`}
+                className="flex items-center"
               >
+                <FolderIcon className="h-4 w-4 mr-2" />
                 Materiales
-              </button>
-            </nav>
-          </div>
+              </Button>
+            </div>
+          </CardHeader>
 
-          {/* Content */}
-          <div className="p-6">
+          <CardContent>
             {activeTab === 'units' && (
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Unidades (Left Panel) */}
-                <div className="lg:col-span-1">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Unidades</h3>
-
-                  <div className="space-y-2">
-                    {units.map((unit) => (
-                      <div
-                        key={unit.id}
-                        onClick={() => handleUnitSelect(unit.id)}
-                        className={`p-3 rounded-lg cursor-pointer border transition-colors ${
-                          selectedUnitId === unit.id
-                            ? 'bg-blue-50 border-blue-300'
-                            : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
-                        }`}
+              <div className="space-y-4">
+                {units.length === 0 ? (
+                  <Card>
+                    <CardContent className="text-center py-12">
+                      <BookOpenIcon className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                      <p className="text-gray-500">No hay unidades disponibles aún.</p>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  units.map((unit) => (
+                    <Card key={unit.id} className="overflow-hidden">
+                      <Collapsible
+                        open={expandedUnits.has(unit.id)}
+                        onOpenChange={() => toggleUnit(unit.id)}
                       >
-                        <div className="font-medium text-gray-900">
-                          Unidad {unit.unit_number}: {unit.title}
-                        </div>
-                        {unit.description && (
-                          <div className="text-sm text-gray-600 mt-1">
-                            {unit.description}
-                          </div>
-                        )}
-                      </div>
-                    ))}
-
-                    {units.length === 0 && (
-                      <div className="text-center py-8 text-gray-500">
-                        No hay unidades disponibles aún.
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Contenidos (Right Panel) */}
-                <div className="lg:col-span-2">
-                  {selectedUnitId ? (
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-4">Contenidos</h3>
-
-                      <div className="space-y-4">
-                        {contents.map((content) => (
-                          <div key={content.id} className="bg-white border border-gray-200 rounded-lg p-4">
-                            <div className="flex items-start justify-between mb-2">
-                              <div className="flex items-center space-x-2">
-                                <span className="text-lg">{getContentTypeIcon(content.content_type)}</span>
-                                <h4 className="font-medium text-gray-900">{content.title}</h4>
-                              </div>
-                              <div className="flex items-center space-x-2">
-                                {content.is_pinned && (
-                                  <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded">
-                                    📌 Fijado
-                                  </span>
+                        <CollapsibleTrigger asChild>
+                          <CardHeader className="cursor-pointer hover:bg-gray-50 transition-colors">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center space-x-4">
+                                {expandedUnits.has(unit.id) ? (
+                                  <ChevronDownIcon className="h-5 w-5 text-gray-500" />
+                                ) : (
+                                  <ChevronRightIcon className="h-5 w-5 text-gray-500" />
                                 )}
-                                <span className="px-2 py-1 bg-gray-100 text-gray-800 text-xs rounded capitalize">
-                                  {content.content_type}
-                                </span>
+                                <div>
+                                  <CardTitle className="flex items-center gap-2">
+                                    Unidad {unit.unit_number}: {unit.title}
+                                  </CardTitle>
+                                  <p className="text-sm text-gray-600">
+                                    {unit.description}
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                <Badge variant="outline">
+                                  {unit.contents?.length || 0} contenidos
+                                </Badge>
+                                <Badge variant="outline">
+                                  {unit.assignments?.length || 0} tareas
+                                </Badge>
                               </div>
                             </div>
-                            
-                            <div className="text-gray-700 mb-3 whitespace-pre-wrap">
-                              {content.content}
-                            </div>
-                            
-                            {content.content_type === 'link' && (
-                              <div className="mb-3">
-                                <a
-                                  href={content.content}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="inline-flex items-center px-3 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors"
-                                >
-                                  🔗 Abrir enlace
-                                  <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                                  </svg>
-                                </a>
+                          </CardHeader>
+                        </CollapsibleTrigger>
+
+                        <CollapsibleContent>
+                          <CardContent className="pt-0">
+                            {/* Contents */}
+                            {unit.contents && unit.contents.length > 0 && (
+                              <div className="mb-6">
+                                <h4 className="font-semibold text-gray-900 mb-3">
+                                  Contenidos
+                                </h4>
+                                <div className="space-y-2">
+                                  {unit.contents.map((content) => (
+                                    <div
+                                      key={content.id}
+                                      className="flex items-start justify-between p-3 bg-blue-50 rounded-lg"
+                                    >
+                                      <div className="flex items-start space-x-3 flex-1">
+                                        <FileTextIcon className="h-4 w-4 text-blue-600 mt-0.5" />
+                                        <div className="flex-1">
+                                          <div className="flex items-center space-x-2 mb-1">
+                                            <p className="font-medium text-gray-900">
+                                              {content.title}
+                                            </p>
+                                            {content.is_pinned && (
+                                              <Badge variant="secondary">Fijado</Badge>
+                                            )}
+                                          </div>
+                                          <p className="text-sm text-gray-600 mb-2 whitespace-pre-wrap">
+                                            {content.content}
+                                          </p>
+                                          {content.content_type === 'link' && (
+                                            <Button
+                                              variant="outline"
+                                              size="sm"
+                                              onClick={() => window.open(content.content, '_blank')}
+                                              className="mb-2"
+                                            >
+                                              <ExternalLinkIcon className="h-4 w-4 mr-2" />
+                                              Abrir enlace
+                                            </Button>
+                                          )}
+                                          <div className="text-xs text-gray-500">
+                                            Por {content.creator.name} • {formatDate(content.created_at)}
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <Badge variant="outline" className="ml-2">
+                                        {content.content_type}
+                                      </Badge>
+                                    </div>
+                                  ))}
+                                </div>
                               </div>
                             )}
-                            
-                            <div className="text-sm text-gray-500">
-                              Por {content.creator.name} • {new Date(content.created_at).toLocaleDateString()}
-                            </div>
-                          </div>
-                        ))}
 
-                        {contents.length === 0 && (
-                          <div className="text-center py-8 text-gray-500">
-                            No hay contenidos disponibles en esta unidad.
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="text-center py-8 text-gray-500">
-                      Selecciona una unidad para ver sus contenidos.
-                    </div>
-                  )}
-                </div>
+                            {/* Assignments */}
+                            {unit.assignments && unit.assignments.length > 0 && (
+                              <div>
+                                <h4 className="font-semibold text-gray-900 mb-3">
+                                  Tareas
+                                </h4>
+                                <div className="space-y-2">
+                                  {unit.assignments.map((assignment) => (
+                                    <div
+                                      key={assignment.id}
+                                      className="p-4 bg-green-50 rounded-lg"
+                                    >
+                                      <div className="flex items-center justify-between">
+                                        <div className="flex-1">
+                                          <div className="flex items-center space-x-2 mb-2">
+                                            <h5 className="font-medium text-gray-900">
+                                              {assignment.title}
+                                            </h5>
+                                            <Badge
+                                              variant={
+                                                assignment.is_active ? "default" : "secondary"
+                                              }
+                                            >
+                                              {assignment.is_active ? "Activa" : "Inactiva"}
+                                            </Badge>
+                                            {assignment.has_submission && (
+                                              <Badge variant="secondary">
+                                                Entregada
+                                              </Badge>
+                                            )}
+                                          </div>
+                                          <p className="text-sm text-gray-600 mb-2">
+                                            {assignment.description}
+                                          </p>
+                                          <div className="flex items-center space-x-4 text-sm text-gray-500">
+                                            <span>
+                                              📅 Fecha límite: {formatDate(assignment.due_date)}
+                                            </span>
+                                            <span>
+                                              🎯 Puntos: {assignment.max_score}
+                                            </span>
+                                          </div>
+                                        </div>
+                                        <Button
+                                          onClick={() =>
+                                            router.push(
+                                              `/campus/student/subjects/${subjectId}/assignments/${assignment.id}`
+                                            )
+                                          }
+                                          size="sm"
+                                        >
+                                          Ver Tarea
+                                        </Button>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {(!unit.contents || unit.contents.length === 0) && 
+                             (!unit.assignments || unit.assignments.length === 0) && (
+                              <div className="text-center py-8 text-gray-500">
+                                <FileTextIcon className="h-12 w-12 mx-auto mb-2 text-gray-400" />
+                                <p>No hay contenido en esta unidad todavía</p>
+                              </div>
+                            )}
+                          </CardContent>
+                        </CollapsibleContent>
+                      </Collapsible>
+                    </Card>
+                  ))
+                )}
               </div>
             )}
 
@@ -365,44 +487,53 @@ export default function StudentSubjectDetailPage() {
               <div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Materiales de Estudio</h3>
                 
-                <div className="grid gap-4">
+                <div className="space-y-4">
                   {documents.map((document) => (
-                    <div key={document.id} className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <h4 className="font-medium text-gray-900 mb-1">{document.title}</h4>
-                          {document.description && (
-                            <p className="text-gray-600 text-sm mb-2">{document.description}</p>
-                          )}
-                          <div className="flex items-center space-x-4 text-sm text-gray-500">
-                            <span>📄 {document.file_name}</span>
-                            <span>📦 {formatFileSize(document.file_size)}</span>
-                            <span>📅 {new Date(document.created_at).toLocaleDateString()}</span>
+                    <Card key={document.id} className="hover:shadow-md transition-shadow">
+                      <CardContent className="p-4">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <h4 className="font-medium text-gray-900 mb-1">{document.title}</h4>
+                            {document.description && (
+                              <p className="text-gray-600 text-sm mb-2">{document.description}</p>
+                            )}
+                            <div className="flex items-center space-x-4 text-sm text-gray-500 mb-2">
+                              <span className="flex items-center">
+                                <FileTextIcon className="h-4 w-4 mr-1" />
+                                {document.file_name}
+                              </span>
+                              <span>{formatFileSize(document.file_size)}</span>
+                              <span>{formatDate(document.created_at)}</span>
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              Subido por: {document.uploader.name}
+                            </div>
                           </div>
-                          <div className="text-sm text-gray-500 mt-1">
-                            Subido por: {document.uploader.name}
-                          </div>
+                          <Button
+                            onClick={() => handleDownload(document)}
+                            className="ml-4"
+                          >
+                            <DownloadIcon className="h-4 w-4 mr-2" />
+                            Descargar
+                          </Button>
                         </div>
-                        <button
-                          onClick={() => handleDownload(document)}
-                          className="ml-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                        >
-                          📥 Descargar
-                        </button>
-                      </div>
-                    </div>
+                      </CardContent>
+                    </Card>
                   ))}
 
                   {documents.length === 0 && (
-                    <div className="text-center py-8 text-gray-500">
-                      No hay materiales disponibles aún.
-                    </div>
+                    <Card>
+                      <CardContent className="text-center py-12">
+                        <FolderIcon className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                        <p className="text-gray-500">No hay materiales disponibles aún.</p>
+                      </CardContent>
+                    </Card>
                   )}
                 </div>
               </div>
             )}
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

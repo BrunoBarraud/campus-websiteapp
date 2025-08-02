@@ -464,20 +464,27 @@ export default function TeacherAssignmentsPage({
                         <span>{assignment.graded_count} calificadas</span>
                       </div>
                     </div>
-                    {assignment.submissions_count > 0 && (
-                      <div className="mt-4">
-                        <Button
-                          variant="outline"
-                          onClick={() =>
-                            router.push(
-                              `/campus/teacher/subjects/${subjectId}/assignments/${assignment.id}/submissions`
-                            )
-                          }
-                        >
-                          Ver Entregas ({assignment.submissions_count})
-                        </Button>
-                      </div>
-                    )}
+                    <div className="mt-4 flex gap-2">
+                      <Button
+                        variant="outline"
+                        onClick={() =>
+                          router.push(
+                            `/campus/teacher/subjects/${subjectId}/assignments/${assignment.id}/submissions`
+                          )
+                        }
+                      >
+                        Ver Entregas ({assignment.submissions_count})
+                      </Button>
+                      {assignment.submissions_count > 0 &&
+                        assignment.graded_count <
+                          assignment.submissions_count && (
+                          <Badge variant="destructive" className="ml-2">
+                            {assignment.submissions_count -
+                              assignment.graded_count}{" "}
+                            sin calificar
+                          </Badge>
+                        )}
+                    </div>
                   </CardContent>
                 </Card>
               ))}
@@ -515,6 +522,17 @@ export default function TeacherAssignmentsPage({
                         <span>{assignment.submissions_count} entregas</span>
                       </div>
                       <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            router.push(
+                              `/campus/teacher/subjects/${subjectId}/assignments/${assignment.id}/submissions`
+                            )
+                          }
+                        >
+                          Ver Entregas
+                        </Button>
                         <Button
                           variant="outline"
                           size="sm"

@@ -1,7 +1,7 @@
 // 🔐 Helper para autenticación con NextAuth
 import { getServerSession } from "next-auth";
 import { userService } from '@/app/lib/services';
-import { User } from '@/app/lib/types';
+import { User } from '@/lib/types';
 
 export async function getCurrentUser(): Promise<User | null> {
   try {

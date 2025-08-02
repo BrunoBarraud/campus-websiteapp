@@ -17,7 +17,8 @@ const eslintConfig = [
       "node_modules/**",
       "out/**",
       "dist/**",
-      "*.js"
+      "*.js",
+      "scripts/**/*.js"
     ],
     rules: {
       "@typescript-eslint/no-explicit-any": "off",

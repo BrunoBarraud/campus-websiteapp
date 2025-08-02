@@ -4,7 +4,48 @@
 export const dynamic = 'force-dynamic';
 
 import React, { useState, useEffect } from 'react';
-import { User, Subject, UserRole, CreateUserForm, CreateSubjectForm } from '@/app/lib/types';
+import { User, Subject, UserRole, CreateUserForm, CreateSubjectForm } from '@/lib/types';
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { AcademicUtils } from '@/constant/academic';
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
+import {
+  UsersIcon,
+  BookOpenIcon,
+  BarChart3Icon,
+  PlusIcon,
+  RefreshCwIcon,
+  EditIcon,
+  UserCheckIcon,
+  UserXIcon,
+  GraduationCapIcon,
+  ShieldCheckIcon,
+  UserIcon,
+} from "lucide-react";
+import { toast } from "sonner";
 
 interface AdminDashboardProps {}
 
@@ -51,15 +92,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
   }, []);
 
   const loadData = async () => {
+    setLoading(true);
     try {
-      setLoading(true);
-      await Promise.all([
-        loadUsers(),
-        loadSubjects(),
-        loadTeachers()
-      ]);
+      await Promise.all([loadUsers(), loadSubjects(), loadTeachers()]);
     } catch (error) {
       console.error('Error loading data:', error);
+      toast.error('Error al cargar los datos');
     } finally {
       setLoading(false);
     }
@@ -67,15 +105,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
 
   const loadUsers = async () => {
     try {
-      const params = new URLSearchParams();
-      if (filters.userRole) params.append('role', filters.userRole);
-      if (filters.userYear) params.append('year', filters.userYear);
-
-      const response = await fetch(`/api/admin/users?${params}`);
+      const response = await fetch('/api/admin/users');
       const data = await response.json();
-      
       if (data.success) {
-        setUsers(data.data);
+        setUsers(data.users);
       }
     } catch (error) {
       console.error('Error loading users:', error);
@@ -86,9 +119,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
     try {
       const response = await fetch('/api/admin/subjects');
       const data = await response.json();
-      
       if (data.success) {
-        setSubjects(data.data);
+        setSubjects(data.subjects);
       }
     } catch (error) {
       console.error('Error loading subjects:', error);
@@ -99,9 +131,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
     try {
       const response = await fetch('/api/admin/users?role=teacher');
       const data = await response.json();
-      
       if (data.success) {
-        setTeachers(data.data);
+        setTeachers(data.users);
       }
     } catch (error) {
       console.error('Error loading teachers:', error);
@@ -119,46 +150,40 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
       const data = await response.json();
       
       if (data.success) {
-        alert('Usuario creado exitosamente');
+        toast.success('Usuario creado exitosamente');
         setShowUserModal(false);
         resetUserForm();
         loadUsers();
       } else {
-        alert(`Error: ${data.error}`);
+        toast.error(`Error: ${data.error}`);
       }
     } catch (error) {
       console.error('Error creating user:', error);
-      alert('Error al crear usuario');
+      toast.error('Error al crear usuario');
     }
   };
 
   const handleCreateSubject = async () => {
     try {
-      const url = editingSubject 
-        ? `/api/admin/subjects/${editingSubject.id}`
-        : '/api/admin/subjects';
-      
-      const method = editingSubject ? 'PUT' : 'POST';
-      
-      const response = await fetch(url, {
-        method,
+      const response = await fetch('/api/admin/subjects', {
+        method: editingSubject ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(subjectForm)
+        body: JSON.stringify(editingSubject ? { ...subjectForm, id: editingSubject.id } : subjectForm)
       });
 
       const data = await response.json();
       
       if (data.success) {
-        alert(editingSubject ? 'Materia actualizada exitosamente' : 'Materia creada exitosamente');
+        toast.success(editingSubject ? 'Materia actualizada exitosamente' : 'Materia creada exitosamente');
         setShowSubjectModal(false);
         resetSubjectForm();
         loadSubjects();
       } else {
-        alert(`Error: ${data.error}`);
+        toast.error(`Error: ${data.error}`);
       }
     } catch (error) {
       console.error('Error saving subject:', error);
-      alert('Error al guardar materia');
+      toast.error('Error al guardar materia');
     }
   };
 
@@ -173,50 +198,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
       const data = await response.json();
       
       if (data.success) {
-        alert('Profesor asignado exitosamente');
+        toast.success('Profesor asignado exitosamente');
         loadSubjects();
       } else {
-        alert(`Error: ${data.error}`);
+        toast.error(`Error: ${data.error}`);
       }
     } catch (error) {
       console.error('Error assigning teacher:', error);
-      alert('Error al asignar profesor');
-    }
-  };
-
-  const handleEditSubject = (subject: Subject) => {
-    setEditingSubject(subject);
-    setSubjectForm({
-      name: subject.name,
-      code: subject.code,
-      description: subject.description || '',
-      year: subject.year,
-      semester: subject.semester,
-      credits: subject.credits,
-      teacher_id: subject.teacher_id || ''
-    });
-    setShowSubjectModal(true);
-  };
-
-  const handleDeleteSubject = async (subjectId: string) => {
-    if (confirm('¿Estás seguro de que quieres eliminar esta materia?')) {
-      try {
-        const response = await fetch(`/api/admin/subjects/${subjectId}`, {
-          method: 'DELETE'
-        });
-
-        const data = await response.json();
-        
-        if (data.success) {
-          alert('Materia eliminada exitosamente');
-          loadSubjects();
-        } else {
-          alert(`Error: ${data.error}`);
-        }
-      } catch (error) {
-        console.error('Error deleting subject:', error);
-        alert('Error al eliminar materia');
-      }
+      toast.error('Error al asignar profesor');
     }
   };
 
@@ -246,6 +235,15 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
     setEditingSubject(null);
   };
 
+  const getRoleIcon = (role: UserRole) => {
+    switch (role) {
+      case 'admin': return <ShieldCheckIcon className="h-4 w-4" />;
+      case 'teacher': return <GraduationCapIcon className="h-4 w-4" />;
+      case 'student': return <UserIcon className="h-4 w-4" />;
+      default: return <UserIcon className="h-4 w-4" />;
+    }
+  };
+
   const getRoleColor = (role: UserRole) => {
     switch (role) {
       case 'admin': return 'bg-red-100 text-red-800';
@@ -256,13 +254,20 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
   };
 
   const getRoleLabel = (role: UserRole) => {
-    switch (role) {
-      case 'admin': return 'Administrador';
-      case 'teacher': return 'Profesor';
-      case 'student': return 'Estudiante';
-      default: return role;
-    }
+    return AcademicUtils.getRoleName(role);
   };
+
+  // Filtrar datos
+  const filteredUsers = users.filter(user => {
+    if (filters.userRole && user.role !== filters.userRole) return false;
+    if (filters.userYear && user.year?.toString() !== filters.userYear) return false;
+    return true;
+  });
+
+  const filteredSubjects = subjects.filter(subject => {
+    if (filters.subjectYear && subject.year.toString() !== filters.subjectYear) return false;
+    return true;
+  });
 
   if (loading) {
     return (
@@ -284,617 +289,496 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
           <p className="text-gray-600 mt-2">Gestiona usuarios, materias y configuraciones del campus</p>
         </div>
 
-        {/* Tabs */}
-        <div className="bg-white rounded-lg shadow mb-6">
-          <div className="border-b border-gray-200">
-            <nav className="-mb-px flex space-x-8 px-6">
-              <button
-                onClick={() => setActiveTab('users')}
-                className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === 'users'
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                👥 Usuarios ({users.length})
-              </button>
-              <button
-                onClick={() => setActiveTab('subjects')}
-                className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === 'subjects'
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                📚 Materias ({subjects.length})
-              </button>
-              <button
-                onClick={() => setActiveTab('stats')}
-                className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === 'stats'
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                📊 Estadísticas
-              </button>
-            </nav>
-          </div>
+        {/* Modern Tabs */}
+        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as any)} className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="users" className="flex items-center gap-2">
+              <UsersIcon className="h-4 w-4" />
+              Usuarios
+            </TabsTrigger>
+            <TabsTrigger value="subjects" className="flex items-center gap-2">
+              <BookOpenIcon className="h-4 w-4" />
+              Materias
+            </TabsTrigger>
+            <TabsTrigger value="stats" className="flex items-center gap-2">
+              <BarChart3Icon className="h-4 w-4" />
+              Estadísticas
+            </TabsTrigger>
+          </TabsList>
 
-          {/* Tab Content */}
-          <div className="p-6">
-            {/* USUARIOS TAB */}
-            {activeTab === 'users' && (
-              <div>
-                <div className="flex justify-between items-center mb-6">
-                  <div className="flex space-x-4">
-                    <select
-                      value={filters.userRole}
-                      onChange={(e) => setFilters({...filters, userRole: e.target.value as UserRole | ''})}
-                      className="px-3 py-2 border border-gray-300 rounded-lg"
-                    >
-                      <option value="">Todos los roles</option>
-                      <option value="admin">Administradores</option>
-                      <option value="teacher">Profesores</option>
-                      <option value="student">Estudiantes</option>
-                    </select>
-                    
-                    <select
-                      value={filters.userYear}
-                      onChange={(e) => setFilters({...filters, userYear: e.target.value})}
-                      className="px-3 py-2 border border-gray-300 rounded-lg"
-                    >
-                      <option value="">Todos los años</option>
-                      {[1,2,3,4,5,6].map(year => (
-                        <option key={year} value={year}>{year}° año</option>
+          {/* USUARIOS TAB */}
+          <TabsContent value="users" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2">
+                    <UsersIcon className="h-5 w-5" />
+                    Gestión de Usuarios
+                  </CardTitle>
+                  <Button onClick={() => setShowUserModal(true)}>
+                    <PlusIcon className="h-4 w-4 mr-2" />
+                    Crear Usuario
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {/* Filtros */}
+                <div className="flex gap-4 mb-6">
+                  <Select value={filters.userRole} onValueChange={(value) => setFilters({...filters, userRole: value as UserRole | ''})}>
+                    <SelectTrigger className="w-48">
+                      <SelectValue placeholder="Filtrar por rol" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">Todos los roles</SelectItem>
+                      <SelectItem value="admin">Administradores</SelectItem>
+                      <SelectItem value="teacher">Profesores</SelectItem>
+                      <SelectItem value="student">Estudiantes</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  
+                  <Select value={filters.userYear} onValueChange={(value) => setFilters({...filters, userYear: value})}>
+                    <SelectTrigger className="w-48">
+                      <SelectValue placeholder="Filtrar por año" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">Todos los años</SelectItem>
+                      {AcademicUtils.getYearOptions().map(({ value, label }) => (
+                        <SelectItem key={value} value={value}>{label}</SelectItem>
                       ))}
-                    </select>
+                    </SelectContent>
+                  </Select>
 
-                    <button
-                      onClick={loadUsers}
-                      className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
-                    >
-                      🔄 Filtrar
-                    </button>
-                  </div>
-
-                  <button
-                    onClick={() => setShowUserModal(true)}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                  >
-                    + Crear Usuario
-                  </button>
+                  <Button variant="outline" onClick={loadUsers}>
+                    <RefreshCwIcon className="h-4 w-4 mr-2" />
+                    Actualizar
+                  </Button>
                 </div>
 
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Usuario
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Rol
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Año
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Estado
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Acciones
-                        </th>
+                {/* Tabla de usuarios */}
+                <div className="rounded-md border">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b bg-gray-50">
+                        <th className="text-left p-4 font-medium">Usuario</th>
+                        <th className="text-left p-4 font-medium">Rol</th>
+                        <th className="text-left p-4 font-medium">Año</th>
+                        <th className="text-left p-4 font-medium">Estado</th>
+                        <th className="text-left p-4 font-medium">Acciones</th>
                       </tr>
                     </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {users.map((user) => (
-                        <tr key={user.id}>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center">
-                              <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
-                                {user.name.charAt(0).toUpperCase()}
+                    <tbody>
+                      {filteredUsers.map((user) => (
+                        <tr key={user.id} className="border-b">
+                          <td className="p-4">
+                            <div className="flex items-center space-x-3">
+                              <div className="flex items-center justify-center w-8 h-8 bg-gray-100 rounded-full">
+                                {getRoleIcon(user.role)}
                               </div>
-                              <div className="ml-4">
-                                <div className="text-sm font-medium text-gray-900">{user.name}</div>
+                              <div>
+                                <div className="font-medium text-gray-900">{user.name}</div>
                                 <div className="text-sm text-gray-500">{user.email}</div>
                               </div>
                             </div>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getRoleColor(user.role)}`}>
+                          <td className="p-4">
+                            <Badge className={getRoleColor(user.role)}>
                               {getRoleLabel(user.role)}
-                            </span>
+                            </Badge>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          <td className="p-4 text-sm text-gray-900">
                             {user.year ? `${user.year}° año` : '-'}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                              user.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                            }`}>
+                          <td className="p-4">
+                            <Badge variant={user.is_active ? "default" : "secondary"}>
                               {user.is_active ? 'Activo' : 'Inactivo'}
-                            </span>
+                            </Badge>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <button className="text-blue-600 hover:text-blue-900 mr-3">
-                              Editar
-                            </button>
-                            <button className="text-red-600 hover:text-red-900">
-                              Desactivar
-                            </button>
+                          <td className="p-4">
+                            <div className="flex space-x-2">
+                              <Button variant="outline" size="sm">
+                                <EditIcon className="h-4 w-4" />
+                              </Button>
+                              <Button variant="outline" size="sm">
+                                {user.is_active ? <UserXIcon className="h-4 w-4" /> : <UserCheckIcon className="h-4 w-4" />}
+                              </Button>
+                            </div>
                           </td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
+                  
+                  {filteredUsers.length === 0 && (
+                    <div className="text-center py-8 text-gray-500">
+                      No se encontraron usuarios con los filtros aplicados.
+                    </div>
+                  )}
                 </div>
-              </div>
-            )}
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-            {/* MATERIAS TAB */}
-            {activeTab === 'subjects' && (
-              <div>
-                <div className="flex justify-between items-center mb-6">
-                  <div className="flex space-x-4">
-                    <select
-                      value={filters.subjectYear}
-                      onChange={(e) => setFilters({...filters, subjectYear: e.target.value})}
-                      className="px-3 py-2 border border-gray-300 rounded-lg"
-                    >
-                      <option value="">Todos los años</option>
-                      {[1,2,3,4,5,6].map(year => (
-                        <option key={year} value={year}>{year}° año</option>
+          {/* MATERIAS TAB */}
+          <TabsContent value="subjects" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2">
+                    <BookOpenIcon className="h-5 w-5" />
+                    Gestión de Materias
+                  </CardTitle>
+                  <Button onClick={() => setShowSubjectModal(true)}>
+                    <PlusIcon className="h-4 w-4 mr-2" />
+                    Crear Materia
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {/* Filtros */}
+                <div className="flex gap-4 mb-6">
+                  <Select value={filters.subjectYear} onValueChange={(value) => setFilters({...filters, subjectYear: value})}>
+                    <SelectTrigger className="w-48">
+                      <SelectValue placeholder="Filtrar por año" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">Todos los años</SelectItem>
+                      {AcademicUtils.getYearOptions().map(({ value, label }) => (
+                        <SelectItem key={value} value={value}>{label}</SelectItem>
                       ))}
-                    </select>
+                    </SelectContent>
+                  </Select>
 
-                    <button
-                      onClick={loadSubjects}
-                      className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
-                    >
-                      🔄 Filtrar
-                    </button>
-                  </div>
-
-                  <button
-                    onClick={() => setShowSubjectModal(true)}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                  >
-                    + Crear Materia
-                  </button>
+                  <Button variant="outline" onClick={loadSubjects}>
+                    <RefreshCwIcon className="h-4 w-4 mr-2" />
+                    Actualizar
+                  </Button>
                 </div>
 
+                {/* Grid de materias */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {subjects.map((subject) => (
-                    <div key={subject.id} className="bg-white border border-gray-200 rounded-lg p-6">
-                      <div className="flex justify-between items-start mb-4">
-                        <div>
-                          <h3 className="text-lg font-semibold text-gray-900">{subject.name}</h3>
-                          <p className="text-sm text-gray-500">Código: {subject.code}</p>
-                          <p className="text-sm text-gray-500">{subject.year}° año • {subject.credits} créditos</p>
+                  {filteredSubjects.map((subject) => (
+                    <Card key={subject.id} className="hover:shadow-md transition-shadow">
+                      <CardHeader>
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <CardTitle className="text-lg">{subject.name}</CardTitle>
+                            <p className="text-sm text-gray-500 mt-1">Código: {subject.code}</p>
+                            <p className="text-sm text-gray-500">{subject.year}° año • {subject.credits} créditos</p>
+                          </div>
+                          <Badge variant="outline">{subject.semester}° sem</Badge>
                         </div>
-                        <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                          {subject.semester}° sem
-                        </span>
-                      </div>
+                      </CardHeader>
+                      <CardContent>
+                        {subject.description && (
+                          <p className="text-sm text-gray-600 mb-4">{subject.description}</p>
+                        )}
 
-                      {subject.description && (
-                        <p className="text-sm text-gray-600 mb-4">{subject.description}</p>
-                      )}
-
-                      <div className="border-t pt-4">
-                        <div className="flex items-center justify-between mb-3">
+                        <div className="space-y-3">
                           <div>
-                            <p className="text-xs text-gray-500">Profesor asignado:</p>
+                            <Label className="text-xs text-gray-500">Profesor asignado:</Label>
                             <p className="text-sm font-medium">
-                              {subject.teacher?.name || 'Sin asignar'}
+                              {(subject as any).teacher?.name || 'Sin asignar'}
                             </p>
                           </div>
-                          <div className="flex space-x-2">
-                            <select
-                              onChange={(e) => e.target.value && handleAssignTeacher(subject.id, e.target.value)}
-                              className="text-xs px-2 py-1 border border-gray-300 rounded"
-                              defaultValue=""
-                            >
-                              <option value="">Asignar profesor</option>
-                              {teachers.map(teacher => (
-                                <option key={teacher.id} value={teacher.id}>
-                                  {teacher.name}
-                                </option>
-                              ))}
-                            </select>
+
+                          <div className="flex gap-2">
+                            <Select onValueChange={(value) => value && handleAssignTeacher(subject.id, value)}>
+                              <SelectTrigger className="flex-1">
+                                <SelectValue placeholder="Asignar profesor" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {teachers.map(teacher => (
+                                  <SelectItem key={teacher.id} value={teacher.id}>
+                                    {teacher.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            
+                            <Button variant="outline" size="sm">
+                              <EditIcon className="h-4 w-4" />
+                            </Button>
                           </div>
                         </div>
-                        
-                        {/* Botones de acción */}
-                        <div className="flex space-x-2 pt-2 border-t">
-                          <button
-                            onClick={() => handleEditSubject(subject)}
-                            className="flex-1 px-3 py-2 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 transition-colors"
-                          >
-                            ✏️ Editar
-                          </button>
-                          <button
-                            onClick={() => handleDeleteSubject(subject.id)}
-                            className="flex-1 px-3 py-2 bg-red-600 text-white text-xs rounded hover:bg-red-700 transition-colors"
-                          >
-                            🗑️ Eliminar
-                          </button>
-                        </div>
-                      </div>
-                    </div>
+                      </CardContent>
+                    </Card>
                   ))}
                 </div>
-              </div>
-            )}
 
-            {/* ESTADÍSTICAS TAB */}
-            {activeTab === 'stats' && (
-              <div>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                  <div className="bg-white p-6 rounded-lg shadow">
-                    <div className="flex items-center">
-                      <div className="p-2 bg-blue-100 rounded-lg">
-                        <span className="text-2xl">👥</span>
-                      </div>
-                      <div className="ml-4">
-                        <p className="text-sm font-medium text-gray-600">Total Usuarios</p>
-                        <p className="text-2xl font-semibold text-gray-900">{users.length}</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="bg-white p-6 rounded-lg shadow">
-                    <div className="flex items-center">
-                      <div className="p-2 bg-green-100 rounded-lg">
-                        <span className="text-2xl">🎓</span>
-                      </div>
-                      <div className="ml-4">
-                        <p className="text-sm font-medium text-gray-600">Estudiantes</p>
-                        <p className="text-2xl font-semibold text-gray-900">
-                          {users.filter(u => u.role === 'student').length}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="bg-white p-6 rounded-lg shadow">
-                    <div className="flex items-center">
-                      <div className="p-2 bg-purple-100 rounded-lg">
-                        <span className="text-2xl">👨‍🏫</span>
-                      </div>
-                      <div className="ml-4">
-                        <p className="text-sm font-medium text-gray-600">Profesores</p>
-                        <p className="text-2xl font-semibold text-gray-900">
-                          {users.filter(u => u.role === 'teacher').length}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="bg-white p-6 rounded-lg shadow">
-                    <div className="flex items-center">
-                      <div className="p-2 bg-yellow-100 rounded-lg">
-                        <span className="text-2xl">📚</span>
-                      </div>
-                      <div className="ml-4">
-                        <p className="text-sm font-medium text-gray-600">Materias</p>
-                        <p className="text-2xl font-semibold text-gray-900">{subjects.length}</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Gráfico de distribución por año */}
-                <div className="bg-white p-6 rounded-lg shadow">
-                  <h3 className="text-lg font-semibold mb-4">Distribución de Estudiantes por Año</h3>
-                  <div className="space-y-3">
-                    {[1,2,3,4,5,6].map(year => {
-                      const count = users.filter(u => u.role === 'student' && u.year === year).length;
-                      const percentage = users.filter(u => u.role === 'student').length > 0 
-                        ? (count / users.filter(u => u.role === 'student').length) * 100 
-                        : 0;
-                      
-                      return (
-                        <div key={year} className="flex items-center">
-                          <div className="w-20 text-sm font-medium text-gray-600">
-                            {year}° año
-                          </div>
-                          <div className="flex-1 mx-4">
-                            <div className="bg-gray-200 rounded-full h-4">
-                              <div 
-                                className="bg-blue-600 h-4 rounded-full" 
-                                style={{ width: `${percentage}%` }}
-                              ></div>
-                            </div>
-                          </div>
-                          <div className="w-16 text-sm text-gray-600 text-right">
-                            {count} estudiantes
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Modal Crear Usuario */}
-      {showUserModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto">
-            <h3 className="text-lg font-semibold mb-4">
-              {editingUser ? 'Editar Usuario' : 'Crear Nuevo Usuario'}
-            </h3>
-            
-            <form onSubmit={(e) => {
-              e.preventDefault();
-              handleCreateUser();
-            }}>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Nombre completo *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={userForm.name}
-                    onChange={(e) => setUserForm({...userForm, name: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Email *
-                  </label>
-                  <input
-                    type="email"
-                    required
-                    value={userForm.email}
-                    onChange={(e) => setUserForm({...userForm, email: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Contraseña *
-                  </label>
-                  <input
-                    type="password"
-                    required
-                    value={userForm.password}
-                    onChange={(e) => setUserForm({...userForm, password: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Rol *
-                  </label>
-                  <select
-                    required
-                    value={userForm.role}
-                    onChange={(e) => setUserForm({...userForm, role: e.target.value as UserRole})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="student">Estudiante</option>
-                    <option value="teacher">Profesor</option>
-                    <option value="admin">Administrador</option>
-                  </select>
-                </div>
-
-                {userForm.role === 'student' && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Año *
-                    </label>
-                    <select
-                      required
-                      value={userForm.year}
-                      onChange={(e) => setUserForm({...userForm, year: parseInt(e.target.value)})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                    >
-                      {[1,2,3,4,5,6].map(year => (
-                        <option key={year} value={year}>{year}° año</option>
-                      ))}
-                    </select>
+                {filteredSubjects.length === 0 && (
+                  <div className="text-center py-8 text-gray-500">
+                    No se encontraron materias con los filtros aplicados.
                   </div>
                 )}
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Teléfono
-                  </label>
-                  <input
-                    type="tel"
-                    value={userForm.phone}
-                    onChange={(e) => setUserForm({...userForm, phone: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
+          {/* ESTADÍSTICAS TAB */}
+          <TabsContent value="stats" className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Total Usuarios</CardTitle>
+                  <UsersIcon className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{users.length}</div>
+                  <p className="text-xs text-muted-foreground">
+                    {users.filter(u => u.is_active).length} activos
+                  </p>
+                </CardContent>
+              </Card>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Biografía
-                  </label>
-                  <textarea
-                    value={userForm.bio}
-                    onChange={(e) => setUserForm({...userForm, bio: e.target.value})}
-                    rows={3}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Estudiantes</CardTitle>
+                  <GraduationCapIcon className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    {users.filter(u => u.role === 'student').length}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {users.filter(u => u.role === 'student' && u.is_active).length} activos
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Profesores</CardTitle>
+                  <ShieldCheckIcon className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    {users.filter(u => u.role === 'teacher').length}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {users.filter(u => u.role === 'teacher' && u.is_active).length} activos
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Materias</CardTitle>
+                  <BookOpenIcon className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{subjects.length}</div>
+                  <p className="text-xs text-muted-foreground">
+                    {subjects.filter(s => (s as any).teacher).length} con profesor asignado
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+        </Tabs>
+
+        {/* Modal para crear/editar usuario */}
+        <Dialog open={showUserModal} onOpenChange={setShowUserModal}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>
+                {editingUser ? 'Editar Usuario' : 'Crear Nuevo Usuario'}
+              </DialogTitle>
+              <DialogDescription>
+                {editingUser ? 'Modifica los datos del usuario.' : 'Completa la información para crear un nuevo usuario.'}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="name">Nombre completo</Label>
+                <Input
+                  id="name"
+                  value={userForm.name}
+                  onChange={(e) => setUserForm({...userForm, name: e.target.value})}
+                  placeholder="Ingresa el nombre completo"
+                />
               </div>
 
-              <div className="flex justify-end space-x-3 mt-6">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowUserModal(false);
-                    resetUserForm();
-                  }}
-                  className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                >
-                  {editingUser ? 'Actualizar' : 'Crear'}
-                </button>
+              <div>
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={userForm.email}
+                  onChange={(e) => setUserForm({...userForm, email: e.target.value})}
+                  placeholder="usuario@ejemplo.com"
+                />
               </div>
-            </form>
-          </div>
-        </div>
-      )}
 
-      {/* Modal Crear Materia */}
-      {showSubjectModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
-            <h3 className="text-lg font-semibold mb-4">
-              {editingSubject ? 'Editar Materia' : 'Crear Nueva Materia'}
-            </h3>
-            
-            <form onSubmit={(e) => {
-              e.preventDefault();
-              handleCreateSubject();
-            }}>
-              <div className="space-y-4">
+              <div>
+                <Label htmlFor="password">Contraseña</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  value={userForm.password}
+                  onChange={(e) => setUserForm({...userForm, password: e.target.value})}
+                  placeholder="Contraseña segura"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="role">Rol</Label>
+                <Select value={userForm.role} onValueChange={(value) => setUserForm({...userForm, role: value as UserRole})}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar rol" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="student">Estudiante</SelectItem>
+                    <SelectItem value="teacher">Profesor</SelectItem>
+                    <SelectItem value="admin">Administrador</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {userForm.role === 'student' && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Nombre de la materia *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={subjectForm.name}
-                    onChange={(e) => setSubjectForm({...subjectForm, name: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Código *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={subjectForm.code}
-                    onChange={(e) => setSubjectForm({...subjectForm, code: e.target.value.toUpperCase()})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                    placeholder="ej: MAT1, FIS2"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Año *
-                    </label>
-                    <select
-                      required
-                      value={subjectForm.year}
-                      onChange={(e) => setSubjectForm({...subjectForm, year: parseInt(e.target.value)})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                    >
+                  <Label htmlFor="year">Año de cursado</Label>
+                  <Select value={userForm.year?.toString()} onValueChange={(value) => setUserForm({...userForm, year: parseInt(value)})}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccionar año" />
+                    </SelectTrigger>
+                    <SelectContent>
                       {[1,2,3,4,5,6].map(year => (
-                        <option key={year} value={year}>{year}° año</option>
+                        <SelectItem key={year} value={year.toString()}>{year}° año</SelectItem>
                       ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Semestre
-                    </label>
-                    <select
-                      value={subjectForm.semester}
-                      onChange={(e) => setSubjectForm({...subjectForm, semester: parseInt(e.target.value)})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value={1}>1° semestre</option>
-                      <option value={2}>2° semestre</option>
-                    </select>
-                  </div>
+                    </SelectContent>
+                  </Select>
                 </div>
+              )}
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Créditos
-                  </label>
-                  <input
-                    type="number"
-                    min="0"
-                    max="10"
-                    value={subjectForm.credits}
-                    onChange={(e) => setSubjectForm({...subjectForm, credits: parseInt(e.target.value)})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Profesor asignado
-                  </label>
-                  <select
-                    value={subjectForm.teacher_id}
-                    onChange={(e) => setSubjectForm({...subjectForm, teacher_id: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">Sin asignar</option>
-                    {teachers.map(teacher => (
-                      <option key={teacher.id} value={teacher.id}>
-                        {teacher.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Descripción
-                  </label>
-                  <textarea
-                    value={subjectForm.description}
-                    onChange={(e) => setSubjectForm({...subjectForm, description: e.target.value})}
-                    rows={3}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-              </div>
-
-              <div className="flex justify-end space-x-3 mt-6">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowSubjectModal(false);
-                    resetSubjectForm();
-                  }}
-                  className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-                >
+              <div className="flex justify-end space-x-2">
+                <Button variant="outline" onClick={() => {
+                  setShowUserModal(false);
+                  resetUserForm();
+                }}>
                   Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                >
-                  {editingSubject ? 'Actualizar' : 'Crear'}
-                </button>
+                </Button>
+                <Button onClick={handleCreateUser}>
+                  {editingUser ? 'Actualizar' : 'Crear'}
+                </Button>
               </div>
-            </form>
-          </div>
-        </div>
-      )}
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Modal para crear/editar materia */}
+        <Dialog open={showSubjectModal} onOpenChange={setShowSubjectModal}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>
+                {editingSubject ? 'Editar Materia' : 'Crear Nueva Materia'}
+              </DialogTitle>
+              <DialogDescription>
+                {editingSubject ? 'Modifica los datos de la materia.' : 'Completa la información para crear una nueva materia.'}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="subject-name">Nombre de la materia</Label>
+                <Input
+                  id="subject-name"
+                  value={subjectForm.name}
+                  onChange={(e) => setSubjectForm({...subjectForm, name: e.target.value})}
+                  placeholder="Ingresa el nombre de la materia"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="subject-code">Código</Label>
+                <Input
+                  id="subject-code"
+                  value={subjectForm.code}
+                  onChange={(e) => setSubjectForm({...subjectForm, code: e.target.value})}
+                  placeholder="Ej: MAT101"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="subject-description">Descripción</Label>
+                <Textarea
+                  id="subject-description"
+                  value={subjectForm.description}
+                  onChange={(e) => setSubjectForm({...subjectForm, description: e.target.value})}
+                  placeholder="Descripción de la materia"
+                />
+              </div>
+
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <Label htmlFor="subject-year">Año</Label>
+                  <Select value={subjectForm.year.toString()} onValueChange={(value) => setSubjectForm({...subjectForm, year: parseInt(value)})}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {[1,2,3,4,5,6].map(year => (
+                        <SelectItem key={year} value={year.toString()}>{year}°</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="subject-semester">Semestre</Label>
+                  <Select value={subjectForm.semester?.toString() || ''} onValueChange={(value) => setSubjectForm({...subjectForm, semester: parseInt(value)})}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1">1°</SelectItem>
+                      <SelectItem value="2">2°</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="subject-credits">Créditos</Label>
+                  <Input
+                    id="subject-credits"
+                    type="number"
+                    value={subjectForm.credits}
+                    onChange={(e) => setSubjectForm({...subjectForm, credits: parseInt(e.target.value) || 0})}
+                    min="0"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="subject-teacher">Profesor asignado (opcional)</Label>
+                <Select value={subjectForm.teacher_id} onValueChange={(value) => setSubjectForm({...subjectForm, teacher_id: value})}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar profesor" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Sin asignar</SelectItem>
+                    {teachers.map(teacher => (
+                      <SelectItem key={teacher.id} value={teacher.id}>
+                        {teacher.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex justify-end space-x-2">
+                <Button variant="outline" onClick={() => {
+                  setShowSubjectModal(false);
+                  resetSubjectForm();
+                }}>
+                  Cancelar
+                </Button>
+                <Button onClick={handleCreateSubject}>
+                  {editingSubject ? 'Actualizar' : 'Crear'}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
     </div>
   );
 };
