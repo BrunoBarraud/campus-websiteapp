@@ -29,10 +29,20 @@ export const authOptions: AuthOptions = {
             return null;
           }
 
+          // Debug: verificar datos del usuario
+          console.log('User data:', {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            role: user.role,
+            passwordExists: !!user.password,
+            passwordType: typeof user.password
+          });
+
           // Verify password
           const isPasswordValid = await bcrypt.compare(
             credentials.password,
-            user.password_hash
+            user.password
           );
 
           if (!isPasswordValid) {

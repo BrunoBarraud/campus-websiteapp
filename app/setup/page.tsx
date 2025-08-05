@@ -44,7 +44,8 @@ export default function SetupPage() {
         setMessage(data.error || "Error al crear administrador");
         setStatus("error");
       }
-    } catch (error) {
+    } catch (err) {
+      console.error("Error creating admin:", err);
       setMessage("Error al crear administrador");
       setStatus("error");
     }

@@ -20,18 +20,20 @@ const nextConfig: NextConfig = {
   compress: true,
   poweredByHeader: false,
   
-  // Optimizaciones experimentales
-  experimental: {
-    optimizeCss: true,
-    optimizePackageImports: ['lucide-react', 'react-icons'],
-    turbo: {
-      rules: {
-        '*.svg': {
-          loaders: ['@svgr/webpack'],
-          as: '*.js',
-        },
+  // Configuración de Turbopack (nuevo bundler estable)
+  turbopack: {
+    rules: {
+      '*.svg': {
+        loaders: ['@svgr/webpack'],
+        as: '*.js',
       },
     },
+  },
+  
+  // Optimizaciones experimentales
+  experimental: {
+    // optimizeCss: true, // Desactivado temporalmente por problemas con critters
+    optimizePackageImports: ['lucide-react', 'react-icons'],
   },
   
   // Configuración del compilador

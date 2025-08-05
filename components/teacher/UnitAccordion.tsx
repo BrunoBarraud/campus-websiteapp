@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { ChevronDownIcon, ChevronRightIcon, PlusIcon, FileTextIcon, ClipboardIcon, DownloadIcon } from 'lucide-react';
-import { extractOriginalContentType, getContentTypeIcon, getContentTypeLabel, hasAttachment } from '@/app/lib/utils/contentTypes';
+import { extractOriginalContentType, getContentTypeLabel, hasAttachment } from '@/app/lib/utils/contentTypes';
 
 interface Unit {
   id: string;
