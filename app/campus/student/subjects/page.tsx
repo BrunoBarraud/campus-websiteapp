@@ -11,8 +11,7 @@ interface Subject {
   code: string;
   description: string;
   year: number;
-  semester: number;
-  credits: number;
+  division: string | null;
   image_url: string | null;
   teacher: {
     id: string;
@@ -197,8 +196,8 @@ export default function StudentSubjectsPage() {
 
                   {/* Subject Details */}
                   <div className="flex justify-between text-sm text-gray-500 mb-4">
-                    <span>{subject.year}° Año • {subject.semester}° Sem</span>
-                    <span>{subject.credits} créditos</span>
+                    <span>{subject.year}° Año{subject.division ? ` • División ${subject.division}` : ''}</span>
+                    <span>Código: {subject.code}</span>
                   </div>
 
                   {/* Teacher Info */}

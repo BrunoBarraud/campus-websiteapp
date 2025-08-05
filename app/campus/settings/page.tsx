@@ -1,164 +1,220 @@
-"use client";
+'use client';
 
-// Forzar rendering dinámico para evitar errores de SSR
-export const dynamic = 'force-dynamic';
-
-import React from "react";
-import Link from 'next/link';
-import { FiUsers, FiBook, FiSettings, FiUserCheck, FiUser, FiArrowRight } from 'react-icons/fi';
+import { useEffect } from 'react';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Settings, User, Shield, Database, Calendar, Bell, MessageSquare, Palette, Zap } from 'lucide-react';
 
 export default function SettingsPage() {
-  const settingsOptions = [
+  const { data: session, status } = useSession();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (status === 'loading') return;
+    
+    if (!session) {
+      router.push('/campus/login');
+      return;
+    }
+  }, [session, status, router]);
+
+  if (status === 'loading') {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  if (!session) return null;
+
+  const features = [
     {
+      icon: User,
       title: 'Gestión de Usuarios',
-      description: 'Administra profesores, alumnos y administradores del campus',
-      href: '/campus/settings/users',
-      icon: FiUsers,
-      color: 'from-amber-400 to-rose-500',
-      bgColor: 'bg-amber-50',
-      borderColor: 'border-amber-200'
+      description: 'Administrar perfiles, roles y permisos de usuarios',
+      status: 'active',
+      path: '/campus/settings/users'
     },
     {
-      title: 'Gestión de Materias', 
-      description: 'Administra las materias del campus, asigna profesores y configura años académicos',
-      href: '/campus/settings/subjects',
-      icon: FiBook,
-      color: 'from-rose-500 to-amber-400',
-      bgColor: 'bg-rose-50',
-      borderColor: 'border-rose-200'
+      icon: Database,
+      title: 'Gestión de Materias',
+      description: 'Administrar materias, profesores y configuraciones académicas',
+      status: 'active',
+      path: '/campus/settings/subjects'
     },
     {
-      title: 'Configuración General',
-      description: 'Ajustes generales del sistema, notificaciones y preferencias',
-      href: '/campus/settings/general',
-      icon: FiSettings,
-      color: 'from-rose-950 to-amber-400',
-      bgColor: 'bg-gray-50',
-      borderColor: 'border-gray-200'
+      icon: Calendar,
+      title: 'Sistema de Calendario',
+      description: 'Gestión de eventos académicos y cronogramas',
+      status: 'planned',
+      path: '/campus/calendar'
+    },
+    {
+      icon: Bell,
+      title: 'Centro de Notificaciones',
+      description: 'Sistema avanzado de notificaciones en tiempo real',
+      status: 'planned',
+      path: '/campus/notifications'
+    },
+    {
+      icon: MessageSquare,
+      title: 'Sistema de Mensajes',
+      description: 'Comunicación interna entre usuarios',
+      status: 'planned',
+      path: '/campus/messages'
+    },
+    {
+      icon: Palette,
+      title: 'Mejorar UI/UX',
+      description: 'Optimización de la interfaz de usuario',
+      status: 'in-progress',
+      path: null
+    },
+    {
+      icon: Zap,
+      title: 'Optimización de Rendimiento',
+      description: 'Mejoras en velocidad y eficiencia del sistema',
+      status: 'completed',
+      path: null
     }
   ];
 
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'active':
+        return <Badge className="bg-green-100 text-green-800">Activo</Badge>;
+      case 'completed':
+        return <Badge className="bg-blue-100 text-blue-800">Completado</Badge>;
+      case 'in-progress':
+        return <Badge className="bg-yellow-100 text-yellow-800">En Progreso</Badge>;
+      case 'planned':
+        return <Badge className="bg-gray-100 text-gray-800">Planificado</Badge>;
+      default:
+        return <Badge variant="secondary">Desconocido</Badge>;
+    }
+  };
+
   return (
-    <div className="bg-gradient-to-br from-amber-50 via-white to-rose-50 min-h-screen">
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-6xl mx-auto">
-          {/* Header */}
-          <div className="text-center mb-12">
-            <h1 className="text-4xl font-bold text-gray-800 mb-4">
-              <span className="bg-amber-400 text-rose-950 px-3 py-1 rounded-lg mr-2">Panel</span>
-              <span className="bg-rose-950 text-amber-400 px-3 py-1 rounded-lg">Administración</span>
-            </h1>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Gestiona todos los aspectos del campus virtual desde un solo lugar
-            </p>
-          </div>
-
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 border border-amber-200 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
-              <div className="flex items-center">
-                <div className="p-3 bg-gradient-to-r from-amber-400 to-rose-500 rounded-lg">
-                  <FiUserCheck className="w-6 h-6 text-white" />
-                </div>
-                <div className="ml-4">
-                  <h3 className="text-lg font-semibold text-gray-800">Usuarios Activos</h3>
-                  <p className="text-2xl font-bold text-gray-900">247</p>
-                </div>
-              </div>
+    <div className="min-h-screen bg-gray-50 p-6">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="mb-8">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2 bg-blue-100 rounded-lg">
+              <Settings className="h-6 w-6 text-blue-600" />
             </div>
-
-            <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 border border-rose-200 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
-              <div className="flex items-center">
-                <div className="p-3 bg-gradient-to-r from-rose-500 to-amber-400 rounded-lg">
-                  <FiBook className="w-6 h-6 text-white" />
-                </div>
-                <div className="ml-4">
-                  <h3 className="text-lg font-semibold text-gray-800">Materias Totales</h3>
-                  <p className="text-2xl font-bold text-gray-900">32</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 border border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
-              <div className="flex items-center">
-                <div className="p-3 bg-gradient-to-r from-rose-950 to-amber-400 rounded-lg">
-                  <FiUser className="w-6 h-6 text-white" />
-                </div>
-                <div className="ml-4">
-                  <h3 className="text-lg font-semibold text-gray-800">Años Académicos</h3>
-                  <p className="text-2xl font-bold text-gray-900">6</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Settings Options */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {settingsOptions.map((option, index) => {
-              const IconComponent = option.icon;
-              return (
-                <Link
-                  key={index}
-                  href={option.href}
-                  className="group block"
-                >
-                  <div className={`${option.bgColor} ${option.borderColor} border-2 rounded-xl p-8 h-full transition-all duration-300 hover:shadow-2xl hover:scale-105 hover:border-opacity-50 relative overflow-hidden`}>
-                    {/* Background Animation */}
-                    <div className="absolute inset-0 bg-gradient-to-r opacity-0 group-hover:opacity-10 transition-opacity duration-300" style={{
-                      background: `linear-gradient(45deg, ${option.color.includes('amber') ? '#f59e0b, #ef4444' : option.color.includes('rose') ? '#ef4444, #f59e0b' : '#881337, #f59e0b'})`
-                    }}></div>
-                    
-                    <div className="relative z-10">
-                      {/* Icon */}
-                      <div className={`inline-flex p-4 bg-gradient-to-r ${option.color} rounded-xl mb-6 shadow-lg group-hover:shadow-xl transition-all duration-300 transform group-hover:scale-110`}>
-                        <IconComponent className="w-8 h-8 text-white" />
-                      </div>
-
-                      {/* Content */}
-                      <h2 className="text-xl font-bold text-gray-800 mb-3 group-hover:text-gray-900 transition-colors duration-300">
-                        {option.title}
-                      </h2>
-                      <p className="text-gray-600 mb-6 leading-relaxed group-hover:text-gray-700 transition-colors duration-300">
-                        {option.description}
-                      </p>
-
-                      {/* Call to Action */}
-                      <div className="flex items-center text-gray-700 group-hover:text-gray-900 transition-all duration-300">
-                        <span className="font-medium mr-2">Gestionar</span>
-                        <FiArrowRight className="w-4 h-4 transform group-hover:translate-x-2 transition-transform duration-300" />
-                      </div>
-                    </div>
-
-                    {/* Hover Border Effect */}
-                    <div className="absolute inset-0 rounded-xl border-2 border-transparent group-hover:border-gradient transition-all duration-300"></div>
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
-
-          {/* Quick Actions */}
-          <div className="mt-12 bg-white/80 backdrop-blur-sm rounded-xl p-8 border border-gray-200 shadow-lg">
-            <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">
-              Acciones Rápidas
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Link href="/campus/settings/users" className="flex items-center justify-center px-6 py-4 bg-gradient-to-r from-amber-400 to-rose-500 text-white rounded-lg hover:from-amber-500 hover:to-rose-600 transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:scale-105">
-                <FiUsers className="w-5 h-5 mr-2" />
-                Agregar Usuario
-              </Link>
-              <Link href="/campus/settings/subjects" className="flex items-center justify-center px-6 py-4 bg-gradient-to-r from-rose-500 to-amber-400 text-white rounded-lg hover:from-rose-600 hover:to-amber-500 transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:scale-105">
-                <FiBook className="w-5 h-5 mr-2" />
-                Nueva Materia
-              </Link>
-              <Link href="/campus/settings/general" className="flex items-center justify-center px-6 py-4 bg-gradient-to-r from-rose-950 to-amber-400 text-white rounded-lg hover:from-rose-900 hover:to-amber-500 transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:scale-105">
-                <FiSettings className="w-5 h-5 mr-2" />
-                Configurar Sistema
-              </Link>
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Configuración del Sistema</h1>
+              <p className="text-gray-600">Gestiona las funcionalidades y configuraciones del campus</p>
             </div>
           </div>
         </div>
+
+        {/* User Info */}
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <User className="h-5 w-5" />
+              Información del Usuario
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <p className="text-sm text-gray-600">Nombre</p>
+                <p className="font-medium">{session.user?.name}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Email</p>
+                <p className="font-medium">{session.user?.email}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Rol</p>
+                <Badge variant={session.user?.role === 'admin' ? 'default' : 'secondary'}>
+                  {session.user?.role === 'admin' ? 'Administrador' : 
+                   session.user?.role === 'teacher' ? 'Profesor' : 'Estudiante'}
+                </Badge>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Features Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {features.map((feature, index) => {
+            const Icon = feature.icon;
+            return (
+              <Card key={index} className="hover:shadow-lg transition-shadow">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-blue-100 rounded-lg">
+                        <Icon className="h-5 w-5 text-blue-600" />
+                      </div>
+                      <CardTitle className="text-lg">{feature.title}</CardTitle>
+                    </div>
+                    {getStatusBadge(feature.status)}
+                  </div>
+                  <CardDescription>{feature.description}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {feature.path && feature.status === 'active' && (
+                    <Button 
+                      onClick={() => router.push(feature.path)}
+                      className="w-full"
+                    >
+                      Acceder
+                    </Button>
+                  )}
+                  {feature.status === 'planned' && (
+                    <Button variant="outline" disabled className="w-full">
+                      Próximamente
+                    </Button>
+                  )}
+                  {feature.status === 'in-progress' && (
+                    <Button variant="outline" disabled className="w-full">
+                      En Desarrollo
+                    </Button>
+                  )}
+                  {feature.status === 'completed' && !feature.path && (
+                    <Button variant="outline" disabled className="w-full">
+                      ✓ Implementado
+                    </Button>
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+
+        {/* Admin Panel Access */}
+        {session.user?.role === 'admin' && (
+          <Card className="mt-8">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Shield className="h-5 w-5" />
+                Panel de Administración Avanzado
+              </CardTitle>
+              <CardDescription>
+                Acceso al panel administrativo completo con estadísticas y configuraciones avanzadas
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button 
+                onClick={() => router.push('/campus/admin')}
+                className="w-full"
+              >
+                Ir al Panel Administrativo
+              </Button>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );
 }
+

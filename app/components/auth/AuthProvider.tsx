@@ -4,15 +4,14 @@ import { SessionProvider } from "next-auth/react";
 import { useEffect, useState } from "react";
 
 export function NextAuthProvider({ children }: { children: React.ReactNode }) {
-  const [mounted, setMounted] = useState(false);
+  const [hasMounted, setHasMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
+    setHasMounted(true);
   }, []);
 
-  // Evitar problemas de hidratación
-  if (!mounted) {
-    return <div style={{ visibility: "hidden" }}>{children}</div>;
+  if (!hasMounted) {
+    return null;
   }
 
   return <SessionProvider>{children}</SessionProvider>;

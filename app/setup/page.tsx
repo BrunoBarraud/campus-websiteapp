@@ -1,50 +1,52 @@
 "use client";
-import { useState } from 'react';
+import { useState } from "react";
 
 export default function SetupPage() {
-  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
-  const [message, setMessage] = useState('');
+  const [status, setStatus] = useState<
+    "idle" | "loading" | "success" | "error"
+  >("idle");
+  const [message, setMessage] = useState("");
   const [adminInfo, setAdminInfo] = useState<any>(null);
 
   const checkAdmin = async () => {
     try {
-      setStatus('loading');
-      const response = await fetch('/api/setup-admin');
+      setStatus("loading");
+      const response = await fetch("/api/setup-admin");
       const data = await response.json();
-      
+
       if (data.hasAdmin) {
-        setMessage('Ya existe un usuario administrador');
+        setMessage("Ya existe un usuario administrador");
         setAdminInfo(data.admin);
       } else {
-        setMessage('No hay usuario administrador configurado');
+        setMessage("No hay usuario administrador configurado");
         setAdminInfo(null);
       }
-      setStatus('success');
+      setStatus("success");
     } catch {
-      setMessage('Error al verificar administrador');
-      setStatus('error');
+      setMessage("Error al verificar administrador");
+      setStatus("error");
     }
   };
 
   const createAdmin = async () => {
     try {
-      setStatus('loading');
-      const response = await fetch('/api/setup-admin', {
-        method: 'POST',
+      setStatus("loading");
+      const response = await fetch("/api/setup-admin", {
+        method: "POST",
       });
       const data = await response.json();
-      
+
       if (response.ok) {
         setMessage(data.message);
         setAdminInfo(data.user);
-        setStatus('success');
+        setStatus("success");
       } else {
-        setMessage(data.error || 'Error al crear administrador');
-        setStatus('error');
+        setMessage(data.error || "Error al crear administrador");
+        setStatus("error");
       }
     } catch (error) {
-      setMessage('Error al crear administrador');
-      setStatus('error');
+      setMessage("Error al crear administrador");
+      setStatus("error");
     }
   };
 
@@ -64,27 +66,31 @@ export default function SetupPage() {
           <div className="space-y-4">
             <button
               onClick={checkAdmin}
-              disabled={status === 'loading'}
+              disabled={status === "loading"}
               className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
             >
-              {status === 'loading' ? 'Verificando...' : 'Verificar Admin'}
+              {status === "loading" ? "Verificando..." : "Verificar Admin"}
             </button>
 
             <button
               onClick={createAdmin}
-              disabled={status === 'loading'}
+              disabled={status === "loading"}
               className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50"
             >
-              {status === 'loading' ? 'Creando...' : 'Crear Admin'}
+              {status === "loading" ? "Creando..." : "Crear Admin"}
             </button>
           </div>
 
           {message && (
-            <div className={`p-4 rounded-md ${
-              status === 'error' ? 'bg-red-50 text-red-700' : 
-              status === 'success' ? 'bg-green-50 text-green-700' : 
-              'bg-blue-50 text-blue-700'
-            }`}>
+            <div
+              className={`p-4 rounded-md ${
+                status === "error"
+                  ? "bg-red-50 text-red-700"
+                  : status === "success"
+                  ? "bg-green-50 text-green-700"
+                  : "bg-blue-50 text-blue-700"
+              }`}
+            >
               {message}
             </div>
           )}
@@ -95,10 +101,18 @@ export default function SetupPage() {
                 Información del Administrador:
               </h3>
               <div className="space-y-1 text-sm text-gray-600">
-                <p><strong>Email:</strong> {adminInfo.email}</p>
-                <p><strong>Nombre:</strong> {adminInfo.name}</p>
-                <p><strong>Rol:</strong> {adminInfo.role}</p>
-                <p><strong>ID:</strong> {adminInfo.id}</p>
+                <p>
+                  <strong>Email:</strong> {adminInfo.email}
+                </p>
+                <p>
+                  <strong>Nombre:</strong> {adminInfo.name}
+                </p>
+                <p>
+                  <strong>Rol:</strong> {adminInfo.role}
+                </p>
+                <p>
+                  <strong>ID:</strong> {adminInfo.id}
+                </p>
               </div>
             </div>
           )}
@@ -108,8 +122,12 @@ export default function SetupPage() {
               Credenciales por defecto:
             </h3>
             <div className="text-sm text-yellow-700">
-              <p><strong>Email:</strong> admin@ipdvs.edu.ar</p>
-              <p><strong>Contraseña:</strong> admin123</p>
+              <p>
+                <strong>Email:</strong> admin@ipdvs.edu.ar
+              </p>
+              <p>
+                <strong>Contraseña:</strong> admin123
+              </p>
             </div>
           </div>
 

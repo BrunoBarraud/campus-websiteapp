@@ -2,8 +2,10 @@
 
 export const dynamic = 'force-dynamic';
 
-import React, { useState, useEffect } from "react";
-import { FiUsers, FiPlus, FiEdit2, FiTrash2, FiSearch, FiX } from 'react-icons/fi';
+import React, { useState, useEffect, useRef } from "react";
+import { FiUsers, FiPlus, FiEdit2, FiTrash2, FiSearch, FiX, FiDownload, FiUpload, FiFileText } from 'react-icons/fi';
+import AdminProtected from '@/components/auth/AdminProtected';
+import Pagination from '@/components/ui/Pagination';
 
 // Definir tipos
 interface User {
@@ -14,6 +16,30 @@ interface User {
   year?: number;
   is_active: boolean;
   created_at: string;
+}
+
+interface PaginationInfo {
+  currentPage: number;
+  totalPages: number;
+  totalItems: number;
+  itemsPerPage: number;
+  hasNextPage: boolean;
+  hasPrevPage: boolean;
+  startItem: number;
+  endItem: number;
+}
+
+interface UsersResponse {
+  success: boolean;
+  data: User[];
+  pagination: PaginationInfo;
+  filters: {
+    role: string;
+    search: string;
+    sortBy: string;
+    sortOrder: string;
+    includeInactive: boolean;
+  };
 }
 
 // Modal para editar/crear usuario
@@ -252,45 +278,114 @@ function EditUserModal({
   );
 }
 
-export default function UsersPage() {
+function UsersPageContent() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterRole, setFilterRole] = useState<string>('all');
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  // Estados para importación/exportación
+  const [isExporting, setIsExporting] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [importResults, setImportResults] = useState<any>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Estados de paginación
+  const [pagination, setPagination] = useState<PaginationInfo>({
+    currentPage: 1,
+    totalPages: 1,
+    totalItems: 0,
+    itemsPerPage: 10,
+    hasNextPage: false,
+    hasPrevPage: false,
+    startItem: 0,
+    endItem: 0
+  });
+  
+  // Estados de ordenamiento (para futura implementación)
+  const [sortBy] = useState('name');
+  const [sortOrder] = useState<'asc' | 'desc'>('asc');
 
-  // Fetch users
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const response = await fetch('/api/users');
-        if (response.ok) {
-          const result = await response.json();
-          // La API devuelve { success: true, data: [...] }
-          setUsers(result.data || []);
-        } else {
-          console.error('Error fetching users');
-          setUsers([]);
-        }
-      } catch (error) {
-        console.error('Error:', error);
+  // Función para construir la URL de la API con parámetros
+  const buildApiUrl = (page: number = pagination.currentPage, limit: number = pagination.itemsPerPage) => {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+      sortBy,
+      sortOrder
+    });
+
+    if (filterRole !== 'all') {
+      params.append('role', filterRole);
+    }
+
+    if (searchTerm.trim()) {
+      params.append('search', searchTerm.trim());
+    }
+
+    return `/api/users?${params.toString()}`;
+  };
+
+  // Fetch users con paginación
+  const fetchUsers = async (page: number = pagination.currentPage, limit: number = pagination.itemsPerPage) => {
+    try {
+      setLoading(true);
+      const url = buildApiUrl(page, limit);
+      console.log('🔄 Fetching users from:', url);
+      
+      const response = await fetch(url);
+      if (response.ok) {
+        const result: UsersResponse = await response.json();
+        console.log('✅ Users response:', result);
+        
+        setUsers(result.data || []);
+        setPagination(result.pagination);
+      } else {
+        console.error('❌ Error fetching users:', response.status);
         setUsers([]);
-      } finally {
-        setLoading(false);
+        setPagination(prev => ({ ...prev, totalItems: 0 }));
+        
+        if (response.status === 403) {
+          alert('No tienes permisos para ver esta información');
+        }
       }
-    };
+    } catch (error) {
+      console.error('💥 Error:', error);
+      setUsers([]);
+      setPagination(prev => ({ ...prev, totalItems: 0 }));
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  // Fetch inicial
+  useEffect(() => {
     fetchUsers();
   }, []);
 
-  // Filter users
-  const filteredUsers = users.filter(user => {
-    const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesRole = filterRole === 'all' || user.role === filterRole;
-    return matchesSearch && matchesRole;
-  });
+  // Refetch cuando cambian los filtros o ordenamiento
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      fetchUsers(1); // Volver a la primera página cuando cambian filtros
+    }, 300); // Debounce de 300ms para el search
+
+    return () => clearTimeout(timeoutId);
+  }, [searchTerm, filterRole, sortBy, sortOrder]);
+
+  // Manejadores de paginación
+  const handlePageChange = (newPage: number) => {
+    fetchUsers(newPage, pagination.itemsPerPage);
+  };
+
+  const handleItemsPerPageChange = (newLimit: number) => {
+    fetchUsers(1, newLimit); // Volver a la primera página cuando cambia el límite
+  };
+
+  // Filter users (ya no se usa client-side, pero mantenemos para stats)
+  // const totalUsers = users;
 
   // Handle save user
   const handleSaveUser = async (userData: Partial<User>) => {
@@ -305,14 +400,8 @@ export default function UsersPage() {
       });
 
       if (response.ok) {
-        const result = await response.json();
-        const savedUser = result.data || result; // Manejar ambos formatos de respuesta
-        
-        if (editingUser) {
-          setUsers(prev => prev.map(u => u.id === editingUser.id ? savedUser : u));
-        } else {
-          setUsers(prev => [...prev, savedUser]);
-        }
+        // Refrescar la lista de usuarios manteniendo la página actual
+        await fetchUsers(pagination.currentPage, pagination.itemsPerPage);
         
         setIsModalOpen(false);
         setEditingUser(null);
@@ -333,13 +422,100 @@ export default function UsersPage() {
     try {
       const response = await fetch(`/api/users/${userId}`, { method: 'DELETE' });
       if (response.ok) {
-        setUsers(prev => prev.filter(u => u.id !== userId));
+        // Refrescar la lista manteniendo la página actual si es posible
+        let targetPage = pagination.currentPage;
+        
+        // Si esta es la última página y solo tiene 1 elemento, ir a la página anterior
+        if (users.length === 1 && pagination.currentPage > 1) {
+          targetPage = pagination.currentPage - 1;
+        }
+        
+        await fetchUsers(targetPage, pagination.itemsPerPage);
       } else {
-        alert('Error al eliminar usuario');
+        const error = await response.json();
+        alert(`Error al eliminar usuario: ${error.error}`);
       }
     } catch (error) {
       console.error('Error deleting user:', error);
       alert('Error al eliminar usuario');
+    }
+  };
+
+  // Función para exportar usuarios a Excel
+  const handleExportUsers = async (includeSubjects = false) => {
+    try {
+      setIsExporting(true);
+      
+      const params = new URLSearchParams();
+      if (includeSubjects) {
+        params.append('includeSubjects', 'true');
+      }
+      
+      const response = await fetch(`/api/users/export?${params.toString()}`);
+      
+      if (!response.ok) {
+        throw new Error('Error al exportar usuarios');
+      }
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `usuarios_${includeSubjects ? 'con_materias_' : ''}${new Date().toISOString().split('T')[0]}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+      
+    } catch (error) {
+      console.error('Error exporting users:', error);
+      alert('Error al exportar usuarios');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  // Función para importar usuarios desde CSV
+  const handleImportUsers = async () => {
+    if (!importFile) {
+      alert('Por favor selecciona un archivo CSV');
+      return;
+    }
+    
+    try {
+      setIsImporting(true);
+      setImportResults(null);
+      
+      const formData = new FormData();
+      formData.append('file', importFile);
+      
+      const response = await fetch('/api/users/import', {
+        method: 'POST',
+        body: formData
+      });
+      
+      const result = await response.json();
+      
+      if (response.ok) {
+        setImportResults(result);
+        setImportFile(null);
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
+        
+        // Refrescar la lista de usuarios
+        await fetchUsers(1, pagination.itemsPerPage);
+        
+        alert(`Importación completada. ${result.data.created} usuarios creados, ${result.data.updated} actualizados, ${result.data.errors} errores.`);
+      } else {
+        throw new Error(result.error || 'Error al importar usuarios');
+      }
+      
+    } catch (error) {
+      console.error('Error importing users:', error);
+      alert('Error al importar usuarios');
+    } finally {
+      setIsImporting(false);
     }
   };
 
@@ -366,6 +542,151 @@ export default function UsersPage() {
   }
 
   return (
+    <>
+      {/* Modal de resultados de importación */}
+      {importResults && (
+        <div 
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: '1rem'
+          }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setImportResults(null);
+          }}
+        >
+          <div 
+            style={{
+              backgroundColor: 'white',
+              borderRadius: '0.75rem',
+              padding: '1.5rem',
+              width: '100%',
+              maxWidth: '32rem',
+              maxHeight: '80vh',
+              overflow: 'auto',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+              <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#1f2937' }}>
+                Resultados de Importación
+              </h2>
+              <button 
+                onClick={() => setImportResults(null)}
+                style={{
+                  padding: '0.5rem',
+                  backgroundColor: '#f3f4f6',
+                  border: 'none',
+                  borderRadius: '0.5rem',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
+                <FiX size={20} />
+              </button>
+            </div>
+
+            <div style={{ marginBottom: '1rem' }}>
+              <div style={{ 
+                display: 'grid', 
+                gridTemplateColumns: 'repeat(3, 1fr)', 
+                gap: '1rem', 
+                marginBottom: '1rem' 
+              }}>
+                <div style={{ 
+                  background: '#ecfdf5', 
+                  borderRadius: '0.5rem', 
+                  padding: '1rem', 
+                  textAlign: 'center',
+                  border: '1px solid #10b981'
+                }}>
+                  <div style={{ color: '#10b981', fontWeight: 'bold', fontSize: '1.5rem' }}>
+                    {importResults.data.created}
+                  </div>
+                  <div style={{ color: '#6b7280', fontSize: '0.875rem' }}>Creados</div>
+                </div>
+                
+                <div style={{ 
+                  background: '#fef3c7', 
+                  borderRadius: '0.5rem', 
+                  padding: '1rem', 
+                  textAlign: 'center',
+                  border: '1px solid #f59e0b'
+                }}>
+                  <div style={{ color: '#f59e0b', fontWeight: 'bold', fontSize: '1.5rem' }}>
+                    {importResults.data.updated}
+                  </div>
+                  <div style={{ color: '#6b7280', fontSize: '0.875rem' }}>Actualizados</div>
+                </div>
+                
+                <div style={{ 
+                  background: '#fef2f2', 
+                  borderRadius: '0.5rem', 
+                  padding: '1rem', 
+                  textAlign: 'center',
+                  border: '1px solid #ef4444'
+                }}>
+                  <div style={{ color: '#ef4444', fontWeight: 'bold', fontSize: '1.5rem' }}>
+                    {importResults.data.errors}
+                  </div>
+                  <div style={{ color: '#6b7280', fontSize: '0.875rem' }}>Errores</div>
+                </div>
+              </div>
+
+              {importResults.data.errorDetails && importResults.data.errorDetails.length > 0 && (
+                <div style={{ marginTop: '1rem' }}>
+                  <h3 style={{ fontSize: '1rem', fontWeight: 'bold', color: '#1f2937', marginBottom: '0.5rem' }}>
+                    Detalles de errores:
+                  </h3>
+                  <div style={{ 
+                    maxHeight: '12rem', 
+                    overflow: 'auto', 
+                    background: '#f9fafb', 
+                    borderRadius: '0.5rem', 
+                    padding: '0.75rem',
+                    border: '1px solid #e5e7eb'
+                  }}>
+                    {importResults.data.errorDetails.map((error: any, index: number) => (
+                      <div key={index} style={{ marginBottom: '0.5rem', fontSize: '0.875rem' }}>
+                        <span style={{ fontWeight: '500', color: '#ef4444' }}>Fila {error.row}:</span>
+                        <span style={{ color: '#6b7280', marginLeft: '0.5rem' }}>{error.error}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => setImportResults(null)}
+                style={{
+                  padding: '0.5rem 1rem',
+                  background: 'linear-gradient(to right, #f59e0b, #881337)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '0.5rem',
+                  cursor: 'pointer',
+                  fontWeight: '500'
+                }}
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     <div style={{ background: 'linear-gradient(135deg, #fef3c7, #ffffff, #fdf2f8)', minHeight: '100vh', padding: '2rem' }}>
       <div style={{ maxWidth: '80rem', margin: '0 auto' }}>
         {/* Header */}
@@ -379,6 +700,68 @@ export default function UsersPage() {
             </span>
           </h1>
           <p style={{ color: '#6b7280' }}>Administra profesores, estudiantes y administradores del campus</p>
+        </div>
+
+        {/* Quick Stats */}
+        <div style={{ 
+          display: 'grid', 
+          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
+          gap: '1rem', 
+          marginBottom: '1.5rem' 
+        }}>
+          <div style={{ 
+            background: 'rgba(255, 255, 255, 0.8)', 
+            borderRadius: '0.75rem', 
+            padding: '1rem', 
+            boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+            border: '1px solid #f59e0b'
+          }}>
+            <div style={{ color: '#f59e0b', fontWeight: 'bold', fontSize: '1.5rem' }}>
+              {users.filter(u => u.role === 'admin').length}
+            </div>
+            <div style={{ color: '#6b7280', fontSize: '0.875rem' }}>Administradores</div>
+          </div>
+          
+          <div style={{ 
+            background: 'rgba(255, 255, 255, 0.8)', 
+            borderRadius: '0.75rem', 
+            padding: '1rem', 
+            boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+            border: '1px solid #881337'
+          }}>
+            <div style={{ color: '#881337', fontWeight: 'bold', fontSize: '1.5rem' }}>
+              {users.filter(u => u.role === 'teacher').length}
+            </div>
+            <div style={{ color: '#6b7280', fontSize: '0.875rem' }}>Profesores</div>
+          </div>
+          
+          <div style={{ 
+            background: 'rgba(255, 255, 255, 0.8)', 
+            borderRadius: '0.75rem', 
+            padding: '1rem', 
+            boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+            border: '1px solid #10b981'
+          }}>
+            <div style={{ color: '#10b981', fontWeight: 'bold', fontSize: '1.5rem' }}>
+              {users.filter(u => u.role === 'student').length}
+            </div>
+            <div style={{ color: '#6b7280', fontSize: '0.875rem' }}>Estudiantes</div>
+          </div>
+          
+          <div style={{ 
+            background: 'rgba(255, 255, 255, 0.8)', 
+            borderRadius: '0.75rem', 
+            padding: '1rem', 
+            boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+            border: '1px solid #6b7280'
+          }}>
+            <div style={{ color: '#1f2937', fontWeight: 'bold', fontSize: '1.5rem' }}>
+              {users.length}
+            </div>
+            <div style={{ color: '#6b7280', fontSize: '0.875rem' }}>
+              {searchTerm || filterRole !== 'all' ? 'En esta página' : 'Total en página'}
+            </div>
+          </div>
         </div>
 
         {/* Controls */}
@@ -425,27 +808,124 @@ export default function UsersPage() {
               </select>
             </div>
 
-            <button
-              onClick={() => {
-                setEditingUser(null);
-                setIsModalOpen(true);
-              }}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                padding: '0.5rem 1rem',
-                background: 'linear-gradient(to right, #f59e0b, #881337)',
-                color: 'white',
-                border: 'none',
-                borderRadius: '0.5rem',
-                cursor: 'pointer',
-                fontWeight: '500'
-              }}
-            >
-              <FiPlus size={16} />
-              Agregar Usuario
-            </button>
+            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+              {/* Botones de Exportación */}
+              <button
+                onClick={() => handleExportUsers(false)}
+                disabled={isExporting}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  padding: '0.5rem 1rem',
+                  background: 'linear-gradient(to right, #10b981, #059669)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '0.5rem',
+                  cursor: isExporting ? 'not-allowed' : 'pointer',
+                  fontWeight: '500',
+                  opacity: isExporting ? 0.6 : 1
+                }}
+              >
+                <FiDownload size={16} />
+                {isExporting ? 'Exportando...' : 'Exportar Excel'}
+              </button>
+
+              <button
+                onClick={() => handleExportUsers(true)}
+                disabled={isExporting}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  padding: '0.5rem 1rem',
+                  background: 'linear-gradient(to right, #3b82f6, #1d4ed8)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '0.5rem',
+                  cursor: isExporting ? 'not-allowed' : 'pointer',
+                  fontWeight: '500',
+                  opacity: isExporting ? 0.6 : 1
+                }}
+              >
+                <FiFileText size={16} />
+                {isExporting ? 'Exportando...' : 'Excel + Materias'}
+              </button>
+
+              {/* Botón de Importación */}
+              <div style={{ position: 'relative' }}>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".csv"
+                  onChange={(e) => setImportFile(e.target.files?.[0] || null)}
+                  style={{ display: 'none' }}
+                />
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    padding: '0.5rem 1rem',
+                    background: 'linear-gradient(to right, #f59e0b, #d97706)',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '0.5rem',
+                    cursor: 'pointer',
+                    fontWeight: '500'
+                  }}
+                >
+                  <FiUpload size={16} />
+                  {importFile ? importFile.name.substring(0, 15) + '...' : 'Seleccionar CSV'}
+                </button>
+              </div>
+
+              {importFile && (
+                <button
+                  onClick={handleImportUsers}
+                  disabled={isImporting}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    padding: '0.5rem 1rem',
+                    background: 'linear-gradient(to right, #8b5cf6, #7c3aed)',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '0.5rem',
+                    cursor: isImporting ? 'not-allowed' : 'pointer',
+                    fontWeight: '500',
+                    opacity: isImporting ? 0.6 : 1
+                  }}
+                >
+                  <FiUpload size={16} />
+                  {isImporting ? 'Importando...' : 'Importar CSV'}
+                </button>
+              )}
+
+              <button
+                onClick={() => {
+                  setEditingUser(null);
+                  setIsModalOpen(true);
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  padding: '0.5rem 1rem',
+                  background: 'linear-gradient(to right, #f59e0b, #881337)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '0.5rem',
+                  cursor: 'pointer',
+                  fontWeight: '500'
+                }}
+              >
+                <FiPlus size={16} />
+                Agregar Usuario
+              </button>
+            </div>
           </div>
         </div>
 
@@ -468,7 +948,7 @@ export default function UsersPage() {
                 </tr>
               </thead>
               <tbody>
-                {filteredUsers.map((user) => {
+                {users.map((user) => {
                   const roleBadge = getRoleBadge(user.role);
                   return (
                     <tr key={user.id} style={{ borderTop: '1px solid #e5e7eb' }}>
@@ -545,7 +1025,7 @@ export default function UsersPage() {
             </table>
           </div>
 
-          {filteredUsers.length === 0 && (
+          {users.length === 0 && !loading && (
             <div style={{ padding: '3rem', textAlign: 'center', color: '#6b7280' }}>
               <FiUsers size={48} style={{ margin: '0 auto 1rem', opacity: 0.5 }} />
               <h3 style={{ fontSize: '1.125rem', fontWeight: '500', marginBottom: '0.5rem' }}>
@@ -554,7 +1034,31 @@ export default function UsersPage() {
               <p>Intenta ajustar los filtros de búsqueda o agrega un nuevo usuario.</p>
             </div>
           )}
+
+          {loading && (
+            <div style={{ padding: '3rem', textAlign: 'center', color: '#6b7280' }}>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500 mx-auto mb-4"></div>
+              <p>Cargando usuarios...</p>
+            </div>
+          )}
         </div>
+
+        {/* Paginación */}
+        {!loading && pagination.totalItems > 0 && (
+          <Pagination
+            currentPage={pagination.currentPage}
+            totalPages={pagination.totalPages}
+            totalItems={pagination.totalItems}
+            itemsPerPage={pagination.itemsPerPage}
+            hasNextPage={pagination.hasNextPage}
+            hasPrevPage={pagination.hasPrevPage}
+            startItem={pagination.startItem}
+            endItem={pagination.endItem}
+            onPageChange={handlePageChange}
+            onItemsPerPageChange={handleItemsPerPageChange}
+            isLoading={loading}
+          />
+        )}
 
         {/* Modal */}
         <EditUserModal
@@ -568,5 +1072,15 @@ export default function UsersPage() {
         />
       </div>
     </div>
+    </>
+  );
+}
+
+// Componente principal con protección de admin
+export default function UsersPage() {
+  return (
+    <AdminProtected>
+      <UsersPageContent />
+    </AdminProtected>
   );
 }

@@ -81,12 +81,12 @@ export async function POST(request: Request) {
       code,
       description,
       year,
-      semester,
+      division,
       teacher_id,
       image_url
     } = await request.json();
 
-    console.log('📝 Datos recibidos:', { name, code, description, year, semester });
+    console.log('📝 Datos recibidos:', { name, code, description, year, division });
 
     // Validaciones básicas
     if (!name || !code || !year) {
@@ -125,7 +125,7 @@ export async function POST(request: Request) {
         code,
         description,
         year,
-        semester: semester || 1,
+        division: division || null,
         teacher_id: teacher_id || null,
         image_url: image_url || null,
         is_active: true,

@@ -1,8 +1,9 @@
-// 👥 API para actualizar/eliminar usuarios individuales (temporal sin autenticación para testing)
+// 👥 API para actualizar/eliminar usuarios individuales (protegida - solo admins)
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/app/lib/supabaseClient';
+import { checkAdminAccess } from '@/app/lib/auth/adminCheck';
 
-// PUT - Actualizar usuario (temporal sin restricciones para testing)
+// PUT - Actualizar usuario (protegido - solo admins)
 export async function PUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -10,6 +11,14 @@ export async function PUT(
   try {
     const { id } = await params;
     console.log(`🔄 PUT: Actualizando usuario con ID: ${id}`);
+    
+    // Verificar permisos de admin
+    const adminCheck = await checkAdminAccess();
+    if (!adminCheck.hasAccess) {
+      return adminCheck.response;
+    }
+
+    console.log('✅ Admin access verified for updating user by:', adminCheck.user?.email);
     
     const {
       name,
@@ -89,7 +98,7 @@ export async function PUT(
   }
 }
 
-// DELETE - Eliminar usuario (temporal sin restricciones para testing)
+// DELETE - Eliminar usuario (protegido - solo admins)
 export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -97,6 +106,14 @@ export async function DELETE(
   try {
     const { id } = await params;
     console.log(`🗑️ DELETE: Eliminando usuario con ID: ${id}`);
+    
+    // Verificar permisos de admin
+    const adminCheck = await checkAdminAccess();
+    if (!adminCheck.hasAccess) {
+      return adminCheck.response;
+    }
+
+    console.log('✅ Admin access verified for deleting user by:', adminCheck.user?.email);
     
     // Marcar como inactivo en lugar de eliminar
     const { data, error } = await supabaseAdmin

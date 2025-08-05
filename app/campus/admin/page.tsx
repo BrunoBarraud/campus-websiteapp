@@ -4,11 +4,16 @@
 export const dynamic = 'force-dynamic';
 
 import React, { useState, useEffect } from 'react';
-import { User, Subject, UserRole, CreateUserForm, CreateSubjectForm } from '@/app/lib/types';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
+import { User, Subject, UserRole, CreateUserForm, CreateSubjectForm } from '@/app/lib/types/index';
 
 interface AdminDashboardProps {}
 
 const AdminDashboard: React.FC<AdminDashboardProps> = () => {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+  
   const [activeTab, setActiveTab] = useState<'users' | 'subjects' | 'stats'>('users');
   const [users, setUsers] = useState<User[]>([]);
   const [subjects, setSubjects] = useState<Subject[]>([]);
@@ -18,6 +23,24 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
   const [showSubjectModal, setShowSubjectModal] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [editingSubject, setEditingSubject] = useState<Subject | null>(null);
+
+  // Verificar autenticación y permisos
+  useEffect(() => {
+    if (status === 'loading') return;
+    
+    if (!session || session.user?.role !== 'admin') {
+      router.push('/campus/login');
+      return;
+    }
+  }, [session, status, router]);
+
+  // Manejar navegación por hash (ej: #users, #subjects)
+  useEffect(() => {
+    const hash = window.location.hash.slice(1); // Quitar el #
+    if (hash && ['users', 'subjects', 'stats'].includes(hash)) {
+      setActiveTab(hash as 'users' | 'subjects' | 'stats');
+    }
+  }, []);
 
   // Formularios
   const [userForm, setUserForm] = useState<CreateUserForm>({
@@ -35,8 +58,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
     code: '',
     description: '',
     year: 1,
-    semester: 1,
-    credits: 0,
+    division: 'A',
     teacher_id: ''
   });
 
@@ -191,8 +213,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
       code: subject.code,
       description: subject.description || '',
       year: subject.year,
-      semester: subject.semester,
-      credits: subject.credits,
+      division: subject.division || '',
       teacher_id: subject.teacher_id || ''
     });
     setShowSubjectModal(true);
@@ -239,8 +260,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
       code: '',
       description: '',
       year: 1,
-      semester: 1,
-      credits: 0,
+      division: 'A',
       teacher_id: ''
     });
     setEditingSubject(null);
@@ -263,6 +283,23 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
       default: return role;
     }
   };
+
+  // Mostrar spinner durante verificación de autenticación
+  if (status === 'loading') {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Verificando autenticación...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // No mostrar nada si no está autenticado (ya se redirigió)
+  if (!session || session.user?.role !== 'admin') {
+    return null;
+  }
 
   if (loading) {
     return (
@@ -471,10 +508,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
                         <div>
                           <h3 className="text-lg font-semibold text-gray-900">{subject.name}</h3>
                           <p className="text-sm text-gray-500">Código: {subject.code}</p>
-                          <p className="text-sm text-gray-500">{subject.year}° año • {subject.credits} créditos</p>
+                          <p className="text-sm text-gray-500">{subject.year}° año{subject.division ? ` • División ${subject.division}` : ''}</p>
                         </div>
                         <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                          {subject.semester}° sem
+                          Activa
                         </span>
                       </div>
 
@@ -815,31 +852,18 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Semestre
+                      División
                     </label>
                     <select
-                      value={subjectForm.semester}
-                      onChange={(e) => setSubjectForm({...subjectForm, semester: parseInt(e.target.value)})}
+                      value={subjectForm.division || ''}
+                      onChange={(e) => setSubjectForm({...subjectForm, division: e.target.value || undefined})}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                     >
-                      <option value={1}>1° semestre</option>
-                      <option value={2}>2° semestre</option>
+                      <option value="">Sin división (5° y 6° año)</option>
+                      <option value="A">División A</option>
+                      <option value="B">División B</option>
                     </select>
                   </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Créditos
-                  </label>
-                  <input
-                    type="number"
-                    min="0"
-                    max="10"
-                    value={subjectForm.credits}
-                    onChange={(e) => setSubjectForm({...subjectForm, credits: parseInt(e.target.value)})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  />
                 </div>
 
                 <div>

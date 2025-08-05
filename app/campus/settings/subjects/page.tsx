@@ -1,12 +1,20 @@
-'use client';
+"use client";
 
 // Forzar rendering dinámico para evitar errores de SSR
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
-import React, { useState, useEffect } from 'react';
-import { FiPlus, FiEdit, FiTrash2, FiBook, FiUser, FiCalendar } from 'react-icons/fi';
-import { User, Subject } from '@/app/lib/types';
-import SimpleModal from '@/components/common/SimpleModal';
+import React, { useState, useEffect } from "react";
+import {
+  FiPlus,
+  FiEdit,
+  FiTrash2,
+  FiBook,
+  FiUser,
+  FiCalendar,
+} from "react-icons/fi";
+import { User, Subject } from "@/app/lib/types";
+import SimpleModal from "@/components/common/SimpleModal";
+import { yearHasDivisions } from "@/app/lib/utils/divisions";
 
 interface EditSubjectModalProps {
   isOpen: boolean;
@@ -16,41 +24,56 @@ interface EditSubjectModalProps {
   teachers: User[];
 }
 
-function EditSubjectModal({ isOpen, onClose, onSave, subject, teachers }: EditSubjectModalProps) {
+function EditSubjectModal({
+  isOpen,
+  onClose,
+  onSave,
+  subject,
+  teachers,
+}: EditSubjectModalProps) {
   const [formData, setFormData] = useState({
-    name: '',
-    code: '',
-    description: '',
+    name: "",
+    code: "",
+    description: "",
     year: 1,
-    semester: 1,
-    division: 'A',
-    teacher_id: '',
-    image_url: ''
+    division: "A",
+    teacher_id: "",
+    image_url: "",
   });
+
+  // Función para manejar cambio de año y limpiar división si es necesario
+  const handleYearChange = (year: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      year,
+      // Si es 5° o 6° año, limpiar la división
+      division: yearHasDivisions(year) ? prev.division : "",
+    }));
+  };
 
   // Actualizar los datos cuando cambie el subject
   useEffect(() => {
     if (subject) {
       setFormData({
-        name: subject.name || '',
-        code: subject.code || '',
-        description: subject.description || '',
+        name: subject.name || "",
+        code: subject.code || "",
+        description: subject.description || "",
         year: subject.year || 1,
-        semester: subject.semester || 1,
-        division: subject.division || 'A',
-        teacher_id: subject.teacher_id || '',
-        image_url: subject.image_url || ''
+        division: yearHasDivisions(subject.year || 1)
+          ? subject.division || "A"
+          : "",
+        teacher_id: subject.teacher_id || "",
+        image_url: subject.image_url || "",
       });
     } else {
       setFormData({
-        name: '',
-        code: '',
-        description: '',
+        name: "",
+        code: "",
+        description: "",
         year: 1,
-        semester: 1,
-        division: 'A',
-        teacher_id: '',
-        image_url: ''
+        division: "A", // Por defecto A para años 1-4
+        teacher_id: "",
+        image_url: "",
       });
     }
   }, [subject]);
@@ -61,194 +84,239 @@ function EditSubjectModal({ isOpen, onClose, onSave, subject, teachers }: EditSu
         id: subject?.id,
         ...formData,
         name: formData.name.trim(),
-        code: formData.code.trim()
+        code: formData.code.trim(),
+        // Solo enviar division si el año requiere división
+        division: yearHasDivisions(formData.year) ? formData.division : null,
       });
       onClose();
     }
   };
 
   return (
-    <SimpleModal 
-      isOpen={isOpen} 
+    <SimpleModal
+      isOpen={isOpen}
       onClose={onClose}
-      title={subject ? `Editar: ${subject.name}` : 'Nueva Materia'}
+      title={subject ? `Editar: ${subject.name}` : "Nueva Materia"}
     >
-      <div style={{
-        backgroundColor: '#d1fae5',
-        padding: '16px',
-        borderRadius: '8px',
-        marginBottom: '24px',
-        border: '2px solid #10b981'
-      }}>
-        <p style={{ color: '#047857', fontWeight: 'bold', textAlign: 'center' }}>
+      <div
+        style={{
+          backgroundColor: "#d1fae5",
+          padding: "16px",
+          borderRadius: "8px",
+          marginBottom: "24px",
+          border: "2px solid #10b981",
+        }}
+      >
+        <p
+          style={{ color: "#047857", fontWeight: "bold", textAlign: "center" }}
+        >
           ✅ Modal Actualizado - Con Selector de Profesor
         </p>
-        <p style={{ color: '#6b7280', textAlign: 'center', marginTop: '8px' }}>
+        <p style={{ color: "#6b7280", textAlign: "center", marginTop: "8px" }}>
           Ahora puedes asignar profesor y se removieron los créditos
         </p>
       </div>
 
       {/* Nombre */}
-      <div style={{ marginBottom: '16px' }}>
-        <label style={{ 
-          display: 'block', 
-          fontWeight: 'bold', 
-          marginBottom: '8px',
-          color: '#374151'
-        }}>
+      <div style={{ marginBottom: "16px" }}>
+        <label
+          style={{
+            display: "block",
+            fontWeight: "bold",
+            marginBottom: "8px",
+            color: "#374151",
+          }}
+        >
           Nombre de la Materia: *
         </label>
-        <input 
+        <input
           type="text"
           value={formData.name}
           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
           style={{
-            width: '100%',
-            padding: '12px',
-            border: '2px solid #d1d5db',
-            borderRadius: '4px',
-            fontSize: '16px',
-            backgroundColor: 'white'
+            width: "100%",
+            padding: "12px",
+            border: "2px solid #d1d5db",
+            borderRadius: "4px",
+            fontSize: "16px",
+            backgroundColor: "white",
           }}
           placeholder="Ej: Matemática"
         />
       </div>
 
       {/* Código */}
-      <div style={{ marginBottom: '16px' }}>
-        <label style={{ 
-          display: 'block', 
-          fontWeight: 'bold', 
-          marginBottom: '8px',
-          color: '#374151'
-        }}>
+      <div style={{ marginBottom: "16px" }}>
+        <label
+          style={{
+            display: "block",
+            fontWeight: "bold",
+            marginBottom: "8px",
+            color: "#374151",
+          }}
+        >
           Código: *
         </label>
-        <input 
+        <input
           type="text"
           value={formData.code}
           onChange={(e) => setFormData({ ...formData, code: e.target.value })}
           style={{
-            width: '100%',
-            padding: '12px',
-            border: '2px solid #d1d5db',
-            borderRadius: '4px',
-            fontSize: '16px',
-            backgroundColor: 'white'
+            width: "100%",
+            padding: "12px",
+            border: "2px solid #d1d5db",
+            borderRadius: "4px",
+            fontSize: "16px",
+            backgroundColor: "white",
           }}
           placeholder="Ej: MAT101"
         />
       </div>
 
       {/* Descripción */}
-      <div style={{ marginBottom: '16px' }}>
-        <label style={{ 
-          display: 'block', 
-          fontWeight: 'bold', 
-          marginBottom: '8px',
-          color: '#374151'
-        }}>
+      <div style={{ marginBottom: "16px" }}>
+        <label
+          style={{
+            display: "block",
+            fontWeight: "bold",
+            marginBottom: "8px",
+            color: "#374151",
+          }}
+        >
           Descripción:
         </label>
-        <textarea 
+        <textarea
           value={formData.description}
-          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+          onChange={(e) =>
+            setFormData({ ...formData, description: e.target.value })
+          }
           rows={3}
           style={{
-            width: '100%',
-            padding: '12px',
-            border: '2px solid #d1d5db',
-            borderRadius: '4px',
-            fontSize: '16px',
-            backgroundColor: 'white',
-            resize: 'vertical'
+            width: "100%",
+            padding: "12px",
+            border: "2px solid #d1d5db",
+            borderRadius: "4px",
+            fontSize: "16px",
+            backgroundColor: "white",
+            resize: "vertical",
           }}
           placeholder="Descripción de la materia..."
         />
       </div>
 
       {/* Año y División */}
-      <div style={{ display: 'flex', gap: '16px', marginBottom: '16px' }}>
+      <div style={{ display: "flex", gap: "16px", marginBottom: "16px" }}>
         <div style={{ flex: 1 }}>
-          <label style={{ 
-            display: 'block', 
-            fontWeight: 'bold', 
-            marginBottom: '8px',
-            color: '#374151'
-          }}>
-            Año:
-          </label>
-          <select 
-            value={formData.year}
-            onChange={(e) => setFormData({ ...formData, year: parseInt(e.target.value) })}
+          <label
             style={{
-              width: '100%',
-              padding: '12px',
-              border: '2px solid #d1d5db',
-              borderRadius: '4px',
-              fontSize: '16px',
-              backgroundColor: 'white'
+              display: "block",
+              fontWeight: "bold",
+              marginBottom: "8px",
+              color: "#374151",
             }}
           >
-            {[1, 2, 3, 4, 5].map(year => (
-              <option key={year} value={year}>{year}°</option>
+            Año:
+          </label>
+          <select
+            value={formData.year}
+            onChange={(e) => handleYearChange(parseInt(e.target.value))}
+            style={{
+              width: "100%",
+              padding: "12px",
+              border: "2px solid #d1d5db",
+              borderRadius: "4px",
+              fontSize: "16px",
+              backgroundColor: "white",
+            }}
+          >
+            {[1, 2, 3, 4, 5, 6].map((year) => (
+              <option key={year} value={year}>
+                {year}°
+              </option>
             ))}
           </select>
         </div>
 
         <div style={{ flex: 1 }}>
-          <label style={{ 
-            display: 'block', 
-            fontWeight: 'bold', 
-            marginBottom: '8px',
-            color: '#374151'
-          }}>
-            División:
-          </label>
-          <select 
-            value={formData.division}
-            onChange={(e) => setFormData({ ...formData, division: e.target.value })}
+          <label
             style={{
-              width: '100%',
-              padding: '12px',
-              border: '2px solid #d1d5db',
-              borderRadius: '4px',
-              fontSize: '16px',
-              backgroundColor: 'white'
+              display: "block",
+              fontWeight: "bold",
+              marginBottom: "8px",
+              color: "#374151",
             }}
           >
-            {['A', 'B'].map(division => (
-              <option key={division} value={division}>{division}</option>
-            ))}
-          </select>
+            División:
+          </label>
+          {yearHasDivisions(formData.year) ? (
+            <select
+              value={formData.division}
+              onChange={(e) =>
+                setFormData({ ...formData, division: e.target.value })
+              }
+              style={{
+                width: "100%",
+                padding: "12px",
+                border: "2px solid #d1d5db",
+                borderRadius: "4px",
+                fontSize: "16px",
+                backgroundColor: "white",
+              }}
+            >
+              {["A", "B"].map((division) => (
+                <option key={division} value={division}>
+                  {division}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <div
+              style={{
+                width: "100%",
+                padding: "12px",
+                border: "2px solid #e5e7eb",
+                borderRadius: "4px",
+                fontSize: "16px",
+                backgroundColor: "#f9fafb",
+                color: "#6b7280",
+                fontStyle: "italic",
+              }}
+            >
+              Sin división (5° y 6° año)
+            </div>
+          )}
         </div>
       </div>
 
       {/* Profesor */}
-      <div style={{ marginBottom: '24px' }}>
+      <div style={{ marginBottom: "24px" }}>
         <div>
-          <label style={{ 
-            display: 'block', 
-            fontWeight: 'bold', 
-            marginBottom: '8px',
-            color: '#374151'
-          }}>
+          <label
+            style={{
+              display: "block",
+              fontWeight: "bold",
+              marginBottom: "8px",
+              color: "#374151",
+            }}
+          >
             Profesor:
           </label>
-          <select 
+          <select
             value={formData.teacher_id}
-            onChange={(e) => setFormData({ ...formData, teacher_id: e.target.value })}
+            onChange={(e) =>
+              setFormData({ ...formData, teacher_id: e.target.value })
+            }
             style={{
-              width: '100%',
-              padding: '12px',
-              border: '2px solid #d1d5db',
-              borderRadius: '4px',
-              fontSize: '16px',
-              backgroundColor: 'white'
+              width: "100%",
+              padding: "12px",
+              border: "2px solid #d1d5db",
+              borderRadius: "4px",
+              fontSize: "16px",
+              backgroundColor: "white",
             }}
           >
             <option value="">Sin asignar</option>
-            {teachers.map(teacher => (
+            {teachers.map((teacher) => (
               <option key={teacher.id} value={teacher.id}>
                 {teacher.name} ({teacher.email})
               </option>
@@ -257,39 +325,47 @@ function EditSubjectModal({ isOpen, onClose, onSave, subject, teachers }: EditSu
         </div>
       </div>
 
-      <div style={{ 
-        display: 'flex', 
-        gap: '12px', 
-        justifyContent: 'flex-end'
-      }}>
-        <button 
+      <div
+        style={{
+          display: "flex",
+          gap: "12px",
+          justifyContent: "flex-end",
+        }}
+      >
+        <button
           onClick={onClose}
           style={{
-            padding: '12px 24px',
-            backgroundColor: '#6b7280',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            fontSize: '16px',
-            cursor: 'pointer'
+            padding: "12px 24px",
+            backgroundColor: "#6b7280",
+            color: "white",
+            border: "none",
+            borderRadius: "4px",
+            fontSize: "16px",
+            cursor: "pointer",
           }}
         >
           Cancelar
         </button>
-        <button 
+        <button
           onClick={handleSave}
           disabled={!formData.name.trim() || !formData.code.trim()}
           style={{
-            padding: '12px 24px',
-            backgroundColor: formData.name.trim() && formData.code.trim() ? '#10b981' : '#9ca3af',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            fontSize: '16px',
-            cursor: formData.name.trim() && formData.code.trim() ? 'pointer' : 'not-allowed'
+            padding: "12px 24px",
+            backgroundColor:
+              formData.name.trim() && formData.code.trim()
+                ? "#10b981"
+                : "#9ca3af",
+            color: "white",
+            border: "none",
+            borderRadius: "4px",
+            fontSize: "16px",
+            cursor:
+              formData.name.trim() && formData.code.trim()
+                ? "pointer"
+                : "not-allowed",
           }}
         >
-          {subject ? 'Actualizar' : 'Crear'}
+          {subject ? "Actualizar" : "Crear"}
         </button>
       </div>
     </SimpleModal>
@@ -301,8 +377,11 @@ export default function SubjectsManagementPage() {
   const [filteredSubjects, setFilteredSubjects] = useState<Subject[]>([]);
   const [teachers, setTeachers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedYear, setSelectedYear] = useState<number | 'all'>('all');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedYear, setSelectedYear] = useState<number | "all">("all");
+  const [selectedDivision, setSelectedDivision] = useState<string | "all">(
+    "all"
+  );
   const [showModal, setShowModal] = useState(false);
   const [editingSubject, setEditingSubject] = useState<Subject | null>(null);
 
@@ -313,30 +392,33 @@ export default function SubjectsManagementPage() {
 
   useEffect(() => {
     filterSubjects();
-  }, [subjects, searchTerm, selectedYear]);
+  }, [subjects, searchTerm, selectedYear, selectedDivision]);
 
   const loadTeachers = async () => {
     try {
-      console.log('👨‍🏫 Cargando profesores...');
-      
+      console.log("👨‍🏫 Cargando profesores...");
+
       // Crear una API simple para obtener profesores
-      const response = await fetch('/api/users?role=teacher');
-      
+      const response = await fetch("/api/users?role=teacher");
+
       if (response.ok) {
         const result = await response.json();
         if (result.success && Array.isArray(result.data)) {
-          console.log('✅ Profesores cargados:', result.data.length);
+          console.log("✅ Profesores cargados:", result.data.length);
           setTeachers(result.data);
         } else {
-          console.warn('⚠️ No se pudieron cargar los profesores');
+          console.warn("⚠️ No se pudieron cargar los profesores");
           setTeachers([]);
         }
       } else {
-        console.error('❌ Error al cargar profesores - Status:', response.status);
+        console.error(
+          "❌ Error al cargar profesores - Status:",
+          response.status
+        );
         setTeachers([]);
       }
     } catch (error) {
-      console.error('💥 Error al cargar profesores:', error);
+      console.error("💥 Error al cargar profesores:", error);
       setTeachers([]);
     }
   };
@@ -344,42 +426,50 @@ export default function SubjectsManagementPage() {
   const loadSubjects = async () => {
     try {
       setLoading(true);
-      console.log('🔄 Cargando materias...');
-      
+      console.log("🔄 Cargando materias...");
+
       // Usar directamente la API pública que hemos simplificado
-      const response = await fetch('/api/subjects');
-      console.log('📡 Response status:', response.status);
-      
+      const response = await fetch("/api/subjects");
+      console.log("📡 Response status:", response.status);
+
       if (response.ok) {
         const result = await response.json();
-        console.log('📊 Response data:', result);
-        
+        console.log("📊 Response data:", result);
+
         if (result.success && Array.isArray(result.data)) {
-          console.log('✅ Materias cargadas:', result.data.length);
+          console.log("✅ Materias cargadas:", result.data.length);
           setSubjects(result.data);
         } else {
-          console.warn('⚠️ Respuesta inesperada de la API:', result);
+          console.warn("⚠️ Respuesta inesperada de la API:", result);
           setSubjects([]);
         }
       } else {
         const errorText = await response.text();
-        console.error('❌ Error al cargar materias - Status:', response.status, 'Response:', errorText);
-        
+        console.error(
+          "❌ Error al cargar materias - Status:",
+          response.status,
+          "Response:",
+          errorText
+        );
+
         // Si aún falla, intentar con la API de admin
-        console.log('🔄 Intentando con API de admin...');
-        const adminResponse = await fetch('/api/admin/subjects');
-        console.log('📡 Admin API Response status:', adminResponse.status);
-        
+        console.log("🔄 Intentando con API de admin...");
+        const adminResponse = await fetch("/api/admin/subjects");
+        console.log("📡 Admin API Response status:", adminResponse.status);
+
         if (adminResponse.ok) {
           const adminResult = await adminResponse.json();
           if (adminResult.success && Array.isArray(adminResult.data)) {
-            console.log('✅ Materias cargadas desde admin API:', adminResult.data.length);
+            console.log(
+              "✅ Materias cargadas desde admin API:",
+              adminResult.data.length
+            );
             setSubjects(adminResult.data);
           }
         }
       }
     } catch (error) {
-      console.error('💥 Error al cargar materias:', error);
+      console.error("💥 Error al cargar materias:", error);
     } finally {
       setLoading(false);
     }
@@ -389,14 +479,29 @@ export default function SubjectsManagementPage() {
     let filtered = subjects;
 
     if (searchTerm) {
-      filtered = filtered.filter(subject =>
-        subject.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        subject.code.toLowerCase().includes(searchTerm.toLowerCase())
+      filtered = filtered.filter(
+        (subject) =>
+          subject.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          subject.code.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
-    if (selectedYear !== 'all') {
-      filtered = filtered.filter(subject => subject.year === selectedYear);
+    if (selectedYear !== "all") {
+      filtered = filtered.filter((subject) => subject.year === selectedYear);
+    }
+
+    if (selectedDivision !== "all") {
+      if (selectedDivision === "sin-division") {
+        // Filtrar materias sin división (5° y 6° año)
+        filtered = filtered.filter(
+          (subject) => !subject.division || subject.division === ""
+        );
+      } else {
+        // Filtrar por división específica (A o B)
+        filtered = filtered.filter(
+          (subject) => subject.division === selectedDivision
+        );
+      }
     }
 
     setFilteredSubjects(filtered);
@@ -408,86 +513,93 @@ export default function SubjectsManagementPage() {
   };
 
   const handleEditSubject = (subject: Subject) => {
-    console.log('🔧 Editando materia:', subject.name);
+    console.log("🔧 Editando materia:", subject.name);
     setEditingSubject(subject);
     setShowModal(true);
   };
 
   const handleSaveSubject = async (subjectData: any) => {
     try {
-      console.log('💾 Guardando materia:', subjectData);
-      
+      console.log("💾 Guardando materia:", subjectData);
+
       if (editingSubject) {
         // Actualizar materia existente - usando API de admin
         console.log(`🔄 Actualizando materia con ID: ${editingSubject.id}`);
-        const response = await fetch(`/api/admin/subjects/${editingSubject.id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(subjectData)
-        });
+        const response = await fetch(
+          `/api/admin/subjects/${editingSubject.id}`,
+          {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(subjectData),
+          }
+        );
 
-        console.log('📡 Response status:', response.status);
-        
+        console.log("📡 Response status:", response.status);
+
         if (response.ok) {
           const result = await response.json();
-          console.log('✅ Materia actualizada exitosamente:', result);
-          alert('✅ Materia actualizada exitosamente');
+          console.log("✅ Materia actualizada exitosamente:", result);
+          alert("✅ Materia actualizada exitosamente");
           loadSubjects();
         } else {
           const errorData = await response.json();
-          console.error('❌ Error al actualizar materia:', errorData);
-          alert(`❌ Error al actualizar: ${errorData.error || 'Error desconocido'}`);
+          console.error("❌ Error al actualizar materia:", errorData);
+          alert(
+            `❌ Error al actualizar: ${errorData.error || "Error desconocido"}`
+          );
         }
       } else {
         // Crear nueva materia - usando API de admin
-        console.log('➕ Creando nueva materia');
-        const response = await fetch('/api/admin/subjects', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(subjectData)
+        console.log("➕ Creando nueva materia");
+        const response = await fetch("/api/admin/subjects", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(subjectData),
         });
 
-        console.log('📡 Response status:', response.status);
-        
+        console.log("📡 Response status:", response.status);
+
         if (response.ok) {
           const result = await response.json();
-          console.log('✅ Materia creada exitosamente:', result);
-          alert('✅ Materia creada exitosamente');
+          console.log("✅ Materia creada exitosamente:", result);
+          alert("✅ Materia creada exitosamente");
           loadSubjects();
         } else {
           const errorData = await response.json();
-          console.error('❌ Error al crear materia:', errorData);
-          alert(`❌ Error al crear: ${errorData.error || 'Error desconocido'}`);
+          console.error("❌ Error al crear materia:", errorData);
+          alert(`❌ Error al crear: ${errorData.error || "Error desconocido"}`);
         }
       }
     } catch (error) {
-      console.error('💥 Error inesperado al guardar materia:', error);
+      console.error("💥 Error inesperado al guardar materia:", error);
       alert(`💥 Error inesperado: ${error}`);
     }
   };
 
   const handleDeleteSubject = async (subjectId: string) => {
-    if (confirm('¿Estás seguro de que quieres eliminar esta materia?')) {
+    if (confirm("¿Estás seguro de que quieres eliminar esta materia?")) {
       try {
         console.log(`🗑️ Eliminando materia con ID: ${subjectId}`);
         const response = await fetch(`/api/subjects/${subjectId}`, {
-          method: 'DELETE'
+          method: "DELETE",
         });
 
-        console.log('📡 Delete response status:', response.status);
+        console.log("📡 Delete response status:", response.status);
 
         if (response.ok) {
           const result = await response.json();
-          console.log('✅ Materia eliminada exitosamente:', result);
-          alert('✅ Materia eliminada exitosamente');
+          console.log("✅ Materia eliminada exitosamente:", result);
+          alert("✅ Materia eliminada exitosamente");
           loadSubjects();
         } else {
           const errorData = await response.json();
-          console.error('❌ Error al eliminar materia:', errorData);
-          alert(`❌ Error al eliminar: ${errorData.error || 'Error desconocido'}`);
+          console.error("❌ Error al eliminar materia:", errorData);
+          alert(
+            `❌ Error al eliminar: ${errorData.error || "Error desconocido"}`
+          );
         }
       } catch (error) {
-        console.error('💥 Error inesperado al eliminar materia:', error);
+        console.error("💥 Error inesperado al eliminar materia:", error);
         alert(`💥 Error inesperado: ${error}`);
       }
     }
@@ -510,7 +622,8 @@ export default function SubjectsManagementPage() {
             Gestión de Materias
           </h1>
           <p className="text-gray-600 text-sm sm:text-base">
-            Administra las materias del campus, asigna profesores y configura años académicos
+            Administra las materias del campus, asigna profesores y configura
+            años académicos
           </p>
         </div>
 
@@ -522,8 +635,12 @@ export default function SubjectsManagementPage() {
                 <FiBook className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
               </div>
               <div className="ml-3 sm:ml-4">
-                <p className="text-xs sm:text-sm font-medium text-gray-500">Total Materias</p>
-                <p className="text-lg sm:text-2xl font-semibold text-gray-900">{subjects.length}</p>
+                <p className="text-xs sm:text-sm font-medium text-gray-500">
+                  Total Materias
+                </p>
+                <p className="text-lg sm:text-2xl font-semibold text-gray-900">
+                  {subjects.length}
+                </p>
               </div>
             </div>
           </div>
@@ -534,9 +651,11 @@ export default function SubjectsManagementPage() {
                 <FiUser className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" />
               </div>
               <div className="ml-3 sm:ml-4">
-                <p className="text-xs sm:text-sm font-medium text-gray-500">Con Profesor</p>
+                <p className="text-xs sm:text-sm font-medium text-gray-500">
+                  Con Profesor
+                </p>
                 <p className="text-lg sm:text-2xl font-semibold text-gray-900">
-                  {subjects.filter(s => s.teacher_id).length}
+                  {subjects.filter((s) => s.teacher_id).length}
                 </p>
               </div>
             </div>
@@ -548,9 +667,11 @@ export default function SubjectsManagementPage() {
                 <FiCalendar className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-600" />
               </div>
               <div className="ml-3 sm:ml-4">
-                <p className="text-xs sm:text-sm font-medium text-gray-500">Años Activos</p>
+                <p className="text-xs sm:text-sm font-medium text-gray-500">
+                  Años Activos
+                </p>
                 <p className="text-lg sm:text-2xl font-semibold text-gray-900">
-                  {new Set(subjects.map(s => s.year)).size}
+                  {new Set(subjects.map((s) => s.year)).size}
                 </p>
               </div>
             </div>
@@ -562,9 +683,11 @@ export default function SubjectsManagementPage() {
                 <FiBook className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600" />
               </div>
               <div className="ml-3 sm:ml-4">
-                <p className="text-xs sm:text-sm font-medium text-gray-500">Sin Asignar</p>
+                <p className="text-xs sm:text-sm font-medium text-gray-500">
+                  Sin Asignar
+                </p>
                 <p className="text-lg sm:text-2xl font-semibold text-gray-900">
-                  {subjects.filter(s => !s.teacher_id).length}
+                  {subjects.filter((s) => !s.teacher_id).length}
                 </p>
               </div>
             </div>
@@ -583,13 +706,29 @@ export default function SubjectsManagementPage() {
             />
             <select
               value={selectedYear}
-              onChange={(e) => setSelectedYear(e.target.value === 'all' ? 'all' : parseInt(e.target.value))}
+              onChange={(e) =>
+                setSelectedYear(
+                  e.target.value === "all" ? "all" : parseInt(e.target.value)
+                )
+              }
               className="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="all">Todos los años</option>
-              {[1, 2, 3, 4, 5].map(year => (
-                <option key={year} value={year}>{year}°</option>
+              {[1, 2, 3, 4, 5, 6].map((year) => (
+                <option key={year} value={year}>
+                  {year}°
+                </option>
               ))}
+            </select>
+            <select
+              value={selectedDivision}
+              onChange={(e) => setSelectedDivision(e.target.value)}
+              className="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="all">Todas las divisiones</option>
+              <option value="A">División A</option>
+              <option value="B">División B</option>
+              <option value="sin-division">Sin división (5°-6°)</option>
             </select>
           </div>
           <button
@@ -611,13 +750,14 @@ export default function SubjectsManagementPage() {
             <div className="flex flex-col items-center justify-center h-64 p-4">
               <FiBook className="w-8 h-8 sm:w-12 sm:h-12 text-gray-400 mb-4" />
               <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2 text-center">
-                {subjects.length === 0 ? 'No hay materias creadas' : 'No se encontraron materias'}
+                {subjects.length === 0
+                  ? "No hay materias creadas"
+                  : "No se encontraron materias"}
               </h3>
               <p className="text-gray-500 text-center max-w-md text-sm sm:text-base">
-                {subjects.length === 0 
-                  ? 'Comienza creando tu primera materia para el campus virtual'
-                  : 'Intenta ajustar los filtros de búsqueda'
-                }
+                {subjects.length === 0
+                  ? "Comienza creando tu primera materia para el campus virtual"
+                  : "Intenta ajustar los filtros de búsqueda"}
               </p>
               {subjects.length === 0 && (
                 <button
@@ -641,7 +781,7 @@ export default function SubjectsManagementPage() {
                       Código
                     </th>
                     <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Año
+                      Año/División
                     </th>
                     <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
                       Profesor
@@ -662,12 +802,15 @@ export default function SubjectsManagementPage() {
                               alt={subject.name}
                               className="w-8 h-8 sm:w-10 sm:h-10 rounded-md object-cover mr-2 sm:mr-3"
                               onError={(e) => {
-                                e.currentTarget.src = 'https://via.placeholder.com/40x40/f3f4f6/9ca3af?text=?';
+                                e.currentTarget.src =
+                                  "https://via.placeholder.com/40x40/f3f4f6/9ca3af?text=?";
                               }}
                             />
                           )}
                           <div>
-                            <div className="text-xs sm:text-sm font-medium text-gray-900">{subject.name}</div>
+                            <div className="text-xs sm:text-sm font-medium text-gray-900">
+                              {subject.name}
+                            </div>
                             {subject.description && (
                               <div className="text-xs text-gray-500 truncate max-w-xs sm:hidden">
                                 {subject.description}
@@ -683,13 +826,28 @@ export default function SubjectsManagementPage() {
                         {subject.code}
                       </td>
                       <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
-                        <span className="inline-flex px-1 sm:px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-                          {subject.year}°
-                        </span>
+                        <div className="flex flex-col">
+                          <span className="inline-flex px-1 sm:px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                            {subject.year}°
+                          </span>
+                          {subject.division && (
+                            <span className="inline-flex px-1 sm:px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800 mt-1">
+                              Div. {subject.division}
+                            </span>
+                          )}
+                          {!subject.division &&
+                            yearHasDivisions(subject.year) && (
+                              <span className="inline-flex px-1 sm:px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-600 mt-1">
+                                Sin división
+                              </span>
+                            )}
+                        </div>
                       </td>
                       <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900 hidden md:table-cell">
                         {subject.teacher?.name || (
-                          <span className="text-gray-400 italic">Sin asignar</span>
+                          <span className="text-gray-400 italic">
+                            Sin asignar
+                          </span>
                         )}
                       </td>
                       <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -729,7 +887,7 @@ export default function SubjectsManagementPage() {
         <div className="fixed bottom-4 right-4 z-[10000]">
           <button
             onClick={() => {
-              console.log('Abriendo modal de prueba');
+              console.log("Abriendo modal de prueba");
               setShowModal(true);
               setEditingSubject(null);
             }}

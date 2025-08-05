@@ -76,7 +76,7 @@ export async function GET() {
           code,
           description,
           year,
-          credits,
+          division,
           teacher:users!subjects_teacher_id_fkey(id, name, email)
         )
       `)

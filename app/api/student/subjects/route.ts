@@ -2,6 +2,7 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/app/lib/supabaseClient";
 import { requireRole } from "@/app/lib/auth";
+import { yearHasDivisions } from "@/app/lib/utils/divisions";
 
 // GET - Obtener materias del estudiante autenticado
 export async function GET(request: Request) {
@@ -19,8 +20,8 @@ export async function GET(request: Request) {
     const year = searchParams.get("year");
 
     // Obtener las materias en las que está inscrito el estudiante
-    // Solo materias de su misma división
-    const query = supabaseAdmin
+    // Filtrar por división solo si el año del estudiante requiere división
+    let query = supabaseAdmin
       .from("student_subjects")
       .select(
         `
@@ -35,8 +36,6 @@ export async function GET(request: Request) {
           code,
           description,
           year,
-          semester,
-          credits,
           division,
           teacher_id,
           image_url,
@@ -46,14 +45,23 @@ export async function GET(request: Request) {
       `
       )
       .eq("student_id", currentUser.id)
-      .eq("is_active", true)
-      .eq("subjects.division", currentUser.division || "A"); // Filtrar por división del estudiante
+      .eq("is_active", true);
+
+    // Solo filtrar por división si el año del estudiante requiere división
+    if (currentUser.year && yearHasDivisions(currentUser.year)) {
+      query = query.eq("subjects.division", currentUser.division || "A");
+    } else {
+      // Para 5° y 6° año, no filtrar por división (las materias de estos años no tienen división)
+      query = query.is("subjects.division", null);
+    }
 
     console.log(
       "Student API: Executing query for student_id:",
       currentUser.id,
+      "year:",
+      currentUser.year,
       "division:",
-      currentUser.division
+      yearHasDivisions(currentUser.year || 0) ? currentUser.division : "N/A (sin división)"
     );
 
     const { data: enrollments, error } = await query;

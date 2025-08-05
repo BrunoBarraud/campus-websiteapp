@@ -1,0 +1,200 @@
+/* 🎨 Estilos para el componente UnitAccordion */
+
+.unit-accordion {
+  /* Animaciones suaves para el desplegable */
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.unit-header {
+  /* Efecto hover mejorado */
+  transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
+}
+
+.unit-header:hover {
+  transform: translateY(-1px);
+}
+
+.unit-content {
+  /* Animación de apertura */
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.section-card {
+  /* Efectos para las tarjetas de sección */
+  transition: all 0.2s ease-in-out;
+}
+
+.section-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.add-section-button {
+  /* Animación para el botón de agregar */
+  transition: all 0.2s ease-in-out;
+}
+
+.add-section-button:hover {
+  background-color: rgba(254, 240, 138, 0.3);
+  border-color: #f59e0b;
+  transform: scale(1.01);
+}
+
+/* Estilos para los modales */
+.modal-overlay {
+  backdrop-filter: blur(4px);
+  animation: fadeIn 0.2s ease-out;
+}
+
+.modal-content {
+  animation: scaleIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Mejoras responsive */
+@media (max-width: 768px) {
+  .unit-header {
+    padding: 1rem;
+  }
+  
+  .section-card {
+    padding: 0.75rem;
+  }
+  
+  .modal-content {
+    margin: 1rem;
+    width: calc(100% - 2rem);
+  }
+}
+
+/* Estados de loading */
+.loading-spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Estilos para badges de tipo de contenido */
+.content-type-badge {
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 0.25rem 0.5rem;
+  border-radius: 9999px;
+  border: 1px solid;
+}
+
+.badge-document {
+  background-color: #dbeafe;
+  color: #1d4ed8;
+  border-color: #93c5fd;
+}
+
+.badge-assignment {
+  background-color: #fee2e2;
+  color: #dc2626;
+  border-color: #fca5a5;
+}
+
+.badge-content {
+  background-color: #f3f4f6;
+  color: #374151;
+  border-color: #d1d5db;
+}
+
+/* Efectos de foco mejorados */
+.focus-ring:focus {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 2px #f59e0b;
+}
+
+/* Animaciones de entrada escalonada */
+.stagger-animation {
+  animation: slideInStagger 0.4s ease-out;
+}
+
+.stagger-animation:nth-child(1) { animation-delay: 0.1s; }
+.stagger-animation:nth-child(2) { animation-delay: 0.2s; }
+.stagger-animation:nth-child(3) { animation-delay: 0.3s; }
+.stagger-animation:nth-child(4) { animation-delay: 0.4s; }
+
+@keyframes slideInStagger {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Mejoras de accesibilidad */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Estados de drag and drop (para futuras funcionalidades) */
+.draggable {
+  cursor: move;
+  transition: all 0.2s ease-in-out;
+}
+
+.draggable:hover {
+  transform: scale(1.02);
+}
+
+.drop-zone {
+  border: 2px dashed #d1d5db;
+  transition: border-color 0.2s ease-in-out;
+}
+
+.drop-zone.active {
+  border-color: #f59e0b;
+  background-color: rgba(254, 240, 138, 0.1);
+}

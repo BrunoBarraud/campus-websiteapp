@@ -23,9 +23,7 @@ export interface Subject {
   code: string;
   description?: string;
   year: number;
-  semester?: number;
-  credits: number;
-  division?: string; // División de la materia (A, B, C, etc.)
+  division?: string; // División de la materia (A, B) - Solo para 1° a 4° año
   teacher_id?: string;
   teacher?: User; // Relación con profesor
   units?: SubjectUnit[]; // Unidades de la materia
@@ -188,8 +186,7 @@ export interface CreateSubjectForm {
   code: string;
   description?: string;
   year: number;
-  semester?: number;
-  credits: number;
+  division?: string; // División (A, B) - Solo para 1° a 4° año
   teacher_id?: string;
 }
 

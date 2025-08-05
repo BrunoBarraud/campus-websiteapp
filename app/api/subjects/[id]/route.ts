@@ -73,13 +73,12 @@ export async function PUT(
       code,
       description,
       year,
-      semester,
       division,
       teacher_id,
       image_url
     } = await request.json();
 
-    console.log('📝 Datos para actualizar:', { name, code, description, year, semester, division });
+    console.log('📝 Datos para actualizar:', { name, code, description, year, division });
 
     // Validaciones básicas
     if (!name || !code || !year) {
@@ -119,7 +118,6 @@ export async function PUT(
         code,
         description,
         year,
-        semester: semester || 1,
         division: division || null,
         teacher_id: teacher_id || null,
         image_url: image_url || null,

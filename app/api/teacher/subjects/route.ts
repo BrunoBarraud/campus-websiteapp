@@ -22,20 +22,17 @@ export async function GET(request: Request) {
         code,
         description,
         year,
-        semester,
-        credits,
+        division,
         teacher_id,
         image_url,
         is_active,
         created_at,
-        updated_at,
-        units_count:subject_units(count),
-        contents_count:subject_content(count),
-        documents_count:documents(count)
+        updated_at
       `)
       .eq('teacher_id', currentUser.id)
       .eq('is_active', true)
       .order('year')
+      .order('division')
       .order('name');
 
     if (year) {

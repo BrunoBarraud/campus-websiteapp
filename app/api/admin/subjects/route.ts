@@ -22,16 +22,20 @@ export async function GET(request: Request) {
         code,
         description,
         year,
-        semester,
-        credits,
         division,
         teacher_id,
         image_url,
         is_active,
         created_at,
-        updated_at
+        updated_at,
+        teacher:users!teacher_id (
+          id,
+          name,
+          email
+        )
       `)
       .order('year')
+      .order('division')
       .order('name');
 
     if (year) {
@@ -79,8 +83,6 @@ export async function POST(request: Request) {
       code,
       description,
       year,
-      semester,
-      credits,
       division,
       teacher_id,
       image_url
@@ -140,8 +142,6 @@ export async function POST(request: Request) {
         code,
         description,
         year,
-        semester: semester || 1,
-        credits: credits || 3,
         division: division || null,
         teacher_id: teacher_id || null,
         image_url: image_url || null,
@@ -153,8 +153,6 @@ export async function POST(request: Request) {
         code,
         description,
         year,
-        semester,
-        credits,
         division,
         teacher_id,
         image_url,

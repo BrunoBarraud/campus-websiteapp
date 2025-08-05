@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { signIn } from 'next-auth/react';
+import { yearHasDivisions, getAvailableDivisions, isValidDivisionForYear } from '@/app/lib/utils/divisions';
 
 export default function AuthForm({ mode }: { mode: 'login' | 'register' }) {
   const [email, setEmail] = useState('');
@@ -13,6 +14,16 @@ export default function AuthForm({ mode }: { mode: 'login' | 'register' }) {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+
+  // Limpiar división cuando se selecciona 5° o 6° año
+  const handleYearChange = (selectedYear: number | '') => {
+    setYear(selectedYear);
+    
+    // Si es 5° o 6° año, limpiar la división ya que no la necesitan
+    if (selectedYear && !yearHasDivisions(selectedYear)) {
+      setDivision('');
+    }
+  };
 
   const toggleMode = () => {
     router.push(mode === 'login' ? '/campus/auth/register' : '/campus/auth/login');
@@ -25,6 +36,16 @@ export default function AuthForm({ mode }: { mode: 'login' | 'register' }) {
 
     try {
       if (mode === 'register') {
+        // Validar que la división sea correcta para el año seleccionado
+        if (year && !isValidDivisionForYear(year, division)) {
+          if (yearHasDivisions(year)) {
+            throw new Error('Para años de 1° a 4°, debes seleccionar una división (A o B)');
+          } else {
+            // 5° y 6° año no deberían tener división, pero si la hay, la limpiamos
+            setDivision('');
+          }
+        }
+
         // Registro usando la API de NextAuth que maneja Supabase
         const response = await fetch('/api/auth/register', {
           method: 'POST',
@@ -34,7 +55,7 @@ export default function AuthForm({ mode }: { mode: 'login' | 'register' }) {
             password, 
             name, 
             year: year || null,
-            division: division || null 
+            division: (year && yearHasDivisions(year)) ? division : null
           }),
         });
 
@@ -161,7 +182,7 @@ export default function AuthForm({ mode }: { mode: 'login' | 'register' }) {
                   <select
                     id="year"
                     value={year}
-                    onChange={(e) => setYear(e.target.value ? parseInt(e.target.value) : '')}
+                    onChange={(e) => handleYearChange(e.target.value ? parseInt(e.target.value) : '')}
                     className="text-black w-full px-3 py-2 sm:px-4 sm:py-3 md:px-5 md:py-3 lg:px-6 lg:py-4 rounded-md border border-gray-300 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-300 outline-none transition-all appearance-none bg-white text-sm sm:text-base"
                   >
                     <option value="">Selecciona tu año de estudio</option>
@@ -179,24 +200,37 @@ export default function AuthForm({ mode }: { mode: 'login' | 'register' }) {
                   </div>
                 </div>
 
-                {/* Campo División (solo para registro) */}
-                <div className="relative">
-                  <select
-                    id="division"
-                    value={division}
-                    onChange={(e) => setDivision(e.target.value)}
-                    className="text-black w-full px-3 py-2 sm:px-4 sm:py-3 md:px-5 md:py-3 lg:px-6 lg:py-4 rounded-md border border-gray-300 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-300 outline-none transition-all appearance-none bg-white text-sm sm:text-base"
-                  >
-                    <option value="">Selecciona tu división</option>
-                    <option value="A">División A</option>
-                    <option value="B">División B</option>
-                  </select>
-                  <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
-                    <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                    </svg>
+                {/* Campo División (solo para registro y años 1°-4°) */}
+                {year && yearHasDivisions(year) && (
+                  <div className="relative">
+                    <select
+                      id="division"
+                      value={division}
+                      onChange={(e) => setDivision(e.target.value)}
+                      className="text-black w-full px-3 py-2 sm:px-4 sm:py-3 md:px-5 md:py-3 lg:px-6 lg:py-4 rounded-md border border-gray-300 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-300 outline-none transition-all appearance-none bg-white text-sm sm:text-base"
+                      required
+                    >
+                      <option value="">Selecciona tu división</option>
+                      {getAvailableDivisions(year).map((div) => (
+                        <option key={div} value={div}>División {div}</option>
+                      ))}
+                    </select>
+                    <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                      <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </div>
                   </div>
-                </div>
+                )}
+
+                {/* Mensaje informativo para 5° y 6° año */}
+                {year && !yearHasDivisions(year) && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
+                    <p className="text-blue-800 text-sm">
+                      ℹ️ Los estudiantes de {year}° año no requieren selección de división.
+                    </p>
+                  </div>
+                )}
               </>
             )}
 

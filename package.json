@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
+    "build:analyze": "ANALYZE=true npm run build",
     "start": "next start",
     "lint": "next lint",
     "test": "jest",
@@ -12,7 +13,8 @@
     "test:coverage": "jest --coverage",
     "setup-db": "node scripts/setup-database.js",
     "monitor-db": "node scripts/monitor-supabase.js",
-    "check-db": "node -e \"const { createClient } = require('@supabase/supabase-js'); require('dotenv').config({ path: '.env.local' }); const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY); supabase.from('users').select('count').limit(1).then(({ data, error }) => console.log(error ? '❌ Error:', error.message : '✅ Base de datos funcionando'));\""
+    "check-db": "node -e \"const { createClient } = require('@supabase/supabase-js'); require('dotenv').config({ path: '.env.local' }); const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY); supabase.from('users').select('count').limit(1).then(({ data, error }) => console.log(error ? '❌ Error:', error.message : '✅ Base de datos funcionando'));\"",
+    "performance": "npm run build && npm run start"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.1.1",
@@ -31,6 +33,7 @@
     "lucide-react": "^0.525.0",
     "next": "15.3.4",
     "next-auth": "^4.24.11",
+    "papaparse": "^5.5.3",
     "prisma": "^6.10.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
@@ -38,10 +41,12 @@
     "react-icons": "^5.5.0",
     "sonner": "^2.0.6",
     "tailwind-merge": "^3.3.1",
+    "xlsx": "^0.18.5",
     "zod": "^3.25.67"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@next/bundle-analyzer": "^15.4.5",
     "@tailwindcss/postcss": "^4",
     "@testing-library/jest-dom": "^6.6.0",
     "@testing-library/react": "^15.0.7",
@@ -50,6 +55,7 @@
     "@types/firebase": "^2.4.32",
     "@types/jest": "^29.5.14",
     "@types/node": "^20",
+    "@types/papaparse": "^5.3.16",
     "@types/react": "^18.3.17",
     "@types/react-dom": "^18.3.5",
     "eslint": "^9",

@@ -40,7 +40,7 @@ const DashboardPage = () => {
             } else if (userData.role === 'teacher') {
               // Profesores ven sus materias asignadas
               console.log('Dashboard: Fetching teacher subjects');
-              subjectsResponse = await fetch(`/api/admin/subjects?teacher_id=${userData.id}`);
+              subjectsResponse = await fetch('/api/teacher/subjects');
             } else if (userData.role === 'student' && userData.year) {
               // Estudiantes ven materias donde están inscritos
               console.log('Dashboard: Fetching student subjects for year:', userData.year);
@@ -150,19 +150,11 @@ const DashboardPage = () => {
           <p className="text-gray-600 mb-4 sm:mb-6 text-sm sm:text-base">
             {getSubjectCountMessage()} ({subjects.length} materias disponibles)
           </p>
-          <div className="mt-4 sm:mt-6 flex flex-col sm:flex-row justify-center space-y-2 sm:space-y-0 sm:space-x-4">
-            <button className="px-4 sm:px-6 py-2 bg-gradient-to-r from-yellow-500 to-rose-500 text-white rounded-full hover:from-yellow-600 hover:to-rose-600 transition-all shadow-lg hover:shadow-xl transform hover:scale-105 text-sm sm:text-base">
-              <i className="fas fa-book mr-2"></i> Mis Materias
-            </button>
-            <button className="px-4 sm:px-6 py-2 border-2 border-yellow-400 text-yellow-600 hover:text-rose-600 hover:border-rose-400 rounded-full hover:bg-gradient-to-r hover:from-yellow-50 hover:to-rose-50 transition-all text-sm sm:text-base">
-              <i className="fas fa-calendar mr-2"></i> Horarios
-            </button>
-          </div>
         </header>
 
         {/* Search and Filter */}
         <div className="mb-6 sm:mb-8 fade-in delay-1">
-          <div className="flex flex-col lg:flex-row justify-between items-center gap-4">
+          <div className="flex justify-center">
             <div className="relative w-full lg:w-96">
               <input
                 type="text"
@@ -171,16 +163,6 @@ const DashboardPage = () => {
               />
               <i className="fas fa-search absolute left-3 top-2.5 sm:top-3 text-yellow-600 text-sm sm:text-base"></i>
             </div>
-            {user?.role === 'admin' && (
-              <div className="flex space-x-2 w-full lg:w-auto">
-                <a
-                  href="/campus/settings/subjects"
-                  className="flex-1 lg:flex-none px-3 sm:px-4 py-2 bg-gradient-to-r from-yellow-500 to-rose-500 text-white rounded-full hover:from-yellow-600 hover:to-rose-600 transition-all shadow-lg hover:shadow-xl transform hover:scale-105 text-center text-sm sm:text-base"
-                >
-                  <i className="fas fa-plus mr-2"></i> Gestionar Materias
-                </a>
-              </div>
-            )}
           </div>
         </div>
 
@@ -193,40 +175,41 @@ const DashboardPage = () => {
                     </div>
                     <div>
                         <p className="text-gray-500 text-xs sm:text-sm font-medium">
-                          {user?.role === 'student' ? 'Mis Materias' : 'Total Materias'}
+                          {user?.role === 'student' ? 'Mis Materias' : user?.role === 'teacher' ? 'Mis Materias' : 'Total Materias'}
                         </p>
                         <h3 className="text-xl sm:text-2xl font-bold text-gray-800">{subjects.length}</h3>
                     </div>
                 </div>
             </div>
-            <div className="bg-white/80 backdrop-blur-sm p-4 sm:p-6 rounded-xl shadow-lg border border-blue-200 hover:shadow-xl hover:scale-105 transition-all duration-300 fade-in delay-3">
-                <div className="flex items-center">
-                    <div className="p-2 sm:p-3 rounded-full bg-gradient-to-r from-blue-100 to-purple-100 text-blue-600 mr-3 sm:mr-4">
-                        <i className="fas fa-chalkboard-teacher text-lg sm:text-xl"></i>
-                    </div>
-                    <div>
-                        <p className="text-gray-500 text-xs sm:text-sm font-medium">Profesores Activos</p>
-                        <h3 className="text-xl sm:text-2xl font-bold text-gray-800">
-                          {[...new Set(subjects.map(s => s.teacher?.name).filter(Boolean))].length}
-                        </h3>
-                    </div>
-                </div>
-            </div>
-            <div className="bg-white/80 backdrop-blur-sm p-4 sm:p-6 rounded-xl shadow-lg border border-green-200 hover:shadow-xl hover:scale-105 transition-all duration-300 fade-in delay-4 sm:col-span-2 lg:col-span-1">
-                <div className="flex items-center">
-                    <div className="p-2 sm:p-3 rounded-full bg-gradient-to-r from-green-100 to-teal-100 text-green-600 mr-3 sm:mr-4">
-                        <i className="fas fa-calendar-check text-lg sm:text-xl"></i>
-                    </div>
-                    <div>
-                        <p className="text-gray-500 text-xs sm:text-sm font-medium">
-                          {user?.role === 'student' ? `Año ${user.year}` : 'Próximas Clases'}
-                        </p>
-                        <h3 className="text-xl sm:text-2xl font-bold text-gray-800">
-                          {user?.role === 'student' ? user.year || '-' : '5'}
-                        </h3>
+            
+            {user?.role === 'student' && (
+              <>
+                <div className="bg-white/80 backdrop-blur-sm p-4 sm:p-6 rounded-xl shadow-lg border border-blue-200 hover:shadow-xl hover:scale-105 transition-all duration-300 fade-in delay-3">
+                    <div className="flex items-center">
+                        <div className="p-2 sm:p-3 rounded-full bg-gradient-to-r from-blue-100 to-purple-100 text-blue-600 mr-3 sm:mr-4">
+                            <i className="fas fa-graduation-cap text-lg sm:text-xl"></i>
+                        </div>
+                        <div>
+                            <p className="text-gray-500 text-xs sm:text-sm font-medium">Año Cursando</p>
+                            <h3 className="text-xl sm:text-2xl font-bold text-gray-800">{user.year}°</h3>
+                        </div>
                     </div>
                 </div>
-            </div>
+                <div className="bg-white/80 backdrop-blur-sm p-4 sm:p-6 rounded-xl shadow-lg border border-green-200 hover:shadow-xl hover:scale-105 transition-all duration-300 fade-in delay-4">
+                    <div className="flex items-center">
+                        <div className="p-2 sm:p-3 rounded-full bg-gradient-to-r from-green-100 to-teal-100 text-green-600 mr-3 sm:mr-4">
+                            <i className="fas fa-chalkboard-teacher text-lg sm:text-xl"></i>
+                        </div>
+                        <div>
+                            <p className="text-gray-500 text-xs sm:text-sm font-medium">Profesores</p>
+                            <h3 className="text-xl sm:text-2xl font-bold text-gray-800">
+                              {[...new Set(subjects.map(s => s.teacher?.name).filter(Boolean))].length}
+                            </h3>
+                        </div>
+                    </div>
+                </div>
+              </>
+            )}
         </div>
 
         {/* Subjects Grid or Empty State */}

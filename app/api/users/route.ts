@@ -1,54 +1,135 @@
-// 👥 API para obtener usuarios (temporal sin autenticación para testing)
+// 👥 API para obtener usuarios (protegida - solo admins)
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/app/lib/supabaseClient';
+import { checkAdminAccess } from '@/app/lib/auth/adminCheck';
 
 export async function GET(request: Request) {
   try {
     console.log('👥 API users called');
     
+    // Verificar permisos de admin
+    const adminCheck = await checkAdminAccess();
+    if (!adminCheck.hasAccess) {
+      return adminCheck.response;
+    }
+
+    console.log('✅ Admin access verified for user:', adminCheck.user?.email);
+    
     const { searchParams } = new URL(request.url);
     const role = searchParams.get('role');
+    const search = searchParams.get('search');
+    const page = parseInt(searchParams.get('page') || '1');
+    const limit = parseInt(searchParams.get('limit') || '10');
+    const sortBy = searchParams.get('sortBy') || 'name';
+    const sortOrder = searchParams.get('sortOrder') || 'asc';
 
+    // Validar parámetros de paginación
+    const validatedPage = Math.max(1, page);
+    const validatedLimit = Math.min(Math.max(1, limit), 100); // Máximo 100 por página
+    const offset = (validatedPage - 1) * validatedLimit;
+
+    console.log('📊 Pagination params:', { page: validatedPage, limit: validatedLimit, offset, search, role, sortBy, sortOrder });
+
+    // Construir query base
     let query = supabaseAdmin
       .from('users')
-      .select('id, name, email, role, year, is_active, created_at, updated_at')
-      .eq('is_active', true)
-      .order('name');
+      .select('id, name, email, role, year, is_active, created_at, updated_at', { count: 'exact' });
 
-    if (role) {
+    // Aplicar filtros
+    if (role && role !== 'all') {
       query = query.eq('role', role);
     }
 
-    const { data, error } = await query;
+    if (search) {
+      query = query.or(`name.ilike.%${search}%,email.ilike.%${search}%`);
+    }
+
+    // Solo usuarios activos por defecto (puede cambiarse con parámetro)
+    const includeInactive = searchParams.get('includeInactive') === 'true';
+    if (!includeInactive) {
+      query = query.eq('is_active', true);
+    }
+
+    // Aplicar ordenamiento
+    const validSortFields = ['name', 'email', 'role', 'created_at', 'updated_at'];
+    const validSortField = validSortFields.includes(sortBy) ? sortBy : 'name';
+    const validSortOrder = sortOrder === 'desc' ? false : true; // true = asc, false = desc
+    
+    query = query.order(validSortField, { ascending: validSortOrder });
+
+    // Aplicar paginación
+    query = query.range(offset, offset + validatedLimit - 1);
+
+    const { data, error, count } = await query;
 
     if (error) {
       console.error('❌ Error fetching users:', error);
       return NextResponse.json(
-        { error: 'Error al obtener los usuarios' },
+        { 
+          success: false,
+          error: 'Error al obtener los usuarios' 
+        },
         { status: 500 }
       );
     }
 
-    console.log('✅ Users fetched successfully:', data?.length || 0);
+    const totalPages = Math.ceil((count || 0) / validatedLimit);
+    const hasNextPage = validatedPage < totalPages;
+    const hasPrevPage = validatedPage > 1;
+
+    const paginationInfo = {
+      currentPage: validatedPage,
+      totalPages,
+      totalItems: count || 0,
+      itemsPerPage: validatedLimit,
+      hasNextPage,
+      hasPrevPage,
+      startItem: offset + 1,
+      endItem: Math.min(offset + validatedLimit, count || 0)
+    };
+
+    console.log('✅ Users fetched successfully:', {
+      items: data?.length || 0,
+      pagination: paginationInfo
+    });
 
     return NextResponse.json({
       success: true,
-      data: data || []
+      data: data || [],
+      pagination: paginationInfo,
+      filters: {
+        role: role || 'all',
+        search: search || '',
+        sortBy: validSortField,
+        sortOrder,
+        includeInactive
+      }
     });
 
   } catch (error) {
     console.error('💥 Error en API users:', error);
     return NextResponse.json(
-      { error: 'Error interno del servidor' },
+      { 
+        success: false,
+        error: 'Error interno del servidor' 
+      },
       { status: 500 }
     );
   }
 }
 
-// POST - Crear nuevo usuario (temporal sin autenticación para testing)
+// POST - Crear nuevo usuario (protegido - solo admins)
 export async function POST(request: Request) {
   try {
     console.log('📝 POST: Creando nuevo usuario');
+    
+    // Verificar permisos de admin
+    const adminCheck = await checkAdminAccess();
+    if (!adminCheck.hasAccess) {
+      return adminCheck.response;
+    }
+
+    console.log('✅ Admin access verified for creating user by:', adminCheck.user?.email);
     
     const {
       name,

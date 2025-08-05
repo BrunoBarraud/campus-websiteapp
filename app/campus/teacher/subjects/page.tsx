@@ -11,8 +11,7 @@ interface Subject {
   code: string;
   description: string;
   year: number;
-  semester: number;
-  credits: number;
+  division?: string;
   image_url: string | null;
   stats: {
     units_count: number;
@@ -178,8 +177,8 @@ export default function TeacherSubjectsPage() {
 
                   {/* Subject Details */}
                   <div className="flex justify-between text-sm text-gray-500 mb-4">
-                    <span>{subject.year}° Año • {subject.semester}° Sem</span>
-                    <span>{subject.credits} créditos</span>
+                    <span>{subject.year}° Año{subject.division ? ` "${subject.division}"` : ''}</span>
+                    <span>{subject.code}</span>
                   </div>
 
                   {/* Stats */}

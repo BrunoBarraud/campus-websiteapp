@@ -1,0 +1,7 @@
+nombre,email,rol,año,activo
+Juan Pérez,juan.perez@ipdvs.edu.ar,teacher,,true
+María García,maria.garcia@ipdvs.edu.ar,student,2,true
+Carlos López,carlos.lopez@ipdvs.edu.ar,admin,,true
+Ana Rodríguez,ana.rodriguez@ipdvs.edu.ar,student,1,true
+Pedro Martínez,pedro.martinez@ipdvs.edu.ar,teacher,,false
+Sofía González,sofia.gonzalez@ipdvs.edu.ar,student,3,true

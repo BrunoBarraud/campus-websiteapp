@@ -1,10 +1,11 @@
-// 📚 Detalle de Materia - Vista del Profesor
-'use client';
+// 📚 Nueva página simplificada para materias del profesor
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useSession } from 'next-auth/react';
-import { useRouter, useParams } from 'next/navigation';
-import UnitManagement from '../../../../../components/dashboard/UnitManagement';
+import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
+import { useRouter, useParams } from "next/navigation";
+import UnitAccordion from "../../../../../components/teacher/UnitAccordion";
+import LoadingSpinner from "../../../../../components/ui/LoadingSpinner";
 
 interface Subject {
   id: string;
@@ -12,619 +13,222 @@ interface Subject {
   code: string;
   description: string;
   year: number;
-  semester: number;
-  credits: number;
+  division?: string;
   image_url: string | null;
 }
 
-interface Unit {
-  id: string;
-  unit_number: number;
-  title: string;
-  description: string;
-  order_index: number;
-  created_at: string;
-}
-
-interface Content {
-  id: string;
-  title: string;
-  content_type: string;
-  content: string;
-  is_pinned: boolean;
-  created_at: string;
-  creator: {
-    name: string;
-    email: string;
-  };
-}
-
-export default function SubjectDetailPage() {
+export default function TeacherSubjectPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const params = useParams();
   const subjectId = params.id as string;
 
   const [subject, setSubject] = useState<Subject | null>(null);
-  const [units, setUnits] = useState<Unit[]>([]);
-  const [selectedUnitId, setSelectedUnitId] = useState<string>('');
-  const [contents, setContents] = useState<Content[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [activeTab, setActiveTab] = useState<'units' | 'documents'>('units');
-
-  // Estado para controlar la vista principal
-  const [currentView, setCurrentView] = useState<'content' | 'management'>('content');
-
-  // Estados para crear/editar unidad
-  const [showCreateForm, setShowCreateForm] = useState(false);
-  // const [isEditing, setIsEditing] = useState(false);
-  // const [editingUnit, setEditingUnit] = useState<SubjectUnit | null>(null);
-  const [newUnit, setNewUnit] = useState({
-    unit_number: '',
-    title: '',
-    description: ''
-  });
-
-  // Estados para crear contenido
-  const [showCreateContent, setShowCreateContent] = useState(false);
-  const [newContent, setNewContent] = useState({
-    title: '',
-    content: '',
-    content_type: 'text',
-    is_pinned: false
-  });
+  const [error, setError] = useState<string>("");
 
   useEffect(() => {
-    if (status === 'loading') return;
-    
-    if (!session || session.user?.role !== 'teacher') {
-      router.push('/campus/login');
+    if (status === "loading") return;
+
+    if (!session || !session.user) {
+      router.push("/campus/login");
       return;
     }
 
-    fetchSubjectData();
-  }, [session, status, subjectId]);
+    if (session.user.role !== "teacher") {
+      router.push("/campus/dashboard");
+      return;
+    }
 
-  const fetchSubjectData = async () => {
+    fetchSubject();
+  }, [session, status, router, subjectId]);
+
+  const fetchSubject = async () => {
     try {
       setLoading(true);
-      
-      // Obtener datos de la materia (usando la API admin que ya filtra por profesor)
-      const subjectResponse = await fetch(`/api/admin/subjects?teacher_id=${session?.user?.id}`);
-      const subjectsData = await subjectResponse.json();
-      
-      if (!subjectResponse.ok) {
-        throw new Error(subjectsData.error || 'Error al cargar la materia');
+      setError("");
+
+      // Verificar que el profesor tenga acceso a esta materia
+      const response = await fetch("/api/teacher/subjects");
+
+      if (!response.ok) {
+        throw new Error("Error al cargar las materias");
       }
 
-      const currentSubject = subjectsData.find((s: Subject) => s.id === subjectId);
+      const subjectsData = await response.json();
+      const currentSubject = subjectsData.find(
+        (s: Subject) => s.id === subjectId
+      );
+
       if (!currentSubject) {
-        throw new Error('Materia no encontrada o no tienes permisos');
+        throw new Error(
+          "Materia no encontrada o no tienes permisos para acceder a ella"
+        );
       }
 
       setSubject(currentSubject);
-
-      // Obtener unidades
-      await fetchUnits();
-
     } catch (err: any) {
       setError(err.message);
+      console.error("Error fetching subject:", err);
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchUnits = async () => {
-    try {
-      const response = await fetch(`/api/subjects/${subjectId}/units`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Error al cargar las unidades');
-      }
-
-      setUnits(data);
-      if (data.length > 0 && !selectedUnitId) {
-        setSelectedUnitId(data[0].id);
-        fetchContents(data[0].id);
-      }
-    } catch (err: any) {
-      console.error('Error fetching units:', err);
-    }
-  };
-
-  const fetchContents = async (unitId: string) => {
-    try {
-      const response = await fetch(`/api/subjects/${subjectId}/units/${unitId}/contents`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Error al cargar los contenidos');
-      }
-
-      setContents(data);
-    } catch (err: any) {
-      console.error('Error fetching contents:', err);
-    }
-  };
-
-  const handleCreateUnit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    try {
-      const response = await fetch(`/api/subjects/${subjectId}/units`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(newUnit),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Error al crear la unidad');
-      }
-
-      // Recargar unidades
-      await fetchUnits();
-      
-      // Resetear formulario
-      setNewUnit({ unit_number: '', title: '', description: '' });
-      setShowCreateForm(false);
-
-    } catch (err: any) {
-      setError(err.message);
-    }
-  };
-
-  const handleCreateContent = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!selectedUnitId) {
-      setError('Selecciona una unidad primero');
-      return;
-    }
-
-    try {
-      const response = await fetch(`/api/subjects/${subjectId}/units/${selectedUnitId}/contents`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(newContent),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Error al crear el contenido');
-      }
-
-      // Recargar contenidos
-      await fetchContents(selectedUnitId);
-      
-      // Resetear formulario
-      setNewContent({ title: '', content: '', content_type: 'text', is_pinned: false });
-      setShowCreateContent(false);
-
-    } catch (err: any) {
-      setError(err.message);
-    }
-  };
-
-  const handleUnitSelect = (unitId: string) => {
-    setSelectedUnitId(unitId);
-    fetchContents(unitId);
-  };
-
-  if (loading) {
+  // Loading state
+  if (status === "loading" || loading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Cargando materia...</p>
+      <div className="min-h-screen flex items-center justify-center">
+        <LoadingSpinner text="Cargando materia..." />
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="bg-white/90 backdrop-blur-sm rounded-xl p-8 shadow-lg border-2 border-red-100 text-center max-w-md">
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <i className="fas fa-exclamation-triangle text-red-500 text-2xl"></i>
+          </div>
+          <h2 className="text-xl font-bold text-gray-800 mb-2">Error</h2>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <div className="flex gap-3">
+            <button
+              onClick={() => router.back()}
+              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              Volver
+            </button>
+            <button
+              onClick={fetchSubject}
+              className="flex-1 px-4 py-2 bg-gradient-to-r from-yellow-500 to-rose-500 text-white rounded-lg hover:shadow-lg transition-all"
+            >
+              Reintentar
+            </button>
           </div>
         </div>
       </div>
     );
   }
 
-  if (error) {
+  // No subject found
+  if (!subject) {
     return (
-      <div className="min-h-screen bg-gray-50 p-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
-            <h2 className="text-xl font-semibold text-red-800 mb-2">Error</h2>
-            <p className="text-red-600">{error}</p>
-            <button
-              onClick={() => router.back()}
-              className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
-            >
-              Volver
-            </button>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="bg-white/90 backdrop-blur-sm rounded-xl p-8 shadow-lg border-2 border-yellow-100 text-center max-w-md">
+          <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <i className="fas fa-search text-yellow-500 text-2xl"></i>
           </div>
+          <h2 className="text-xl font-bold text-gray-800 mb-2">
+            Materia no encontrada
+          </h2>
+          <p className="text-gray-600 mb-4">
+            No se pudo cargar la información de la materia solicitada.
+          </p>
+          <button
+            onClick={() => router.push("/campus/dashboard")}
+            className="px-4 py-2 bg-gradient-to-r from-yellow-500 to-rose-500 text-white rounded-lg hover:shadow-lg transition-all"
+          >
+            Ir al Dashboard
+          </button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <button
-            onClick={() => router.back()}
-            className="mb-4 text-blue-600 hover:text-blue-800 flex items-center"
-          >
-            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-            Volver a mis materias
-          </button>
-          
-          {subject && (
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                {subject.name}
-              </h1>
-              <div className="flex items-center space-x-4 text-gray-600">
-                <span>{subject.code}</span>
-                <span>•</span>
-                <span>{subject.year}° Año - {subject.semester}° Semestre</span>
-                <span>•</span>
-                <span>{subject.credits} créditos</span>
-              </div>
-              {subject.description && (
-                <p className="mt-2 text-gray-700">{subject.description}</p>
+    <div className="min-h-screen bg-gradient-to-br from-yellow-50 via-rose-50 to-yellow-100 p-4 sm:p-6">
+      <div className="max-w-6xl mx-auto">
+        {/* Breadcrumb */}
+        <nav className="mb-6">
+          <div className="flex items-center space-x-2 text-sm text-gray-600">
+            <button
+              onClick={() => router.push("/campus/dashboard")}
+              className="hover:text-yellow-600 transition-colors"
+            >
+              Dashboard
+            </button>
+            <i className="fas fa-chevron-right text-xs"></i>
+            <button
+              onClick={() => router.push("/campus/teacher/subjects")}
+              className="hover:text-yellow-600 transition-colors"
+            >
+              Mis Materias
+            </button>
+            <i className="fas fa-chevron-right text-xs"></i>
+            <span className="text-gray-800 font-medium">{subject.name}</span>
+          </div>
+        </nav>
+
+        {/* Subject Info Card */}
+        <div className="bg-white/90 backdrop-blur-sm rounded-xl p-6 shadow-lg border-2 border-yellow-100 mb-6">
+          <div className="flex items-start justify-between">
+            <div className="flex items-center gap-4">
+              {subject.image_url ? (
+                <img
+                  src={subject.image_url}
+                  alt={subject.name}
+                  className="w-16 h-16 rounded-lg object-cover border-2 border-yellow-200"
+                />
+              ) : (
+                <div className="w-16 h-16 bg-gradient-to-r from-yellow-100 to-rose-100 rounded-lg flex items-center justify-center">
+                  <i className="fas fa-book text-yellow-600 text-xl"></i>
+                </div>
               )}
-            </div>
-          )}
-          
-          {/* Botones de navegación rápida */}
-          <div className="mt-4 flex gap-2">
-            <button
-              onClick={() => setCurrentView('content')}
-              className={`px-4 py-2 rounded-lg flex items-center transition-colors ${
-                currentView === 'content'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-              }`}
-            >
-              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-              </svg>
-              Contenido y Unidades
-            </button>
-            <button
-              onClick={() => setCurrentView('management')}
-              className={`px-4 py-2 rounded-lg flex items-center transition-colors ${
-                currentView === 'management'
-                  ? 'bg-green-600 text-white'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-              }`}
-            >
-              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              Gestionar Unidades y Tareas
-            </button>
-            <button
-              onClick={() => router.push(`/campus/teacher/subjects/${subjectId}/assignments`)}
-              className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 flex items-center"
-            >
-              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-5 5v-5zM3 9v10a1 1 0 001 1h6m5-7V8a1 1 0 00-1-1H9m0 0V6a1 1 0 011-1h1m0 0V3a1 1 0 011-1h1a1 1 0 011 1v3M9 7h3" />
-              </svg>
-              Ver Entregas
-            </button>
-          </div>
-        </div>
-
-        {/* Contenido principal basado en la vista seleccionada */}
-        {currentView === 'management' ? (
-          /* Vista de Gestión de Unidades y Tareas */
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <div className="mb-6">
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                <i className="fas fa-tasks mr-3 text-green-600"></i>
-                Gestión de Unidades y Tareas
-              </h2>
-              <p className="text-gray-600">
-                Administra las unidades temáticas y crea tareas con archivos adjuntos para tus estudiantes.
-              </p>
-            </div>
-            
-            <UnitManagement 
-              subjectId={subjectId}
-              onUnitSelect={(unitId: string) => setSelectedUnitId(unitId)}
-              selectedUnitId={selectedUnitId}
-            />
-          </div>
-        ) : (
-          /* Vista de Contenido Tradicional */
-          <>
-        {/* Tabs */}
-        <div className="bg-white rounded-lg shadow-sm mb-6">
-          <div className="border-b border-gray-200">
-            <nav className="flex">
-              <button
-                onClick={() => setActiveTab('units')}
-                className={`px-6 py-3 font-medium text-sm border-b-2 ${
-                  activeTab === 'units'
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                Unidades y Contenidos
-              </button>
-              <button
-                onClick={() => setActiveTab('documents')}
-                className={`px-6 py-3 font-medium text-sm border-b-2 ${
-                  activeTab === 'documents'
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                Documentos
-              </button>
-            </nav>
-          </div>
-
-          {/* Content */}
-          <div className="p-6">
-            {activeTab === 'units' && (
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Unidades (Left Panel) */}
-                <div className="lg:col-span-1">
-                  <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-lg font-semibold text-gray-900">Unidades</h3>
-                    <button
-                      onClick={() => setShowCreateForm(true)}
-                      className="px-3 py-1 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700"
-                    >
-                      + Nueva
-                    </button>
-                  </div>
-
-                  <div className="space-y-2">
-                    {units.map((unit) => (
-                      <div
-                        key={unit.id}
-                        onClick={() => handleUnitSelect(unit.id)}
-                        className={`p-3 rounded-lg cursor-pointer border transition-colors ${
-                          selectedUnitId === unit.id
-                            ? 'bg-blue-50 border-blue-300'
-                            : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
-                        }`}
-                      >
-                        <div className="font-medium text-gray-900">
-                          Unidad {unit.unit_number}: {unit.title}
-                        </div>
-                        {unit.description && (
-                          <div className="text-sm text-gray-600 mt-1">
-                            {unit.description}
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Contenidos (Right Panel) */}
-                <div className="lg:col-span-2">
-                  {selectedUnitId ? (
-                    <div>
-                      <div className="flex justify-between items-center mb-4">
-                        <h3 className="text-lg font-semibold text-gray-900">Contenidos</h3>
-                        <button
-                          onClick={() => setShowCreateContent(true)}
-                          className="px-3 py-1 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700"
-                        >
-                          + Agregar Contenido
-                        </button>
-                      </div>
-
-                      <div className="space-y-4">
-                        {contents.map((content) => (
-                          <div key={content.id} className="bg-white border border-gray-200 rounded-lg p-4">
-                            <div className="flex justify-between items-start mb-2">
-                              <h4 className="font-medium text-gray-900">{content.title}</h4>
-                              <div className="flex items-center space-x-2">
-                                {content.is_pinned && (
-                                  <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded">
-                                    Fijado
-                                  </span>
-                                )}
-                                <span className="px-2 py-1 bg-gray-100 text-gray-800 text-xs rounded">
-                                  {content.content_type}
-                                </span>
-                              </div>
-                            </div>
-                            <div className="text-gray-700 mb-2">
-                              {content.content}
-                            </div>
-                            <div className="text-sm text-gray-500">
-                              Por {content.creator.name} • {new Date(content.created_at).toLocaleDateString()}
-                            </div>
-                          </div>
-                        ))}
-
-                        {contents.length === 0 && (
-                          <div className="text-center py-8 text-gray-500">
-                            No hay contenidos en esta unidad aún.
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="text-center py-8 text-gray-500">
-                      Selecciona una unidad para ver sus contenidos.
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {activeTab === 'documents' && (
               <div>
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900">Documentos</h3>
-                  <button className="px-3 py-1 bg-purple-600 text-white text-sm rounded-lg hover:bg-purple-700">
-                    + Subir Documento
-                  </button>
+                <div className="flex items-center gap-3 mb-2">
+                  <h1 className="text-2xl font-bold text-gray-800">
+                    {subject.name}
+                  </h1>
+                  <span className="bg-gradient-to-r from-yellow-100 to-rose-100 text-yellow-800 px-3 py-1 rounded-full text-sm font-medium">
+                    {subject.code}
+                  </span>
                 </div>
-                <div className="text-center py-8 text-gray-500">
-                  Funcionalidad de documentos en desarrollo...
+                <p className="text-gray-600 mb-2">{subject.description}</p>
+                <div className="flex items-center gap-4 text-sm text-gray-500">
+                  <span>
+                    <i className="fas fa-graduation-cap mr-1"></i>
+                    {subject.year}° Año
+                    {subject.division ? ` "${subject.division}"` : ""}
+                  </span>
+                  <span>
+                    <i className="fas fa-book mr-1"></i>
+                    {subject.code}
+                  </span>
                 </div>
               </div>
-            )}
+            </div>
+
+            {/* Quick Actions */}
+            <div className="flex gap-2">
+              <button
+                onClick={() =>
+                  router.push(
+                    `/campus/teacher/subjects/${subjectId}/assignments`
+                  )
+                }
+                className="px-3 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors text-sm"
+              >
+                <i className="fas fa-tasks mr-1"></i>
+                Tareas
+              </button>
+              <button
+                onClick={() =>
+                  router.push(`/campus/teacher/subjects/${subjectId}/students`)
+                }
+                className="px-3 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors text-sm"
+              >
+                <i className="fas fa-users mr-1"></i>
+                Estudiantes
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* Modal para crear unidad */}
-        {showCreateForm && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 w-full max-w-md">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Nueva Unidad</h3>
-              <form onSubmit={handleCreateUnit}>
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Número de Unidad
-                  </label>
-                  <input
-                    type="number"
-                    min="1"
-                    value={newUnit.unit_number}
-                    onChange={(e) => setNewUnit({...newUnit, unit_number: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    required
-                  />
-                </div>
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Título
-                  </label>
-                  <input
-                    type="text"
-                    value={newUnit.title}
-                    onChange={(e) => setNewUnit({...newUnit, title: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    required
-                  />
-                </div>
-                <div className="mb-6">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Descripción (opcional)
-                  </label>
-                  <textarea
-                    value={newUnit.description}
-                    onChange={(e) => setNewUnit({...newUnit, description: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    rows={3}
-                  />
-                </div>
-                <div className="flex space-x-3">
-                  <button
-                    type="submit"
-                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                  >
-                    Crear Unidad
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setShowCreateForm(false)}
-                    className="flex-1 px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400"
-                  >
-                    Cancelar
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
-
-        {/* Modal para crear contenido */}
-        {showCreateContent && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 w-full max-w-lg">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Agregar Contenido</h3>
-              <form onSubmit={handleCreateContent}>
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Título
-                  </label>
-                  <input
-                    type="text"
-                    value={newContent.title}
-                    onChange={(e) => setNewContent({...newContent, title: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    required
-                  />
-                </div>
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Tipo de Contenido
-                  </label>
-                  <select
-                    value={newContent.content_type}
-                    onChange={(e) => setNewContent({...newContent, content_type: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="text">Texto</option>
-                    <option value="video">Video</option>
-                    <option value="document">Documento</option>
-                    <option value="link">Enlace</option>
-                    <option value="assignment">Tarea</option>
-                  </select>
-                </div>
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Contenido
-                  </label>
-                  <textarea
-                    value={newContent.content}
-                    onChange={(e) => setNewContent({...newContent, content: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    rows={4}
-                    required
-                  />
-                </div>
-                <div className="mb-6">
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={newContent.is_pinned}
-                      onChange={(e) => setNewContent({...newContent, is_pinned: e.target.checked})}
-                      className="mr-2"
-                    />
-                    <span className="text-sm text-gray-700">Fijar contenido</span>
-                  </label>
-                </div>
-                <div className="flex space-x-3">
-                  <button
-                    type="submit"
-                    className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-                  >
-                    Crear Contenido
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setShowCreateContent(false)}
-                    className="flex-1 px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400"
-                  >
-                    Cancelar
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
-          </>
-        )}
+        {/* Unit Accordion Component */}
+        <UnitAccordion subjectId={subjectId} subjectName={subject.name} />
       </div>
     </div>
   );

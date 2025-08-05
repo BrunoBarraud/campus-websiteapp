@@ -72,8 +72,6 @@ export async function PUT(
       code,
       description,
       year,
-      semester,
-      credits,
       division,
       teacher_id,
       image_url
@@ -84,8 +82,6 @@ export async function PUT(
       code,
       description,
       year,
-      semester,
-      credits,
       division,
       teacher_id,
       image_url
@@ -146,8 +142,6 @@ export async function PUT(
         code,
         description,
         year,
-        semester: semester || 1,
-        credits: credits || 3,
         division: division || null,
         teacher_id: teacher_id || null,
         image_url: image_url || null,

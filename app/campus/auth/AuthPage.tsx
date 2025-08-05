@@ -1,74 +1,76 @@
-'use client';
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Image from 'next/image';
-import { signIn } from 'next-auth/react';
+"use client";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import Image from "next/image";
+import { signIn } from "next-auth/react";
 
-export default function AuthForm({ mode }: { mode: 'login' | 'register' }) {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+export default function AuthForm({ mode }: { mode: "login" | "register" }) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
   const toggleMode = () => {
-    router.push(mode === 'login' ? '/campus/auth/register' : '/campus/auth/login');
+    router.push(
+      mode === "login" ? "/campus/auth/register" : "/campus/auth/login"
+    );
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setError("");
     setIsLoading(true);
 
     try {
-      if (mode === 'register') {
+      if (mode === "register") {
         // Para registro, hacer una llamada API
-        const response = await fetch('/api/auth/register', {
-          method: 'POST',
+        const response = await fetch("/api/auth/register", {
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({
             email,
             password,
-            name: email.split('@')[0], // Usar la parte antes del @ como nombre por defecto
+            name: email.split("@")[0], // Usar la parte antes del @ como nombre por defecto
           }),
         });
 
         if (!response.ok) {
           const errorData = await response.json();
-          throw new Error(errorData.error || 'Error al registrar usuario');
+          throw new Error(errorData.error || "Error al registrar usuario");
         }
 
         // Después del registro exitoso, hacer login automático
-        const result = await signIn('credentials', {
+        const result = await signIn("credentials", {
           email,
           password,
           redirect: false,
         });
 
         if (result?.error) {
-          throw new Error('Error al iniciar sesión después del registro');
+          throw new Error("Error al iniciar sesión después del registro");
         }
       } else {
         // Para login, usar NextAuth
-        const result = await signIn('credentials', {
+        const result = await signIn("credentials", {
           email,
           password,
           redirect: false,
         });
 
         if (result?.error) {
-          throw new Error('Credenciales incorrectas');
+          throw new Error("Credenciales incorrectas");
         }
       }
-      
-      router.push('/campus/dashboard');
+
+      router.push("/campus/dashboard");
     } catch (err: unknown) {
       if (err instanceof Error) {
         setError(err.message);
       } else {
-        setError('Ocurrió un error al procesar tu solicitud.');
+        setError("Ocurrió un error al procesar tu solicitud.");
       }
     } finally {
       setIsLoading(false);
@@ -78,7 +80,6 @@ export default function AuthForm({ mode }: { mode: 'login' | 'register' }) {
   return (
     <div className="bg-gradient-to-br from-rose-100 to-gray-100 min-h-screen flex items-center justify-center p-4">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-200">
-        
         {/* Decoración superior */}
         <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-yellow-300 to-yellow-400"></div>
 
@@ -97,13 +98,16 @@ export default function AuthForm({ mode }: { mode: 'login' | 'register' }) {
           {/* Título */}
           <h2 className="text-center mb-8">
             <span className="inline-block text-3xl font-bold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-yellow-500 to-rose-500">
-              {mode === 'login' ? 'Iniciar sesión' : 'Registrarse'}
+              {mode === "login" ? "Iniciar sesión" : "Registrarse"}
             </span>
             <span className="block mt-2 h-1 w-20 mx-auto bg-gradient-to-r from-yellow-300 to-rose-400 rounded-full"></span>
           </h2>
 
           {/* Formulario */}
-          <form onSubmit={handleSubmit} className="space-y-6 backdrop-blur-sm bg-white/80 p-8 rounded-xl shadow-md">
+          <form
+            onSubmit={handleSubmit}
+            className="space-y-6 backdrop-blur-sm bg-white/80 p-8 rounded-xl shadow-md"
+          >
             {/* Campo Email */}
             <div className="floating-input relative group">
               <input
@@ -143,7 +147,9 @@ export default function AuthForm({ mode }: { mode: 'login' | 'register' }) {
             </div>
 
             {/* Mensaje de error */}
-            {error && <p className="text-red-500 text-center text-sm">{error}</p>}
+            {error && (
+              <p className="text-red-500 text-center text-sm">{error}</p>
+            )}
 
             {/* Botón Submit */}
             <button
@@ -152,20 +158,20 @@ export default function AuthForm({ mode }: { mode: 'login' | 'register' }) {
               className="w-full py-3 bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-white font-semibold rounded-md shadow-md transition-transform transform hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-yellow-300 disabled:opacity-70 disabled:cursor-not-allowed"
             >
               {isLoading
-                ? mode === 'login'
-                  ? 'Accediendo...'
-                  : 'Creando cuenta...'
-                : mode === 'login'
-                ? 'Acceder ahora'
-                : 'Crear cuenta'}
+                ? mode === "login"
+                  ? "Accediendo..."
+                  : "Creando cuenta..."
+                : mode === "login"
+                ? "Acceder ahora"
+                : "Crear cuenta"}
             </button>
           </form>
 
           {/* Cambiar modo */}
           <div className="text-center text-sm text-gray-500 mt-6">
-            {mode === 'login' ? (
+            {mode === "login" ? (
               <>
-                ¿No tienes cuenta?{' '}
+                ¿No tienes cuenta?{" "}
                 <button
                   type="button"
                   onClick={toggleMode}
@@ -176,7 +182,7 @@ export default function AuthForm({ mode }: { mode: 'login' | 'register' }) {
               </>
             ) : (
               <>
-                ¿Ya tienes cuenta?{' '}
+                ¿Ya tienes cuenta?{" "}
                 <button
                   type="button"
                   onClick={toggleMode}

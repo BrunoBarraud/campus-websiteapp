@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, memo, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
@@ -20,10 +20,15 @@ interface CourseCardProps {
   delay: number;
 }
 
-const CourseCard: React.FC<CourseCardProps> = ({ course, delay }) => {
+const CourseCard: React.FC<CourseCardProps> = memo(({ course, delay }) => {
   const [imageError, setImageError] = useState(false);
   const { data: session } = useSession();
   const fallbackImage = "/images/ipdvs-logo.png";
+
+  // Memoized error handler
+  const handleImageError = useCallback(() => {
+    setImageError(true);
+  }, []);
 
   // Generate URL based on user role
   const getSubjectUrl = () => {
@@ -50,9 +55,9 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, delay }) => {
             fill
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110 subject-image" 
-            priority
-            onError={() => setImageError(true)}
-            loading="eager"
+            priority={delay <= 4} // Solo priorizar las primeras 4 imágenes
+            onError={handleImageError}
+            loading={delay <= 4 ? "eager" : "lazy"} // Lazy loading para las imágenes que no están en el fold
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
         </div>
@@ -85,6 +90,11 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, delay }) => {
       </div>
     </Link>
   );
-};
+});
+
+// Agregar displayName para debugging
+CourseCard.displayName = 'CourseCard';
 
 export default CourseCard;
+
+
