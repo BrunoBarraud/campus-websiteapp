@@ -1,60 +1,60 @@
-import { NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/app/lib/supabaseClient';
-import { requireRole } from '@/app/lib/auth';
+import { NextResponse } from "next/server";
+import { supabaseAdmin } from "@/app/lib/supabaseClient";
+import { requireRole } from "@/app/lib/auth";
 
 // POST - Inscribir estudiante en materia automáticamente
 export async function POST() {
   try {
-    const currentUser = await requireRole(['student']);
-    
+    const currentUser = await requireRole(["student"]);
+
     // Obtener todas las materias del año del estudiante
     const { data: subjects, error: subjectsError } = await supabaseAdmin
-      .from('subjects')
-      .select('id')
-      .eq('year', currentUser.year)
-      .eq('is_active', true);
+      .from("subjects")
+      .select("id")
+      .eq("year", currentUser.year)
+      .eq("is_active", true);
 
     if (subjectsError) {
-      console.error('Error fetching subjects:', subjectsError);
+      console.error("Error fetching subjects:", subjectsError);
       return NextResponse.json(
-        { error: 'Error al obtener las materias' },
+        { error: "Error al obtener las materias" },
         { status: 500 }
       );
     }
 
     // Inscribir al estudiante en todas las materias de su año
-    const enrollments = subjects?.map(subject => ({
-      student_id: currentUser.id,
-      subject_id: subject.id
-    })) || [];
+    const enrollments =
+      subjects?.map((subject) => ({
+        student_id: currentUser.id,
+        subject_id: subject.id,
+      })) || [];
 
     if (enrollments.length > 0) {
       const { error: enrollError } = await supabaseAdmin
-        .from('student_subjects')
-        .upsert(enrollments, { 
-          onConflict: 'student_id,subject_id',
-          ignoreDuplicates: true 
+        .from("student_subjects")
+        .upsert(enrollments, {
+          onConflict: "student_id,subject_id",
+          ignoreDuplicates: true,
         });
 
       if (enrollError) {
-        console.error('Error enrolling student:', enrollError);
+        console.error("Error enrolling student:", enrollError);
         return NextResponse.json(
-          { error: 'Error al inscribir en las materias' },
+          { error: "Error al inscribir en las materias" },
           { status: 500 }
         );
       }
     }
 
-    return NextResponse.json({ 
-      success: true, 
+    return NextResponse.json({
+      success: true,
       enrolled: enrollments.length,
-      message: `Inscrito exitosamente en ${enrollments.length} materias`
+      message: `Inscrito exitosamente en ${enrollments.length} materias`,
     });
-
   } catch (error: unknown) {
-    console.error('Error:', error);
+    console.error("Error:", error);
     return NextResponse.json(
-      { error: 'Error interno del servidor' },
+      { error: "Error interno del servidor" },
       { status: 500 }
     );
   }
@@ -63,11 +63,12 @@ export async function POST() {
 // GET - Obtener materias del estudiante
 export async function GET() {
   try {
-    const currentUser = await requireRole(['student']);
-    
+    const currentUser = await requireRole(["student"]);
+
     const { data: enrolledSubjects, error } = await supabaseAdmin
-      .from('student_subjects')
-      .select(`
+      .from("student_subjects")
+      .select(
+        `
         id,
         enrolled_at,
         subject:subjects(
@@ -79,24 +80,24 @@ export async function GET() {
           division,
           teacher:users!subjects_teacher_id_fkey(id, name, email)
         )
-      `)
-      .eq('student_id', currentUser.id)
-      .eq('is_active', true);
+      `
+      )
+      .eq("student_id", currentUser.id)
+      .eq("is_active", true);
 
     if (error) {
-      console.error('Error fetching enrolled subjects:', error);
+      console.error("Error fetching enrolled subjects:", error);
       return NextResponse.json(
-        { error: 'Error al obtener las materias' },
+        { error: "Error al obtener las materias" },
         { status: 500 }
       );
     }
 
     return NextResponse.json(enrolledSubjects || []);
-
   } catch (error: unknown) {
-    console.error('Error:', error);
+    console.error("Error:", error);
     return NextResponse.json(
-      { error: 'Error interno del servidor' },
+      { error: "Error interno del servidor" },
       { status: 500 }
     );
   }

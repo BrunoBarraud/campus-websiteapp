@@ -16,34 +16,40 @@ export function getAvailableDivisions(year: number): string[] {
   if (!yearHasDivisions(year)) {
     return [];
   }
-  return ['A', 'B'];
+  return ["A", "B"];
 }
 
 /**
  * Valida si una división es válida para un año dado
  */
-export function isValidDivisionForYear(year: number, division?: string): boolean {
+export function isValidDivisionForYear(
+  year: number,
+  division?: string
+): boolean {
   if (!yearHasDivisions(year)) {
     // 5° y 6° año no deben tener división
-    return !division || division === '';
+    return !division || division === "";
   }
-  
+
   // 1° a 4° año deben tener división A o B
-  return division === 'A' || division === 'B';
+  return division === "A" || division === "B";
 }
 
 /**
  * Formatea el nombre de una materia con año y división
  */
-export function formatSubjectYearDivision(year: number, division?: string): string {
+export function formatSubjectYearDivision(
+  year: number,
+  division?: string
+): string {
   if (!yearHasDivisions(year)) {
     return `${year}° Año`;
   }
-  
+
   if (!division) {
     return `${year}° Año`;
   }
-  
+
   return `${year}° Año "${division}"`;
 }
 
@@ -54,6 +60,6 @@ export function getDivisionDescription(year: number): string {
   if (!yearHasDivisions(year)) {
     return `${year}° Año no tiene divisiones`;
   }
-  
+
   return `${year}° Año se divide en: A y B`;
 }

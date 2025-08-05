@@ -1,9 +1,20 @@
-// 📚 Vista de Materia para Estudiantes
+// 📚 Vista de Materia para Estudiantes - Modernizada
 "use client";
 
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter, useParams } from "next/navigation";
+import LoadingSpinner from "../../../../../components/ui/LoadingSpinner";
+
+interface Subject {
+  id: string;
+  name: string;
+  code: string;
+  description: string;
+  year: number;
+  division?: string;
+  image_url: string | null;
+}
 
 interface Unit {
   id: string;
@@ -49,6 +60,7 @@ export default function StudentSubjectDetailPage() {
   const params = useParams();
   const subjectId = params.id as string;
 
+  const [subject, setSubject] = useState<Subject | null>(null);
   const [units, setUnits] = useState<Unit[]>([]);
   const [selectedUnitId, setSelectedUnitId] = useState<string>("");
   const [contents, setContents] = useState<Content[]>([]);
@@ -72,6 +84,9 @@ export default function StudentSubjectDetailPage() {
     try {
       setLoading(true);
 
+      // Obtener información de la materia
+      await fetchSubject();
+
       // Obtener unidades
       await fetchUnits();
 
@@ -81,6 +96,21 @@ export default function StudentSubjectDetailPage() {
       setError(err.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchSubject = async () => {
+    try {
+      const response = await fetch(`/api/subjects/${subjectId}`);
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Error al cargar la materia");
+      }
+
+      setSubject(data);
+    } catch (err: any) {
+      console.error("Error fetching subject:", err);
     }
   };
 
@@ -141,7 +171,6 @@ export default function StudentSubjectDetailPage() {
   };
 
   const handleDownload = (document: Document) => {
-    // Abrir el archivo en una nueva ventana/pestaña
     window.open(document.file_url, "_blank");
   };
 
@@ -168,31 +197,37 @@ export default function StudentSubjectDetailPage() {
     }
   };
 
-  if (loading) {
+  // Loading state
+  if (status === "loading" || loading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Cargando contenido...</p>
-          </div>
-        </div>
+      <div className="min-h-screen flex items-center justify-center">
+        <LoadingSpinner text="Cargando contenido..." />
       </div>
     );
   }
 
+  // Error state
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 p-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
-            <h2 className="text-xl font-semibold text-red-800 mb-2">Error</h2>
-            <p className="text-red-600">{error}</p>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="bg-white/90 backdrop-blur-sm rounded-xl p-8 shadow-lg border-2 border-red-100 text-center max-w-md">
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <i className="fas fa-exclamation-triangle text-red-500 text-2xl"></i>
+          </div>
+          <h2 className="text-xl font-bold text-gray-800 mb-2">Error</h2>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <div className="flex gap-3">
             <button
               onClick={() => router.back()}
-              className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
             >
               Volver
+            </button>
+            <button
+              onClick={fetchData}
+              className="flex-1 px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg hover:shadow-lg transition-all"
+            >
+              Reintentar
             </button>
           </div>
         </div>
@@ -201,58 +236,91 @@ export default function StudentSubjectDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <button
-            onClick={() => router.back()}
-            className="mb-4 text-blue-600 hover:text-blue-800 flex items-center"
-          >
-            <svg
-              className="w-5 h-5 mr-2"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 19l-7-7 7-7"
-              />
-            </svg>
-            Volver a mis materias
-          </button>
-
-          {/* Botón de navegación a tareas */}
-          <div className="mb-4">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-blue-100 p-4 sm:p-6">
+      <div className="max-w-6xl mx-auto">
+        {/* Breadcrumb */}
+        <nav className="mb-6">
+          <div className="flex items-center space-x-2 text-sm text-gray-600">
             <button
-              onClick={() =>
-                router.push(`/campus/student/subjects/${subjectId}/assignments`)
-              }
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center"
+              onClick={() => router.push("/campus/dashboard")}
+              className="hover:text-blue-600 transition-colors"
             >
-              <svg
-                className="w-4 h-4 mr-2"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                />
-              </svg>
-              Ver Mis Tareas
+              Dashboard
             </button>
+            <i className="fas fa-chevron-right text-xs"></i>
+            <button
+              onClick={() => router.push("/campus/student/subjects")}
+              className="hover:text-blue-600 transition-colors"
+            >
+              Mis Materias
+            </button>
+            <i className="fas fa-chevron-right text-xs"></i>
+            <span className="text-gray-800 font-medium">
+              {subject?.name || "Materia"}
+            </span>
           </div>
-        </div>
+        </nav>
+
+        {/* Subject Info Card */}
+        {subject && (
+          <div className="bg-white/90 backdrop-blur-sm rounded-xl p-6 shadow-lg border-2 border-blue-100 mb-6">
+            <div className="flex items-start justify-between">
+              <div className="flex items-center gap-4">
+                {subject.image_url ? (
+                  <img
+                    src={subject.image_url}
+                    alt={subject.name}
+                    className="w-16 h-16 rounded-lg object-cover border-2 border-blue-200"
+                  />
+                ) : (
+                  <div className="w-16 h-16 bg-gradient-to-r from-blue-100 to-purple-100 rounded-lg flex items-center justify-center">
+                    <i className="fas fa-book text-blue-600 text-xl"></i>
+                  </div>
+                )}
+                <div>
+                  <div className="flex items-center gap-3 mb-2">
+                    <h1 className="text-2xl font-bold text-gray-800">
+                      {subject.name}
+                    </h1>
+                    <span className="bg-gradient-to-r from-blue-100 to-purple-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
+                      {subject.code}
+                    </span>
+                  </div>
+                  <p className="text-gray-600 mb-2">{subject.description}</p>
+                  <div className="flex items-center gap-4 text-sm text-gray-500">
+                    <span>
+                      <i className="fas fa-graduation-cap mr-1"></i>
+                      {subject.year}° Año
+                      {subject.division ? ` "${subject.division}"` : ""}
+                    </span>
+                    <span>
+                      <i className="fas fa-book mr-1"></i>
+                      {subject.code}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Quick Actions */}
+              <div className="flex gap-2">
+                <button
+                  onClick={() =>
+                    router.push(
+                      `/campus/student/subjects/${subjectId}/assignments`
+                    )
+                  }
+                  className="px-3 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors text-sm"
+                >
+                  <i className="fas fa-tasks mr-1"></i>
+                  Mis Tareas
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Tabs */}
-        <div className="bg-white rounded-lg shadow-sm mb-6">
+        <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border-2 border-blue-100 mb-6">
           <div className="border-b border-gray-200">
             <nav className="flex">
               <button
@@ -293,10 +361,10 @@ export default function StudentSubjectDetailPage() {
                       <div
                         key={unit.id}
                         onClick={() => handleUnitSelect(unit.id)}
-                        className={`p-3 rounded-lg cursor-pointer border transition-colors ${
+                        className={`p-4 rounded-lg cursor-pointer border transition-all duration-200 ${
                           selectedUnitId === unit.id
-                            ? "bg-blue-50 border-blue-300"
-                            : "bg-gray-50 border-gray-200 hover:bg-gray-100"
+                            ? "bg-gradient-to-r from-blue-50 to-purple-50 border-blue-300 shadow-md"
+                            : "bg-white/50 border-gray-200 hover:bg-white/70 hover:shadow-sm"
                         }`}
                       >
                         <div className="font-medium text-gray-900">
@@ -312,7 +380,8 @@ export default function StudentSubjectDetailPage() {
 
                     {units.length === 0 && (
                       <div className="text-center py-8 text-gray-500">
-                        No hay unidades disponibles aún.
+                        <i className="fas fa-book-open text-2xl mb-2"></i>
+                        <p>No hay unidades disponibles aún.</p>
                       </div>
                     )}
                   </div>
@@ -330,7 +399,7 @@ export default function StudentSubjectDetailPage() {
                         {contents.map((content) => (
                           <div
                             key={content.id}
-                            className="bg-white border border-gray-200 rounded-lg p-4"
+                            className="bg-white/70 backdrop-blur-sm border border-gray-200 rounded-lg p-4 hover:shadow-md transition-all duration-200"
                           >
                             <div className="flex items-start justify-between mb-2">
                               <div className="flex items-center space-x-2">
@@ -343,11 +412,11 @@ export default function StudentSubjectDetailPage() {
                               </div>
                               <div className="flex items-center space-x-2">
                                 {content.is_pinned && (
-                                  <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded">
+                                  <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full">
                                     📌 Fijado
                                   </span>
                                 )}
-                                <span className="px-2 py-1 bg-gray-100 text-gray-800 text-xs rounded capitalize">
+                                <span className="px-2 py-1 bg-gray-100 text-gray-800 text-xs rounded-full capitalize">
                                   {content.content_type}
                                 </span>
                               </div>
@@ -394,14 +463,16 @@ export default function StudentSubjectDetailPage() {
 
                         {contents.length === 0 && (
                           <div className="text-center py-8 text-gray-500">
-                            No hay contenidos disponibles en esta unidad.
+                            <i className="fas fa-file-alt text-2xl mb-2"></i>
+                            <p>No hay contenidos disponibles en esta unidad.</p>
                           </div>
                         )}
                       </div>
                     </div>
                   ) : (
                     <div className="text-center py-8 text-gray-500">
-                      Selecciona una unidad para ver sus contenidos.
+                      <i className="fas fa-hand-pointer text-2xl mb-2"></i>
+                      <p>Selecciona una unidad para ver sus contenidos.</p>
                     </div>
                   )}
                 </div>
@@ -418,7 +489,7 @@ export default function StudentSubjectDetailPage() {
                   {documents.map((document) => (
                     <div
                       key={document.id}
-                      className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+                      className="bg-white/70 backdrop-blur-sm border border-gray-200 rounded-lg p-4 hover:shadow-md transition-all duration-200"
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
@@ -446,7 +517,7 @@ export default function StudentSubjectDetailPage() {
                         </div>
                         <button
                           onClick={() => handleDownload(document)}
-                          className="ml-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                          className="ml-4 px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg hover:shadow-lg transition-all"
                         >
                           📥 Descargar
                         </button>
@@ -456,7 +527,8 @@ export default function StudentSubjectDetailPage() {
 
                   {documents.length === 0 && (
                     <div className="text-center py-8 text-gray-500">
-                      No hay materiales disponibles aún.
+                      <i className="fas fa-folder-open text-2xl mb-2"></i>
+                      <p>No hay materiales disponibles aún.</p>
                     </div>
                   )}
                 </div>

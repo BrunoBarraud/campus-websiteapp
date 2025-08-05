@@ -1,6 +1,10 @@
 // Componente para selección de división según el año académico
-import React from 'react';
-import { yearHasDivisions, getAvailableDivisions, formatSubjectYearDivision } from '@/app/lib/utils/divisions';
+import React from "react";
+import {
+  yearHasDivisions,
+  getAvailableDivisions,
+  formatSubjectYearDivision,
+} from "@/app/lib/utils/divisions";
 
 interface DivisionSelectorProps {
   year: number;
@@ -14,8 +18,8 @@ export const DivisionSelector: React.FC<DivisionSelectorProps> = ({
   year,
   division,
   onDivisionChange,
-  className = '',
-  required = false
+  className = "",
+  required = false,
 }) => {
   const hasDivisions = yearHasDivisions(year);
   const availableDivisions = getAvailableDivisions(year);
@@ -37,7 +41,7 @@ export const DivisionSelector: React.FC<DivisionSelectorProps> = ({
         División {required && <span className="text-red-500">*</span>}
       </label>
       <select
-        value={division || ''}
+        value={division || ""}
         onChange={(e) => onDivisionChange(e.target.value)}
         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
         required={required}
@@ -50,7 +54,7 @@ export const DivisionSelector: React.FC<DivisionSelectorProps> = ({
         ))}
       </select>
       <p className="text-xs text-gray-500 mt-1">
-        {year}° Año se divide en: {availableDivisions.join(' y ')}
+        {year}° Año se divide en: {availableDivisions.join(" y ")}
       </p>
     </div>
   );
@@ -65,7 +69,7 @@ interface YearDivisionDisplayProps {
 export const YearDivisionDisplay: React.FC<YearDivisionDisplayProps> = ({
   year,
   division,
-  className = ''
+  className = "",
 }) => {
   return (
     <span className={className}>
