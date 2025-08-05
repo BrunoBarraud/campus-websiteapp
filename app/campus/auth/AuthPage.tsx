@@ -2,8 +2,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '../../lib/firebaseConfig';
+import { signIn } from 'next-auth/react';
 
 export default function AuthForm({ mode }: { mode: 'login' | 'register' }) {
   const [email, setEmail] = useState('');
@@ -23,10 +22,47 @@ export default function AuthForm({ mode }: { mode: 'login' | 'register' }) {
 
     try {
       if (mode === 'register') {
-        await createUserWithEmailAndPassword(auth, email, password);
+        // Para registro, hacer una llamada API
+        const response = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email,
+            password,
+            name: email.split('@')[0], // Usar la parte antes del @ como nombre por defecto
+          }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Error al registrar usuario');
+        }
+
+        // Después del registro exitoso, hacer login automático
+        const result = await signIn('credentials', {
+          email,
+          password,
+          redirect: false,
+        });
+
+        if (result?.error) {
+          throw new Error('Error al iniciar sesión después del registro');
+        }
       } else {
-        await signInWithEmailAndPassword(auth, email, password);
+        // Para login, usar NextAuth
+        const result = await signIn('credentials', {
+          email,
+          password,
+          redirect: false,
+        });
+
+        if (result?.error) {
+          throw new Error('Credenciales incorrectas');
+        }
       }
+      
       router.push('/campus/dashboard');
     } catch (err: unknown) {
       if (err instanceof Error) {

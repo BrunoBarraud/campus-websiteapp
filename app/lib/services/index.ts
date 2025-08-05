@@ -27,7 +27,8 @@ export const userService = {
     try {
       console.log('Getting user by email:', email);
 
-      const { data, error } = await supabase
+      // Usar supabaseAdmin para operaciones de autenticación que necesitan bypass RLS
+      const { data, error } = await supabaseAdmin
         .from('users')
         .select('*')
         .eq('email', email)

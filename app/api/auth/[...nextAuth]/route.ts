@@ -1,6 +1,6 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { supabase } from "@/app/lib/supabaseClient";
+import { supabaseAdmin } from "@/app/lib/supabaseClient";
 import bcrypt from "bcryptjs";
 
 const handler = NextAuth({
@@ -18,10 +18,11 @@ const handler = NextAuth({
 
         try {
           // Get user from database
-          const { data: user, error } = await supabase
+          const { data: user, error } = await supabaseAdmin
             .from("users")
             .select("*")
             .eq("email", credentials.email)
+            .eq("is_active", true)
             .single();
 
           if (error || !user) {
