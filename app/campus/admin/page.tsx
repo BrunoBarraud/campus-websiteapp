@@ -27,7 +27,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
     if (status === "loading") return;
 
     if (!session) {
-      router.push("/campus/login");
+      router.push("/campus/auth/login");
       return;
     }
 

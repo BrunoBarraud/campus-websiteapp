@@ -1,27 +1,43 @@
-'use client';
+"use client";
 
-import { useEffect } from 'react';
-import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Settings, User, Shield, Database, Calendar, Bell, MessageSquare, Palette, Zap } from 'lucide-react';
+import { useEffect } from "react";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+  Settings,
+  User,
+  Shield,
+  Database,
+  Calendar,
+  Bell,
+  MessageSquare,
+  Palette,
+  Zap,
+} from "lucide-react";
 
 export default function SettingsPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
 
   useEffect(() => {
-    if (status === 'loading') return;
-    
+    if (status === "loading") return;
+
     if (!session) {
-      router.push('/campus/login');
+      router.push("/campus/auth/login");
       return;
     }
   }, [session, status, router]);
 
-  if (status === 'loading') {
+  if (status === "loading") {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
@@ -34,64 +50,67 @@ export default function SettingsPage() {
   const features = [
     {
       icon: User,
-      title: 'Gestión de Usuarios',
-      description: 'Administrar perfiles, roles y permisos de usuarios',
-      status: 'active',
-      path: '/campus/settings/users'
+      title: "Gestión de Usuarios",
+      description: "Administrar perfiles, roles y permisos de usuarios",
+      status: "active",
+      path: "/campus/settings/users",
     },
     {
       icon: Database,
-      title: 'Gestión de Materias',
-      description: 'Administrar materias, profesores y configuraciones académicas',
-      status: 'active',
-      path: '/campus/settings/subjects'
+      title: "Gestión de Materias",
+      description:
+        "Administrar materias, profesores y configuraciones académicas",
+      status: "active",
+      path: "/campus/settings/subjects",
     },
     {
       icon: Calendar,
-      title: 'Sistema de Calendario',
-      description: 'Gestión de eventos académicos y cronogramas',
-      status: 'planned',
-      path: '/campus/calendar'
+      title: "Sistema de Calendario",
+      description: "Gestión de eventos académicos y cronogramas",
+      status: "planned",
+      path: "/campus/calendar",
     },
     {
       icon: Bell,
-      title: 'Centro de Notificaciones',
-      description: 'Sistema avanzado de notificaciones en tiempo real',
-      status: 'planned',
-      path: '/campus/notifications'
+      title: "Centro de Notificaciones",
+      description: "Sistema avanzado de notificaciones en tiempo real",
+      status: "planned",
+      path: "/campus/notifications",
     },
     {
       icon: MessageSquare,
-      title: 'Sistema de Mensajes',
-      description: 'Comunicación interna entre usuarios',
-      status: 'planned',
-      path: '/campus/messages'
+      title: "Sistema de Mensajes",
+      description: "Comunicación interna entre usuarios",
+      status: "planned",
+      path: "/campus/messages",
     },
     {
       icon: Palette,
-      title: 'Mejorar UI/UX',
-      description: 'Optimización de la interfaz de usuario',
-      status: 'in-progress',
-      path: null
+      title: "Mejorar UI/UX",
+      description: "Optimización de la interfaz de usuario",
+      status: "in-progress",
+      path: null,
     },
     {
       icon: Zap,
-      title: 'Optimización de Rendimiento',
-      description: 'Mejoras en velocidad y eficiencia del sistema',
-      status: 'completed',
-      path: null
-    }
+      title: "Optimización de Rendimiento",
+      description: "Mejoras en velocidad y eficiencia del sistema",
+      status: "completed",
+      path: null,
+    },
   ];
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'active':
+      case "active":
         return <Badge className="bg-green-100 text-green-800">Activo</Badge>;
-      case 'completed':
+      case "completed":
         return <Badge className="bg-blue-100 text-blue-800">Completado</Badge>;
-      case 'in-progress':
-        return <Badge className="bg-yellow-100 text-yellow-800">En Progreso</Badge>;
-      case 'planned':
+      case "in-progress":
+        return (
+          <Badge className="bg-yellow-100 text-yellow-800">En Progreso</Badge>
+        );
+      case "planned":
         return <Badge className="bg-gray-100 text-gray-800">Planificado</Badge>;
       default:
         return <Badge variant="secondary">Desconocido</Badge>;
@@ -108,8 +127,12 @@ export default function SettingsPage() {
               <Settings className="h-6 w-6 text-blue-600" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Configuración del Sistema</h1>
-              <p className="text-gray-600">Gestiona las funcionalidades y configuraciones del campus</p>
+              <h1 className="text-3xl font-bold text-gray-900">
+                Configuración del Sistema
+              </h1>
+              <p className="text-gray-600">
+                Gestiona las funcionalidades y configuraciones del campus
+              </p>
             </div>
           </div>
         </div>
@@ -134,9 +157,16 @@ export default function SettingsPage() {
               </div>
               <div>
                 <p className="text-sm text-gray-600">Rol</p>
-                <Badge variant={session.user?.role === 'admin' ? 'default' : 'secondary'}>
-                  {session.user?.role === 'admin' ? 'Administrador' : 
-                   session.user?.role === 'teacher' ? 'Profesor' : 'Estudiante'}
+                <Badge
+                  variant={
+                    session.user?.role === "admin" ? "default" : "secondary"
+                  }
+                >
+                  {session.user?.role === "admin"
+                    ? "Administrador"
+                    : session.user?.role === "teacher"
+                    ? "Profesor"
+                    : "Estudiante"}
                 </Badge>
               </div>
             </div>
@@ -162,25 +192,25 @@ export default function SettingsPage() {
                   <CardDescription>{feature.description}</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {feature.path && feature.status === 'active' && (
-                    <Button 
+                  {feature.path && feature.status === "active" && (
+                    <Button
                       onClick={() => router.push(feature.path)}
                       className="w-full"
                     >
                       Acceder
                     </Button>
                   )}
-                  {feature.status === 'planned' && (
+                  {feature.status === "planned" && (
                     <Button variant="outline" disabled className="w-full">
                       Próximamente
                     </Button>
                   )}
-                  {feature.status === 'in-progress' && (
+                  {feature.status === "in-progress" && (
                     <Button variant="outline" disabled className="w-full">
                       En Desarrollo
                     </Button>
                   )}
-                  {feature.status === 'completed' && !feature.path && (
+                  {feature.status === "completed" && !feature.path && (
                     <Button variant="outline" disabled className="w-full">
                       ✓ Implementado
                     </Button>
@@ -192,7 +222,7 @@ export default function SettingsPage() {
         </div>
 
         {/* Admin Panel Access */}
-        {session.user?.role === 'admin' && (
+        {session.user?.role === "admin" && (
           <Card className="mt-8">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -200,12 +230,13 @@ export default function SettingsPage() {
                 Panel de Administración Avanzado
               </CardTitle>
               <CardDescription>
-                Acceso al panel administrativo completo con estadísticas y configuraciones avanzadas
+                Acceso al panel administrativo completo con estadísticas y
+                configuraciones avanzadas
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Button 
-                onClick={() => router.push('/campus/admin')}
+              <Button
+                onClick={() => router.push("/campus/admin")}
                 className="w-full"
               >
                 Ir al Panel Administrativo
@@ -217,4 +248,3 @@ export default function SettingsPage() {
     </div>
   );
 }
-

@@ -45,7 +45,7 @@ export default function StudentSubjectsPage() {
     if (status === "loading") return;
 
     if (!session || session.user?.role !== "student") {
-      router.push("/campus/login");
+      router.push("/campus/auth/login");
       return;
     }
 

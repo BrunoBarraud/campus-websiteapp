@@ -17,7 +17,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
     { name: "Calendario", href: "/campus/calendar", icon: "📅" },
     { name: "Perfil", href: "/campus/profile", icon: "👤" },
     ...(session?.user?.role === "admin"
-      ? [{ name: "Configuración", href: "/campus/settings", icon: "⚙️" }]
+      ? [{ name: "Configuración", href: "/campus/settings/users", icon: "⚙️" }]
       : []),
   ];
 
