@@ -3,6 +3,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { ChevronDownIcon, ChevronRightIcon, PlusIcon, FileTextIcon, ClipboardIcon, DownloadIcon } from 'lucide-react';
+import { extractOriginalContentType, getContentTypeIcon, getContentTypeLabel, hasAttachment } from '@/app/lib/utils/contentTypes';
 
 interface Unit {
   id: string;
@@ -178,26 +179,22 @@ const UnitAccordion: React.FC<UnitAccordionProps> = ({ subjectId, subjectName })
     }
   };
 
-  const getSectionIcon = (type: string) => {
-    switch (type) {
+  const getSectionIcon = (section: Section) => {
+    const { originalType } = extractOriginalContentType(section.content || '');
+    
+    switch (originalType) {
       case 'document':
         return <FileTextIcon className="w-4 h-4 text-blue-500" />;
       case 'assignment':
         return <ClipboardIcon className="w-4 h-4 text-red-500" />;
+      case 'content':
       default:
         return <FileTextIcon className="w-4 h-4 text-gray-500" />;
     }
   };
 
-  const getSectionTypeLabel = (type: string) => {
-    switch (type) {
-      case 'document':
-        return 'Documento';
-      case 'assignment':
-        return 'Tarea';
-      default:
-        return 'Contenido';
-    }
+  const getSectionTypeLabel = (section: Section) => {
+    return getContentTypeLabel(section.content || '');
   };
 
   if (loading) {
@@ -270,11 +267,11 @@ const UnitAccordion: React.FC<UnitAccordionProps> = ({ subjectId, subjectName })
                     <div key={section.id} className="bg-gray-50/50 rounded-lg p-3 border border-gray-200 hover:shadow-md transition-shadow duration-200">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                          {getSectionIcon(section.content_type)}
+                          {getSectionIcon(section)}
                           <div className="flex-1">
                             <div className="flex items-center gap-2">
                               <h4 className="font-medium text-gray-800">{section.title}</h4>
-                              {section.file_url && section.content_type === 'document' && (
+                              {hasAttachment(section.content || '', section.file_url) && (
                                 <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full flex items-center gap-1">
                                   <i className="fas fa-paperclip"></i>
                                   {section.file_name || 'Archivo'}
@@ -283,7 +280,7 @@ const UnitAccordion: React.FC<UnitAccordionProps> = ({ subjectId, subjectName })
                             </div>
                             <div className="flex items-center gap-2 mt-1">
                               <span className="text-xs text-gray-500 bg-white px-2 py-1 rounded-full">
-                                {getSectionTypeLabel(section.content_type)}
+                                {getSectionTypeLabel(section)}
                               </span>
                               {section.due_date && (
                                 <span className="text-xs text-red-500 flex items-center gap-1">
@@ -311,7 +308,7 @@ const UnitAccordion: React.FC<UnitAccordionProps> = ({ subjectId, subjectName })
                       </div>
                       {section.content && (
                         <p className="text-sm text-gray-600 mt-2 line-clamp-2 bg-white p-2 rounded border-l-2 border-yellow-200">
-                          {section.content}
+                          {extractOriginalContentType(section.content).cleanContent}
                         </p>
                       )}
                     </div>

@@ -212,11 +212,34 @@ export async function POST(
       );
     }
 
-    // Tipos de contenido válidos
-    const validContentTypes = ['text', 'video', 'document', 'link', 'assignment'];
-    if (!validContentTypes.includes(content_type)) {
+    // Log para debugging
+    console.log('📋 Datos recibidos para crear contenido:', {
+      title,
+      content_type,
+      contentLength: content?.length,
+      hasFile: !!file,
+      file_url,
+      file_name
+    });
+
+    // IMPORTANTE: La base de datos actualmente solo acepta 'assignment' como content_type
+    // Mapear todos los tipos a 'assignment' temporalmente hasta que se pueda actualizar la BD
+    const originalContentType = content_type;
+    const mappedContentType = 'assignment'; // Forzar a assignment que es el único permitido
+    
+    console.log(`🔄 Mapeando content_type de "${originalContentType}" a "${mappedContentType}"`);
+
+    // Preservar el tipo original en el contenido si es diferente
+    let enhancedContent = content;
+    if (originalContentType !== mappedContentType) {
+      enhancedContent = `[TIPO: ${originalContentType.toUpperCase()}]\n\n${content}`;
+    }
+
+    // Tipos de contenido que el frontend puede enviar
+    const frontendContentTypes = ['content', 'document', 'assignment'];
+    if (!frontendContentTypes.includes(originalContentType)) {
       return NextResponse.json(
-        { error: 'Tipo de contenido inválido' },
+        { error: `Tipo de contenido inválido. Valores permitidos: ${frontendContentTypes.join(', ')}` },
         { status: 400 }
       );
     }
@@ -228,8 +251,8 @@ export async function POST(
         subject_id: subjectId,
         unit_id: unitId,
         title,
-        content,
-        content_type,
+        content: enhancedContent, // Usar el contenido mejorado
+        content_type: mappedContentType, // Usar el tipo mapeado
         file_url,
         file_name,
         created_by: currentUser.id,
