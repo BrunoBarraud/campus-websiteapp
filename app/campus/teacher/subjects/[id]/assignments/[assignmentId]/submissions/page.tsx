@@ -6,11 +6,23 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { CalendarIcon, FileIcon, UserIcon, DownloadIcon, StarIcon } from "lucide-react";
+import {
+  CalendarIcon,
+  FileIcon,
+  UserIcon,
+  DownloadIcon,
+  StarIcon,
+} from "lucide-react";
 import { toast } from "sonner";
 
 interface Assignment {
@@ -38,20 +50,22 @@ interface Submission {
   };
 }
 
-export default function AssignmentSubmissionsPage({ 
-  params 
-}: { 
-  params: Promise<{ id: string; assignmentId: string }> 
+export default function AssignmentSubmissionsPage({
+  params,
+}: {
+  params: Promise<{ id: string; assignmentId: string }>;
 }) {
   const { data: session } = useSession();
   const router = useRouter();
   const [assignment, setAssignment] = useState<Assignment | null>(null);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [loading, setLoading] = useState(true);
-  const [gradingSubmission, setGradingSubmission] = useState<Submission | null>(null);
+  const [gradingSubmission, setGradingSubmission] = useState<Submission | null>(
+    null
+  );
   const [gradeData, setGradeData] = useState({ score: "", feedback: "" });
-  const [subjectId, setSubjectId] = useState<string>('');
-  const [assignmentId, setAssignmentId] = useState<string>('');
+  const [subjectId, setSubjectId] = useState<string>("");
+  const [assignmentId, setAssignmentId] = useState<string>("");
 
   useEffect(() => {
     const loadParams = async () => {
@@ -64,10 +78,12 @@ export default function AssignmentSubmissionsPage({
 
   const fetchAssignment = useCallback(async () => {
     try {
-      const response = await fetch(`/api/subjects/${subjectId}/assignments?assignmentId=${assignmentId}`);
+      const response = await fetch(
+        `/api/subjects/${subjectId}/assignments?assignmentId=${assignmentId}`
+      );
       if (response.ok) {
         const data = await response.json();
-        setAssignment(data[0]); // Assuming it returns an array with one item
+        setAssignment(data[0]);
       }
     } catch (error) {
       console.error("Error fetching assignment:", error);
@@ -77,7 +93,9 @@ export default function AssignmentSubmissionsPage({
 
   const fetchSubmissions = useCallback(async () => {
     try {
-      const response = await fetch(`/api/subjects/${subjectId}/assignments/${assignmentId}/submissions`);
+      const response = await fetch(
+        `/api/subjects/${subjectId}/assignments/${assignmentId}/submissions`
+      );
       if (response.ok) {
         const data = await response.json();
         setSubmissions(data);
@@ -102,17 +120,20 @@ export default function AssignmentSubmissionsPage({
     if (!gradingSubmission) return;
 
     try {
-      const response = await fetch(`/api/subjects/${subjectId}/assignments/${assignmentId}/submissions`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          submissionId: gradingSubmission.id,
-          score: parseInt(gradeData.score),
-          feedback: gradeData.feedback,
-        }),
-      });
+      const response = await fetch(
+        `/api/subjects/${subjectId}/assignments/${assignmentId}/submissions`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            submissionId: gradingSubmission.id,
+            score: parseInt(gradeData.score),
+            feedback: gradeData.feedback,
+          }),
+        }
+      );
 
       if (response.ok) {
         toast.success("Calificación guardada exitosamente");
@@ -137,12 +158,12 @@ export default function AssignmentSubmissionsPage({
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('es-ES', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+    return new Date(dateString).toLocaleDateString("es-ES", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
 
@@ -150,12 +171,13 @@ export default function AssignmentSubmissionsPage({
     if (submission.score !== null && submission.score !== undefined) {
       return <Badge variant="default">Calificada</Badge>;
     }
-    
-    const isLate = new Date(submission.submitted_at) > new Date(assignment?.due_date || '');
+
+    const isLate =
+      new Date(submission.submitted_at) > new Date(assignment?.due_date || "");
     if (isLate) {
       return <Badge variant="destructive">Tarde</Badge>;
     }
-    
+
     return <Badge variant="secondary">Pendiente</Badge>;
   };
 
@@ -185,7 +207,7 @@ export default function AssignmentSubmissionsPage({
         >
           ← Volver
         </Button>
-        
+
         <Card>
           <CardHeader>
             <CardTitle>{assignment.title}</CardTitle>
@@ -210,7 +232,7 @@ export default function AssignmentSubmissionsPage({
 
       <div className="space-y-4">
         <h2 className="text-xl font-semibold">Entregas de Estudiantes</h2>
-        
+
         {submissions.length === 0 ? (
           <Card>
             <CardContent className="p-6 text-center">
@@ -230,15 +252,18 @@ export default function AssignmentSubmissionsPage({
                         {submission.student.name}
                         {getStatusBadge(submission)}
                       </CardTitle>
-                      <p className="text-sm text-gray-600">{submission.student.email}</p>
+                      <p className="text-sm text-gray-600">
+                        {submission.student.email}
+                      </p>
                     </div>
                     <div className="text-right text-sm">
                       <p>Entregado: {formatDate(submission.submitted_at)}</p>
-                      {submission.score !== null && submission.score !== undefined && (
-                        <p className="font-semibold text-lg">
-                          {submission.score}/{assignment.max_score} puntos
-                        </p>
-                      )}
+                      {submission.score !== null &&
+                        submission.score !== undefined && (
+                          <p className="font-semibold text-lg">
+                            {submission.score}/{assignment.max_score} puntos
+                          </p>
+                        )}
                     </div>
                   </div>
                 </CardHeader>
@@ -251,7 +276,7 @@ export default function AssignmentSubmissionsPage({
                       </p>
                     </div>
                   )}
-                  
+
                   {submission.file_url && (
                     <div className="mb-4">
                       <h4 className="font-medium mb-2">Archivo:</h4>
@@ -261,7 +286,9 @@ export default function AssignmentSubmissionsPage({
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => window.open(submission.file_url, '_blank')}
+                          onClick={() =>
+                            window.open(submission.file_url, "_blank")
+                          }
                         >
                           <DownloadIcon className="h-4 w-4 mr-1" />
                           Descargar
@@ -269,7 +296,7 @@ export default function AssignmentSubmissionsPage({
                       </div>
                     </div>
                   )}
-                  
+
                   {submission.feedback && (
                     <div className="mb-4">
                       <h4 className="font-medium mb-2">Retroalimentación:</h4>
@@ -278,7 +305,7 @@ export default function AssignmentSubmissionsPage({
                       </p>
                     </div>
                   )}
-                  
+
                   <div className="flex justify-end">
                     <Dialog>
                       <DialogTrigger asChild>
@@ -287,10 +314,10 @@ export default function AssignmentSubmissionsPage({
                           onClick={() => openGradingDialog(submission)}
                         >
                           <StarIcon className="h-4 w-4 mr-2" />
-                          {submission.score !== null && submission.score !== undefined 
-                            ? "Editar Calificación" 
-                            : "Calificar"
-                          }
+                          {submission.score !== null &&
+                          submission.score !== undefined
+                            ? "Editar Calificación"
+                            : "Calificar"}
                         </Button>
                       </DialogTrigger>
                       <DialogContent>
@@ -310,7 +337,12 @@ export default function AssignmentSubmissionsPage({
                               min="0"
                               max={assignment.max_score}
                               value={gradeData.score}
-                              onChange={(e) => setGradeData({ ...gradeData, score: e.target.value })}
+                              onChange={(e) =>
+                                setGradeData({
+                                  ...gradeData,
+                                  score: e.target.value,
+                                })
+                              }
                               required
                             />
                           </div>
@@ -319,7 +351,12 @@ export default function AssignmentSubmissionsPage({
                             <Textarea
                               id="feedback"
                               value={gradeData.feedback}
-                              onChange={(e) => setGradeData({ ...gradeData, feedback: e.target.value })}
+                              onChange={(e) =>
+                                setGradeData({
+                                  ...gradeData,
+                                  feedback: e.target.value,
+                                })
+                              }
                               rows={4}
                               placeholder="Comentarios para el estudiante..."
                             />
@@ -330,9 +367,7 @@ export default function AssignmentSubmissionsPage({
                                 Cancelar
                               </Button>
                             </DialogTrigger>
-                            <Button type="submit">
-                              Guardar Calificación
-                            </Button>
+                            <Button type="submit">Guardar Calificación</Button>
                           </div>
                         </form>
                       </DialogContent>

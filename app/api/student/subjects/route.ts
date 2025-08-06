@@ -2,7 +2,6 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/app/lib/supabaseClient";
 import { requireRole } from "@/app/lib/auth";
-import { yearHasDivisions } from "@/app/lib/utils/divisions";
 
 // GET - Obtener materias del estudiante autenticado
 export async function GET(request: Request) {
@@ -20,8 +19,8 @@ export async function GET(request: Request) {
     const year = searchParams.get("year");
 
     // Obtener las materias en las que está inscrito el estudiante
-    // Filtrar por división solo si el año del estudiante requiere división
-    let query = supabaseAdmin
+    // Solo materias de su misma división
+    const query = supabaseAdmin
       .from("student_subjects")
       .select(
         `
@@ -45,23 +44,14 @@ export async function GET(request: Request) {
       `
       )
       .eq("student_id", currentUser.id)
-      .eq("is_active", true);
-
-    // Solo filtrar por división si el año del estudiante requiere división
-    if (currentUser.year && yearHasDivisions(currentUser.year)) {
-      query = query.eq("subjects.division", currentUser.division || "A");
-    } else {
-      // Para 5° y 6° año, no filtrar por división (las materias de estos años no tienen división)
-      query = query.is("subjects.division", null);
-    }
+      .eq("is_active", true)
+      .eq("subjects.division", currentUser.division || "A"); // Filtrar por división del estudiante
 
     console.log(
       "Student API: Executing query for student_id:",
       currentUser.id,
-      "year:",
-      currentUser.year,
       "division:",
-      yearHasDivisions(currentUser.year || 0) ? currentUser.division : "N/A (sin división)"
+      currentUser.division
     );
 
     const { data: enrollments, error } = await query;
@@ -82,7 +72,7 @@ export async function GET(request: Request) {
     // Extraer las materias y filtrar por año si se especifica
     let subjects = (enrollments || [])
       .map((enrollment) => enrollment.subjects)
-      .flat() // Aplanar el array de arrays
+      .flat()
       .filter((subject) => subject && subject.is_active);
 
     console.log("Student API: Subjects after extraction:", subjects.length);
@@ -143,10 +133,10 @@ export async function GET(request: Request) {
     );
 
     return NextResponse.json(validSubjects);
-  } catch (error: unknown) {
-    console.error("Error in GET /api/student/subjects:", error);
+  } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : "Error interno del servidor";
+    console.error("Student API: Unhandled error:", errorMessage);
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }

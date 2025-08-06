@@ -49,7 +49,7 @@ export async function GET(
       );
     }
 
-        // Obtener los contenidos de la unidad
+    // Obtener los contenidos de la unidad
     const { data: contents, error } = await supabaseAdmin
       .from('subject_content')
       .select(`
@@ -59,8 +59,6 @@ export async function GET(
         content_type,
         title,
         content,
-        file_url,
-        file_name,
         created_by,
         is_pinned,
         is_active,
@@ -139,70 +137,7 @@ export async function POST(
       );
     }
 
-    // Verificar si es FormData (para archivos) o JSON
-    let title, content, content_type, is_pinned, file;
-    let file_url = null;
-    let file_name = null;
-
-    const contentType = request.headers.get('content-type');
-    
-    if (contentType?.includes('multipart/form-data')) {
-      // Manejar FormData (con archivos)
-      const formData = await request.formData();
-      title = formData.get('title') as string;
-      content = formData.get('content') as string;
-      content_type = formData.get('content_type') as string;
-      is_pinned = formData.get('is_pinned') === 'true';
-      file = formData.get('file') as File;
-
-      // Si hay archivo, procesarlo
-      if (file) {
-        try {
-          // Generar nombre único para el archivo
-          const timestamp = new Date().getTime();
-          const fileName = `${timestamp}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
-          const filePath = `subjects/${subjectId}/units/${unitId}/${fileName}`;
-
-          // Subir archivo a Supabase Storage
-          const { error: uploadError } = await supabaseAdmin.storage
-            .from('documents')
-            .upload(filePath, file, {
-              contentType: file.type,
-              upsert: false
-            });
-
-          if (uploadError) {
-            console.error('Error uploading file:', uploadError);
-            return NextResponse.json(
-              { error: 'Error al subir el archivo' },
-              { status: 500 }
-            );
-          }
-
-          // Obtener URL pública del archivo
-          const { data: urlData } = supabaseAdmin.storage
-            .from('documents')
-            .getPublicUrl(filePath);
-
-          file_url = urlData.publicUrl;
-          file_name = file.name;
-
-        } catch (fileError) {
-          console.error('Error processing file:', fileError);
-          return NextResponse.json(
-            { error: 'Error al procesar el archivo' },
-            { status: 500 }
-          );
-        }
-      }
-    } else {
-      // Manejar JSON tradicional
-      const body = await request.json();
-      title = body.title;
-      content = body.content;
-      content_type = body.content_type;
-      is_pinned = body.is_pinned;
-    }
+    const { title, content, content_type, is_pinned } = await request.json();
 
     // Validaciones
     if (!title || !content || !content_type) {
@@ -212,34 +147,11 @@ export async function POST(
       );
     }
 
-    // Log para debugging
-    console.log('📋 Datos recibidos para crear contenido:', {
-      title,
-      content_type,
-      contentLength: content?.length,
-      hasFile: !!file,
-      file_url,
-      file_name
-    });
-
-    // IMPORTANTE: La base de datos actualmente solo acepta 'assignment' como content_type
-    // Mapear todos los tipos a 'assignment' temporalmente hasta que se pueda actualizar la BD
-    const originalContentType = content_type;
-    const mappedContentType = 'assignment'; // Forzar a assignment que es el único permitido
-    
-    console.log(`🔄 Mapeando content_type de "${originalContentType}" a "${mappedContentType}"`);
-
-    // Preservar el tipo original en el contenido si es diferente
-    let enhancedContent = content;
-    if (originalContentType !== mappedContentType) {
-      enhancedContent = `[TIPO: ${originalContentType.toUpperCase()}]\n\n${content}`;
-    }
-
-    // Tipos de contenido que el frontend puede enviar
-    const frontendContentTypes = ['content', 'document', 'assignment'];
-    if (!frontendContentTypes.includes(originalContentType)) {
+    // Tipos de contenido válidos
+    const validContentTypes = ['text', 'video', 'document', 'link', 'assignment'];
+    if (!validContentTypes.includes(content_type)) {
       return NextResponse.json(
-        { error: `Tipo de contenido inválido. Valores permitidos: ${frontendContentTypes.join(', ')}` },
+        { error: 'Tipo de contenido inválido' },
         { status: 400 }
       );
     }
@@ -251,10 +163,8 @@ export async function POST(
         subject_id: subjectId,
         unit_id: unitId,
         title,
-        content: enhancedContent, // Usar el contenido mejorado
-        content_type: mappedContentType, // Usar el tipo mapeado
-        file_url,
-        file_name,
+        content,
+        content_type,
         created_by: currentUser.id,
         is_pinned: is_pinned || false,
         is_active: true
@@ -266,8 +176,6 @@ export async function POST(
         content_type,
         title,
         content,
-        file_url,
-        file_name,
         created_by,
         is_pinned,
         is_active,
