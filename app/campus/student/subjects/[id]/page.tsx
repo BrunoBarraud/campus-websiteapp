@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter, useParams } from "next/navigation";
 import LoadingSpinner from "../../../../../components/ui/LoadingSpinner";
-import UnitAccordion from "../../../../../components/teacher/UnitAccordion";
+import UnitAccordionStudent from "@/components/student/UnitAccordionStudent";
 
 interface Subject {
   id: string;
@@ -40,7 +40,7 @@ export default function StudentSubjectDetailPage() {
   const fetchSubject = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/subjects/${subjectId}`);
+      const response = await fetch(`/api/student/subjects/${subjectId}`);
       const data = await response.json();
 
       if (!response.ok) {
@@ -174,10 +174,9 @@ export default function StudentSubjectDetailPage() {
         )}
 
         {/* Unidades y contenidos */}
-        <UnitAccordion
+        <UnitAccordionStudent
           subjectId={subjectId}
           subjectName={subject?.name || ""}
-          isTeacher={false}
         />
       </div>
     </div>

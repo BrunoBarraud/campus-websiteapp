@@ -3,9 +3,8 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter, useParams } from "next/navigation";
-import UnitAccordion from "../../../../../components/teacher/UnitAccordion";
+import UnitAccordionTeacher from "../../../../../components/teacher/UnitAccordionTeacher";
 import LoadingSpinner from "../../../../../components/ui/LoadingSpinner";
-
 interface Subject {
   id: string;
   name: string;
@@ -203,10 +202,9 @@ export default function TeacherSubjectPage() {
           </div>
         </div>
 
-        <UnitAccordion
+        <UnitAccordionTeacher
           subjectId={subjectId}
-          subjectName={subject.name}
-          isTeacher={true}
+          subjectName={subject?.name || ""}
         />
       </div>
     </div>

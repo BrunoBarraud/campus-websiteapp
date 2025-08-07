@@ -5,11 +5,24 @@ import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { CalendarIcon, ClockIcon, FileTextIcon, UploadIcon, CheckCircleIcon, AlertCircleIcon } from "lucide-react";
+import {
+  CalendarIcon,
+  ClockIcon,
+  FileTextIcon,
+  UploadIcon,
+  CheckCircleIcon,
+  AlertCircleIcon,
+} from "lucide-react";
 import { toast } from "sonner";
 
 interface Assignment {
@@ -36,18 +49,23 @@ interface Assignment {
   };
 }
 
-export default function StudentAssignmentsPage({ params }: { params: Promise<{ id: string }> }) {
+export default function StudentAssignmentsPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const { data: session } = useSession();
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitDialogOpen, setSubmitDialogOpen] = useState(false);
-  const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(null);
+  const [selectedAssignment, setSelectedAssignment] =
+    useState<Assignment | null>(null);
   const [submissionData, setSubmissionData] = useState({
     submission_text: "",
     file: null as File | null,
   });
   const [uploading, setUploading] = useState(false);
-  const [subjectId, setSubjectId] = useState<string>('');
+  const [subjectId, setSubjectId] = useState<string>("");
 
   useEffect(() => {
     const loadParams = async () => {
@@ -59,15 +77,17 @@ export default function StudentAssignmentsPage({ params }: { params: Promise<{ i
 
   const fetchAssignments = useCallback(async () => {
     try {
-      const response = await fetch(`/api/student/subjects/${subjectId}/assignments`);
+      const response = await fetch(
+        `/api/student/subjects/${subjectId}/assignments`
+      );
       if (response.ok) {
         const data = await response.json();
-        setAssignments(data.assignments || []);
+        setAssignments(Array.isArray(data) ? data : data.assignments || []);
       } else {
-        console.error('Error fetching assignments');
+        console.error("Error fetching assignments");
       }
     } catch (error) {
-      console.error('Error:', error);
+      console.error("Error:", error);
     } finally {
       setLoading(false);
     }
@@ -89,13 +109,16 @@ export default function StudentAssignmentsPage({ params }: { params: Promise<{ i
       if (submissionData.file) {
         // Enviar como FormData con el archivo
         const formData = new FormData();
-        formData.append('content', submissionData.submission_text);
-        formData.append('file', submissionData.file);
+        formData.append("submission_text", submissionData.submission_text);
+        formData.append("file", submissionData.file);
 
-        const response = await fetch(`/api/subjects/${subjectId}/assignments/${selectedAssignment.id}/submissions`, {
-          method: "POST",
-          body: formData, // No incluir Content-Type header, deja que el navegador lo configure
-        });
+        const response = await fetch(
+          `/api/student/subjects/${subjectId}/assignments/${selectedAssignment.id}/submissions`,
+          {
+            method: "POST",
+            body: formData, // No incluir Content-Type header, deja que el navegador lo configure
+          }
+        );
 
         if (response.ok) {
           toast.success("Tarea entregada exitosamente");
@@ -109,15 +132,18 @@ export default function StudentAssignmentsPage({ params }: { params: Promise<{ i
         }
       } else {
         // Enviar como JSON solo con texto
-        const response = await fetch(`/api/subjects/${subjectId}/assignments/${selectedAssignment.id}/submissions`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            content: submissionData.submission_text,
-          }),
-        });
+        const response = await fetch(
+          `/api/student/subjects/${subjectId}/assignments/${selectedAssignment.id}/submissions`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              submission_text: submissionData.submission_text,
+            }),
+          }
+        );
 
         if (response.ok) {
           toast.success("Tarea entregada exitosamente");
@@ -145,12 +171,12 @@ export default function StudentAssignmentsPage({ params }: { params: Promise<{ i
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('es-ES', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+    return new Date(dateString).toLocaleDateString("es-ES", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
 
@@ -160,26 +186,29 @@ export default function StudentAssignmentsPage({ params }: { params: Promise<{ i
 
   const getAssignmentStatus = (assignment: Assignment) => {
     if (assignment.submission) {
-      if (assignment.submission.score !== null && assignment.submission.score !== undefined) {
+      if (
+        assignment.submission.score !== null &&
+        assignment.submission.score !== undefined
+      ) {
         return {
           badge: <Badge variant="default">Calificada</Badge>,
-          icon: <CheckCircleIcon className="h-5 w-5 text-green-500" />
+          icon: <CheckCircleIcon className="h-5 w-5 text-green-500" />,
         };
       } else {
         return {
           badge: <Badge variant="secondary">Entregada</Badge>,
-          icon: <CheckCircleIcon className="h-5 w-5 text-blue-500" />
+          icon: <CheckCircleIcon className="h-5 w-5 text-blue-500" />,
         };
       }
     } else if (isOverdue(assignment.due_date)) {
       return {
         badge: <Badge variant="destructive">Vencida</Badge>,
-        icon: <AlertCircleIcon className="h-5 w-5 text-red-500" />
+        icon: <AlertCircleIcon className="h-5 w-5 text-red-500" />,
       };
     } else {
       return {
         badge: <Badge variant="outline">Pendiente</Badge>,
-        icon: <ClockIcon className="h-5 w-5 text-yellow-500" />
+        icon: <ClockIcon className="h-5 w-5 text-yellow-500" />,
       };
     }
   };
@@ -196,7 +225,9 @@ export default function StudentAssignmentsPage({ params }: { params: Promise<{ i
     <div className="container mx-auto p-6">
       <div className="mb-6">
         <h1 className="text-2xl font-bold">Mis Tareas</h1>
-        <p className="text-gray-600">Administra tus entregas y revisa las calificaciones</p>
+        <p className="text-gray-600">
+          Administra tus entregas y revisa las calificaciones
+        </p>
       </div>
 
       {assignments.length === 0 ? (
@@ -211,7 +242,14 @@ export default function StudentAssignmentsPage({ params }: { params: Promise<{ i
           {assignments.map((assignment) => {
             const status = getAssignmentStatus(assignment);
             return (
-              <Card key={assignment.id} className={`${isOverdue(assignment.due_date) && !assignment.submission ? 'border-red-200 bg-red-50' : ''}`}>
+              <Card
+                key={assignment.id}
+                className={`${
+                  isOverdue(assignment.due_date) && !assignment.submission
+                    ? "border-red-200 bg-red-50"
+                    : ""
+                }`}
+              >
                 <CardHeader>
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
@@ -256,42 +294,56 @@ export default function StudentAssignmentsPage({ params }: { params: Promise<{ i
                       <div className="bg-blue-50 p-4 rounded">
                         <h4 className="font-medium mb-2">Tu entrega:</h4>
                         <div className="text-sm space-y-2">
-                          <p><strong>Entregado:</strong> {formatDate(assignment.submission.submitted_at)}</p>
-                          
+                          <p>
+                            <strong>Entregado:</strong>{" "}
+                            {formatDate(assignment.submission.submitted_at)}
+                          </p>
+
                           {assignment.submission.submission_text && (
                             <div>
                               <strong>Texto:</strong>
-                              <p className="mt-1 bg-white p-2 rounded">{assignment.submission.submission_text}</p>
+                              <p className="mt-1 bg-white p-2 rounded">
+                                {assignment.submission.submission_text}
+                              </p>
                             </div>
                           )}
-                          
+
                           {assignment.submission.file_url && (
                             <div>
                               <strong>Archivo:</strong>
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => window.open(assignment.submission!.file_url, '_blank')}
+                                onClick={() =>
+                                  window.open(
+                                    assignment.submission!.file_url,
+                                    "_blank"
+                                  )
+                                }
                                 className="ml-2"
                               >
                                 {assignment.submission.file_name}
                               </Button>
                             </div>
                           )}
-                          
-                          {assignment.submission.score !== null && assignment.submission.score !== undefined && (
-                            <div>
-                              <strong>Calificación:</strong>
-                              <span className="ml-2 text-lg font-semibold">
-                                {assignment.submission.score}/{assignment.max_score} puntos
-                              </span>
-                            </div>
-                          )}
-                          
+
+                          {assignment.submission.score !== null &&
+                            assignment.submission.score !== undefined && (
+                              <div>
+                                <strong>Calificación:</strong>
+                                <span className="ml-2 text-lg font-semibold">
+                                  {assignment.submission.score}/
+                                  {assignment.max_score} puntos
+                                </span>
+                              </div>
+                            )}
+
                           {assignment.submission.feedback && (
                             <div>
                               <strong>Retroalimentación:</strong>
-                              <p className="mt-1 bg-green-50 p-2 rounded">{assignment.submission.feedback}</p>
+                              <p className="mt-1 bg-green-50 p-2 rounded">
+                                {assignment.submission.feedback}
+                              </p>
                             </div>
                           )}
                         </div>
@@ -305,24 +357,38 @@ export default function StudentAssignmentsPage({ params }: { params: Promise<{ i
                           Fecha Vencida
                         </Button>
                       ) : (
-                        <Dialog open={submitDialogOpen} onOpenChange={setSubmitDialogOpen}>
+                        <Dialog
+                          open={submitDialogOpen}
+                          onOpenChange={setSubmitDialogOpen}
+                        >
                           <DialogTrigger asChild>
-                            <Button onClick={() => openSubmitDialog(assignment)}>
+                            <Button
+                              onClick={() => openSubmitDialog(assignment)}
+                            >
                               <UploadIcon className="h-4 w-4 mr-2" />
                               Entregar Tarea
                             </Button>
                           </DialogTrigger>
                           <DialogContent className="max-w-2xl">
                             <DialogHeader>
-                              <DialogTitle>Entregar: {selectedAssignment?.title}</DialogTitle>
+                              <DialogTitle>
+                                Entregar: {selectedAssignment?.title}
+                              </DialogTitle>
                             </DialogHeader>
                             <form onSubmit={handleSubmit} className="space-y-4">
                               <div>
-                                <Label htmlFor="submission_text">Texto de la entrega</Label>
+                                <Label htmlFor="submission_text">
+                                  Texto de la entrega
+                                </Label>
                                 <Textarea
                                   id="submission_text"
                                   value={submissionData.submission_text}
-                                  onChange={(e) => setSubmissionData({ ...submissionData, submission_text: e.target.value })}
+                                  onChange={(e) =>
+                                    setSubmissionData({
+                                      ...submissionData,
+                                      submission_text: e.target.value,
+                                    })
+                                  }
                                   rows={4}
                                   placeholder="Escribe aquí tu respuesta o comentarios..."
                                 />
@@ -332,23 +398,36 @@ export default function StudentAssignmentsPage({ params }: { params: Promise<{ i
                                 <Input
                                   id="file"
                                   type="file"
-                                  onChange={(e) => setSubmissionData({ ...submissionData, file: e.target.files?.[0] || null })}
+                                  onChange={(e) =>
+                                    setSubmissionData({
+                                      ...submissionData,
+                                      file: e.target.files?.[0] || null,
+                                    })
+                                  }
                                   accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png"
                                 />
                                 <p className="text-xs text-gray-500 mt-1">
-                                  Formatos aceptados: PDF, DOC, DOCX, TXT, JPG, PNG (máximo 10MB)
+                                  Formatos aceptados: PDF, DOC, DOCX, TXT, JPG,
+                                  PNG (máximo 10MB)
                                 </p>
                               </div>
                               <div className="flex justify-end gap-2">
-                                <Button 
-                                  type="button" 
-                                  variant="outline" 
+                                <Button
+                                  type="button"
+                                  variant="outline"
                                   onClick={() => setSubmitDialogOpen(false)}
                                   disabled={uploading}
                                 >
                                   Cancelar
                                 </Button>
-                                <Button type="submit" disabled={uploading || (!submissionData.submission_text.trim() && !submissionData.file)}>
+                                <Button
+                                  type="submit"
+                                  disabled={
+                                    uploading ||
+                                    (!submissionData.submission_text.trim() &&
+                                      !submissionData.file)
+                                  }
+                                >
                                   {uploading ? "Subiendo..." : "Entregar Tarea"}
                                 </Button>
                               </div>

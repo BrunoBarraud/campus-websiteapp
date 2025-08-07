@@ -1,4 +1,3 @@
-// 🎓 API para materias del estudiante autenticado
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/app/lib/supabaseClient";
 import { requireRole } from "@/app/lib/auth";
@@ -7,136 +6,40 @@ import { requireRole } from "@/app/lib/auth";
 export async function GET(request: Request) {
   try {
     const currentUser = await requireRole(["student"]);
-
-    console.log(
-      "Student API: User accessing subjects:",
-      currentUser.email,
-      "Year:",
-      currentUser.year
-    );
-
-    const { searchParams } = new URL(request.url);
-    const year = searchParams.get("year");
-
-    // Obtener las materias en las que está inscrito el estudiante
-    // Solo materias de su misma división
-    const query = supabaseAdmin
+    // Busca las materias a las que está inscripto el estudiante
+    const { data: relations, error } = await supabaseAdmin
       .from("student_subjects")
-      .select(
-        `
-        id,
-        student_id,
-        subject_id,
-        enrolled_at,
-        is_active,
-        subjects!inner (
-          id,
-          name,
-          code,
-          description,
-          year,
-          division,
-          teacher_id,
-          image_url,
-          is_active,
-          teacher:users!subjects_teacher_id_fkey(id, name, email)
-        )
-      `
-      )
-      .eq("student_id", currentUser.id)
-      .eq("is_active", true)
-      .eq("subjects.division", currentUser.division || "A"); // Filtrar por división del estudiante
-
-    console.log(
-      "Student API: Executing query for student_id:",
-      currentUser.id,
-      "division:",
-      currentUser.division
-    );
-
-    const { data: enrollments, error } = await query;
+      .select("subject_id")
+      .eq("student_id", currentUser.id);
 
     if (error) {
-      console.error("Student API: Error fetching enrollments:", error);
       return NextResponse.json(
-        { error: "Error al obtener las materias" },
+        { error: "Error al obtener materias" },
         { status: 500 }
       );
     }
 
-    console.log(
-      "Student API: Raw enrollments data:",
-      JSON.stringify(enrollments, null, 2)
-    );
+    const subjectIds = relations.map((r: any) => r.subject_id);
 
-    // Extraer las materias y filtrar por año si se especifica
-    let subjects = (enrollments || [])
-      .map((enrollment) => enrollment.subjects)
-      .flat()
-      .filter((subject) => subject && subject.is_active);
+    // Ahora busca los datos de las materias
+    const { data: subjects, error: subjectsError } = await supabaseAdmin
+      .from("subjects")
+      .select("*")
+      .in("id", subjectIds)
+      .eq("is_active", true);
 
-    console.log("Student API: Subjects after extraction:", subjects.length);
-
-    if (year) {
-      subjects = subjects.filter(
-        (subject) => subject && subject.year === parseInt(year)
-      );
-      console.log(
-        "Student API: Subjects after year filter:",
-        subjects.length,
-        "for year:",
-        year
+    if (subjectsError) {
+      return NextResponse.json(
+        { error: "Error al obtener materias" },
+        { status: 500 }
       );
     }
 
-    // Enriquecer con información adicional para cada materia
-    const enrichedSubjects = await Promise.all(
-      subjects.map(async (subject) => {
-        if (!subject) return null;
-
-        // Contar unidades públicas
-        const { count: unitsCount } = await supabaseAdmin
-          .from("subject_units")
-          .select("*", { count: "exact", head: true })
-          .eq("subject_id", subject.id)
-          .eq("is_active", true);
-
-        // Contar contenidos públicos
-        const { count: contentsCount } = await supabaseAdmin
-          .from("subject_content")
-          .select("*", { count: "exact", head: true })
-          .eq("subject_id", subject.id)
-          .eq("is_active", true);
-
-        // Contar documentos públicos
-        const { count: documentsCount } = await supabaseAdmin
-          .from("documents")
-          .select("*", { count: "exact", head: true })
-          .eq("subject_id", subject.id)
-          .eq("is_public", true)
-          .eq("is_active", true);
-
-        return {
-          ...subject,
-          stats: {
-            units_count: unitsCount || 0,
-            contents_count: contentsCount || 0,
-            documents_count: documentsCount || 0,
-          },
-        };
-      })
+    return NextResponse.json(subjects);
+  } catch (error: any) {
+    return NextResponse.json(
+      { error: error.message || "Error interno" },
+      { status: 500 }
     );
-
-    // Filtrar elementos nulos
-    const validSubjects = enrichedSubjects.filter(
-      (subject) => subject !== null
-    );
-
-    return NextResponse.json(validSubjects);
-  } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Error interno del servidor";
-    console.error("Student API: Unhandled error:", errorMessage);
-    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
