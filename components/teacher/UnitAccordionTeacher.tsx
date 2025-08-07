@@ -90,18 +90,47 @@ const UnitAccordionTeacher: React.FC<UnitAccordionProps> = ({
     setLoading(true);
     setError(null);
     try {
-      await fetch(`/api/subjects/${subjectId}/units`, {
+      const response = await fetch(`/api/subjects/${subjectId}/units`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newUnit),
       });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "No se pudo crear la unidad.");
+      }
+
       setNewUnit({ title: "", description: "" });
       await fetchUnits();
       setShowAddUnit(false);
-    } catch {
-      setError("No se pudo crear la unidad.");
+    } catch (err: any) {
+      setError(err.message || "No se pudo crear la unidad.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Función para eliminar una tarea (assignment)
+  const handleDeleteAssignment = async (
+    unitId: string,
+    assignmentId: string
+  ) => {
+    if (!window.confirm("¿Seguro que quieres eliminar esta tarea?")) return;
+    const res = await fetch(
+      `/api/units/${unitId}/sections?assignmentId=${assignmentId}`,
+      {
+        method: "DELETE",
+      }
+    );
+    if (res.ok) {
+      setSections((prev) => ({
+        ...prev,
+        [unitId]: prev[unitId].filter((section) => section.id !== assignmentId),
+      }));
+    } else {
+      const data = await res.json();
+      alert(data.error || "Error al eliminar la tarea");
     }
   };
 
@@ -121,10 +150,16 @@ const UnitAccordionTeacher: React.FC<UnitAccordionProps> = ({
       formData.append("content", newSection.content);
       if (newSection.file) formData.append("file", newSection.file);
 
-      await fetch(`/api/units/${unitId}/sections`, {
+      const response = await fetch(`/api/units/${unitId}/sections`, {
         method: "POST",
         body: formData,
       });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "No se pudo agregar la sección.");
+      }
+
       setNewSection({
         title: "",
         content_type: "content",
@@ -133,8 +168,8 @@ const UnitAccordionTeacher: React.FC<UnitAccordionProps> = ({
       });
       await fetchUnits();
       setShowAddSection(null);
-    } catch {
-      setError("No se pudo agregar la sección.");
+    } catch (err: any) {
+      setError(err.message || "No se pudo agregar la sección.");
     } finally {
       setLoading(false);
     }
@@ -252,37 +287,51 @@ const UnitAccordionTeacher: React.FC<UnitAccordionProps> = ({
               >
                 <div className="space-y-3">
                   {Array.isArray(sections[unit.id]) &&
-                    sections[unit.id].map((section) => (
-                      <div
-                        key={section.id}
-                        className="bg-yellow-50 border border-yellow-200 rounded-lg p-4"
-                      >
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-lg">
-                            {getSectionIcon(section)}
-                          </span>
-                          <span className="font-medium text-gray-900">
-                            {section.title}
-                          </span>
-                          <span className="px-2 py-1 bg-gray-100 text-gray-800 text-xs rounded-full capitalize">
-                            {getSectionTypeLabel(section)}
-                          </span>
-                        </div>
-                        <div className="text-gray-700 mb-2 whitespace-pre-wrap">
-                          {section.content}
-                        </div>
-                        {section.content_type === "link" && (
-                          <a
-                            href={section.content}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center px-3 py-2 bg-yellow-100 text-yellow-700 rounded-lg hover:bg-yellow-200 transition-colors text-sm"
-                          >
-                            🔗 Abrir enlace
-                          </a>
-                        )}
-                        {section.content_type === "document" &&
-                          section.file_url && (
+                    sections[unit.id].map((section) => {
+                      // LOG PARA DEPURAR
+                      console.log("Section render:", section);
+                      return (
+                        <div
+                          key={section.id}
+                          className="bg-yellow-50 border border-yellow-200 rounded-lg p-4"
+                        >
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-lg">
+                              {getSectionIcon(section)}
+                            </span>
+                            <span className="font-medium text-gray-900">
+                              {section.title}
+                            </span>
+                            <span className="px-2 py-1 bg-gray-100 text-gray-800 text-xs rounded-full capitalize">
+                              {getSectionTypeLabel(section)}
+                            </span>
+                            {/* Botón eliminar solo para tareas */}
+                            {section.content_type === "assignment" && (
+                              <button
+                                onClick={() =>
+                                  handleDeleteAssignment(unit.id, section.id)
+                                }
+                                className="ml-2 px-2 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 text-xs"
+                              >
+                                Eliminar tarea
+                              </button>
+                            )}
+                          </div>
+                          <div className="text-gray-700 mb-2 whitespace-pre-wrap">
+                            {section.content}
+                          </div>
+                          {section.content_type === "link" && (
+                            <a
+                              href={section.content}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center px-3 py-2 bg-yellow-100 text-yellow-700 rounded-lg hover:bg-yellow-200 transition-colors text-sm"
+                            >
+                              🔗 Abrir enlace
+                            </a>
+                          )}
+                          {/* Mostrar botón de descarga si hay archivo */}
+                          {section.file_url && section.file_name && (
                             <a
                               href={section.file_url}
                               target="_blank"
@@ -292,12 +341,13 @@ const UnitAccordionTeacher: React.FC<UnitAccordionProps> = ({
                               📄 Descargar {section.file_name}
                             </a>
                           )}
-                        <div className="text-xs text-gray-500 mt-1">
-                          Por {section.creator_name || "Desconocido"} •{" "}
-                          {new Date(section.created_at).toLocaleDateString()}
+                          <div className="text-xs text-gray-500 mt-1">
+                            Por {section.creator_name || "Desconocido"} •{" "}
+                            {new Date(section.created_at).toLocaleDateString()}
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   <button
                     onClick={() => setShowAddSection(unit.id)}
                     className="w-full p-3 border-2 border-dashed border-gray-300 rounded-lg hover:border-yellow-400 hover:bg-yellow-50/50 transition-all duration-200 flex items-center justify-center gap-2 text-gray-600"

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 interface UnitAccordionProps {
   subjectId: string;
@@ -29,6 +30,7 @@ const UnitAccordionStudent: React.FC<UnitAccordionProps> = ({
   subjectId,
   subjectName,
 }) => {
+  const router = useRouter();
   const [units, setUnits] = useState<Unit[]>([]);
   const [expandedUnit, setExpandedUnit] = useState<string | null>(null);
   const [sections, setSections] = useState<Record<string, Section[]>>({});
@@ -223,6 +225,19 @@ const UnitAccordionStudent: React.FC<UnitAccordionProps> = ({
                           >
                             📄 Descargar {section.file_name}
                           </a>
+                        )}
+                        {/* Botón para entregar tarea */}
+                        {section.content_type === "assignment" && (
+                          <button
+                            onClick={() =>
+                              router.push(
+                                `/campus/student/subjects/${subjectId}/assignments`
+                              )
+                            }
+                            className="inline-flex items-center px-3 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors text-sm"
+                          >
+                            📝 Realizar Entrega
+                          </button>
                         )}
                         <div className="text-xs text-gray-500 mt-1">
                           Por {section.creator_name || "Desconocido"} •{" "}

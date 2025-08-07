@@ -76,6 +76,9 @@ export default function StudentAssignmentsPage({
   }, [params]);
 
   const fetchAssignments = useCallback(async () => {
+    if (!subjectId) return;
+
+    setLoading(true);
     try {
       const response = await fetch(
         `/api/student/subjects/${subjectId}/assignments`
@@ -84,9 +87,11 @@ export default function StudentAssignmentsPage({
         const data = await response.json();
         setAssignments(Array.isArray(data) ? data : data.assignments || []);
       } else {
+        toast.error("Error al cargar las tareas.");
         console.error("Error fetching assignments");
       }
     } catch (error) {
+      toast.error("Ocurrió un error inesperado.");
       console.error("Error:", error);
     } finally {
       setLoading(false);
@@ -105,56 +110,38 @@ export default function StudentAssignmentsPage({
 
     setUploading(true);
     try {
-      // Crear FormData si hay archivo, JSON si solo hay texto
-      if (submissionData.file) {
-        // Enviar como FormData con el archivo
-        const formData = new FormData();
-        formData.append("submission_text", submissionData.submission_text);
-        formData.append("file", submissionData.file);
+      const body: FormData | string = submissionData.file
+        ? (() => {
+            const fd = new FormData();
+            fd.append("submission_text", submissionData.submission_text);
+            fd.append("file", submissionData.file as File);
+            return fd;
+          })()
+        : JSON.stringify({ submission_text: submissionData.submission_text });
 
-        const response = await fetch(
-          `/api/student/subjects/${subjectId}/assignments/${selectedAssignment.id}/submissions`,
-          {
-            method: "POST",
-            body: formData, // No incluir Content-Type header, deja que el navegador lo configure
-          }
-        );
+      const requestOptions: RequestInit = {
+        method: "POST",
+        body,
+      };
 
-        if (response.ok) {
-          toast.success("Tarea entregada exitosamente");
-          setSubmitDialogOpen(false);
-          setSelectedAssignment(null);
-          setSubmissionData({ submission_text: "", file: null });
-          fetchAssignments();
-        } else {
-          const errorData = await response.json();
-          toast.error(errorData.error || "Error al entregar la tarea");
-        }
+      if (!submissionData.file) {
+        requestOptions.headers = { "Content-Type": "application/json" };
+      }
+
+      const response = await fetch(
+        `/api/student/subjects/${subjectId}/assignments/${selectedAssignment.id}/submissions`,
+        requestOptions
+      );
+
+      if (response.ok) {
+        toast.success("Tarea entregada exitosamente");
+        setSubmitDialogOpen(false);
+        setSelectedAssignment(null);
+        setSubmissionData({ submission_text: "", file: null });
+        fetchAssignments();
       } else {
-        // Enviar como JSON solo con texto
-        const response = await fetch(
-          `/api/student/subjects/${subjectId}/assignments/${selectedAssignment.id}/submissions`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              submission_text: submissionData.submission_text,
-            }),
-          }
-        );
-
-        if (response.ok) {
-          toast.success("Tarea entregada exitosamente");
-          setSubmitDialogOpen(false);
-          setSelectedAssignment(null);
-          setSubmissionData({ submission_text: "", file: null });
-          fetchAssignments();
-        } else {
-          const errorData = await response.json();
-          toast.error(errorData.error || "Error al entregar la tarea");
-        }
+        const errorData = await response.json();
+        toast.error(errorData.error || "Error al entregar la tarea");
       }
     } catch (error) {
       console.error("Error:", error);
@@ -234,7 +221,9 @@ export default function StudentAssignmentsPage({
         <Card>
           <CardContent className="p-6 text-center">
             <FileTextIcon className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-            <p className="text-gray-600">No hay tareas disponibles</p>
+            <p className="text-gray-600">
+              No hay tareas disponibles para esta materia.
+            </p>
           </CardContent>
         </Card>
       ) : (

@@ -74,10 +74,12 @@ export async function GET(
       );
     }
 
-    // Agregar el nombre del creador a cada sección
+    // Agregar el nombre del creador y asegurar file_url/file_name en cada sección
     const sectionsWithCreator = (sections || []).map((section) => ({
       ...section,
       creator_name: creatorsMap[section.created_by] || "Desconocido",
+      file_url: section.file_url ?? null,
+      file_name: section.file_name ?? null,
     }));
 
     return NextResponse.json({
