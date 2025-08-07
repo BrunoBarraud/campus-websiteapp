@@ -1,9 +1,20 @@
 // 🎯 Nuevo componente de Unidades Desplegables para Profesores
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import { ChevronDownIcon, ChevronRightIcon, PlusIcon, FileTextIcon, ClipboardIcon, DownloadIcon } from 'lucide-react';
-import { extractOriginalContentType, getContentTypeLabel, hasAttachment } from '@/app/lib/utils/contentTypes';
+import React, { useState, useEffect } from "react";
+import {
+  ChevronDownIcon,
+  ChevronRightIcon,
+  PlusIcon,
+  FileTextIcon,
+  ClipboardIcon,
+  DownloadIcon,
+} from "lucide-react";
+import {
+  extractOriginalContentType,
+  getContentTypeLabel,
+  hasAttachment,
+} from "@/app/lib/utils/contentTypes";
 
 interface Unit {
   id: string;
@@ -17,7 +28,7 @@ interface Unit {
 interface Section {
   id: string;
   title: string;
-  content_type: 'document' | 'assignment' | 'content';
+  content_type: "document" | "assignment" | "content";
   content?: string;
   file_url?: string;
   file_name?: string;
@@ -31,7 +42,10 @@ interface UnitAccordionProps {
   subjectName: string;
 }
 
-const UnitAccordion: React.FC<UnitAccordionProps> = ({ subjectId, subjectName }) => {
+const UnitAccordion: React.FC<UnitAccordionProps> = ({
+  subjectId,
+  subjectName,
+}) => {
   const [units, setUnits] = useState<Unit[]>([]);
   const [sections, setSections] = useState<{ [unitId: string]: Section[] }>({});
   const [expandedUnits, setExpandedUnits] = useState<Set<string>>(new Set());
@@ -42,16 +56,16 @@ const UnitAccordion: React.FC<UnitAccordionProps> = ({ subjectId, subjectName })
   // Estados para formularios
   const [newUnit, setNewUnit] = useState({
     unit_number: 1,
-    title: '',
-    description: ''
+    title: "",
+    description: "",
   });
 
   const [newSection, setNewSection] = useState({
-    title: '',
-    content_type: 'content' as 'document' | 'assignment' | 'content',
-    content: '',
-    due_date: '',
-    file: null as File | null
+    title: "",
+    content_type: "content" as "document" | "assignment" | "content",
+    content: "",
+    due_date: "",
+    file: null as File | null,
   });
 
   useEffect(() => {
@@ -62,7 +76,7 @@ const UnitAccordion: React.FC<UnitAccordionProps> = ({ subjectId, subjectName })
     try {
       const response = await fetch(`/api/subjects/${subjectId}/units`);
       const data = await response.json();
-      
+
       if (response.ok) {
         setUnits(data);
         // Cargar secciones para cada unidad
@@ -71,7 +85,7 @@ const UnitAccordion: React.FC<UnitAccordionProps> = ({ subjectId, subjectName })
         });
       }
     } catch (error) {
-      console.error('Error fetching units:', error);
+      console.error("Error fetching units:", error);
     } finally {
       setLoading(false);
     }
@@ -79,14 +93,16 @@ const UnitAccordion: React.FC<UnitAccordionProps> = ({ subjectId, subjectName })
 
   const fetchSections = async (unitId: string) => {
     try {
-      const response = await fetch(`/api/subjects/${subjectId}/units/${unitId}/contents`);
+      const response = await fetch(
+        `/api/subjects/${subjectId}/units/${unitId}/contents`
+      );
       const data = await response.json();
-      
+
       if (response.ok) {
-        setSections(prev => ({ ...prev, [unitId]: data }));
+        setSections((prev) => ({ ...prev, [unitId]: data }));
       }
     } catch (error) {
-      console.error('Error fetching sections:', error);
+      console.error("Error fetching sections:", error);
     }
   };
 
@@ -103,18 +119,22 @@ const UnitAccordion: React.FC<UnitAccordionProps> = ({ subjectId, subjectName })
   const handleAddUnit = async () => {
     try {
       const response = await fetch(`/api/subjects/${subjectId}/units`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newUnit)
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newUnit),
       });
 
       if (response.ok) {
         setShowAddUnit(false);
-        setNewUnit({ unit_number: units.length + 1, title: '', description: '' });
+        setNewUnit({
+          unit_number: units.length + 1,
+          title: "",
+          description: "",
+        });
         fetchUnits();
       }
     } catch (error) {
-      console.error('Error adding unit:', error);
+      console.error("Error adding unit:", error);
     }
   };
 
@@ -122,79 +142,82 @@ const UnitAccordion: React.FC<UnitAccordionProps> = ({ subjectId, subjectName })
     try {
       // Validaciones
       if (!newSection.title.trim()) {
-        alert('El título es requerido');
+        alert("El título es requerido");
         return;
       }
 
-      if (newSection.content_type === 'document' && !newSection.file) {
-        alert('Debe seleccionar un archivo para el documento');
+      if (newSection.content_type === "document" && !newSection.file) {
+        alert("Debe seleccionar un archivo para el documento");
         return;
       }
 
-      if (newSection.content_type === 'assignment' && !newSection.due_date) {
-        alert('La fecha de entrega es requerida para las tareas');
+      if (newSection.content_type === "assignment" && !newSection.due_date) {
+        alert("La fecha de entrega es requerida para las tareas");
         return;
       }
 
       const formData = new FormData();
-      formData.append('title', newSection.title);
-      formData.append('content_type', newSection.content_type);
-      formData.append('content', newSection.content);
-      
-      if (newSection.content_type === 'assignment' && newSection.due_date) {
-        formData.append('due_date', newSection.due_date);
-      }
-      
-      if (newSection.file) {
-        formData.append('file', newSection.file);
+      formData.append("title", newSection.title);
+      formData.append("content_type", newSection.content_type);
+      formData.append("content", newSection.content);
+
+      if (newSection.content_type === "assignment" && newSection.due_date) {
+        formData.append("due_date", newSection.due_date);
       }
 
-      const response = await fetch(`/api/subjects/${subjectId}/units/${unitId}/contents`, {
-        method: 'POST',
-        body: formData
-      });
+      if (newSection.file) {
+        formData.append("file", newSection.file);
+      }
+
+      const response = await fetch(
+        `/api/subjects/${subjectId}/units/${unitId}/contents`,
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
 
       if (response.ok) {
         setShowAddSection(null);
         setNewSection({
-          title: '',
-          content_type: 'content',
-          content: '',
-          due_date: '',
-          file: null
+          title: "",
+          content_type: "content",
+          content: "",
+          due_date: "",
+          file: null,
         });
         fetchSections(unitId);
-        
+
         // Mostrar mensaje de éxito
-        if (newSection.content_type === 'document') {
-          alert('Documento subido exitosamente');
+        if (newSection.content_type === "document") {
+          alert("Documento subido exitosamente");
         }
       } else {
         const error = await response.text();
         alert(`Error al crear la sección: ${error}`);
       }
     } catch (error) {
-      console.error('Error adding section:', error);
-      alert('Error al crear la sección');
+      console.error("Error adding section:", error);
+      alert("Error al crear la sección");
     }
   };
 
   const getSectionIcon = (section: Section) => {
-    const { originalType } = extractOriginalContentType(section.content || '');
-    
+    const { originalType } = extractOriginalContentType(section.content || "");
+
     switch (originalType) {
-      case 'document':
+      case "document":
         return <FileTextIcon className="w-4 h-4 text-blue-500" />;
-      case 'assignment':
+      case "assignment":
         return <ClipboardIcon className="w-4 h-4 text-red-500" />;
-      case 'content':
+      case "content":
       default:
         return <FileTextIcon className="w-4 h-4 text-gray-500" />;
     }
   };
 
   const getSectionTypeLabel = (section: Section) => {
-    return getContentTypeLabel(section.content || '');
+    return getContentTypeLabel(section.content || "");
   };
 
   if (loading) {
@@ -214,7 +237,9 @@ const UnitAccordion: React.FC<UnitAccordionProps> = ({ subjectId, subjectName })
             <h1 className="text-2xl font-bold bg-gradient-to-r from-yellow-600 to-rose-600 bg-clip-text text-transparent">
               {subjectName}
             </h1>
-            <p className="text-gray-600 mt-1">Gestiona las unidades y contenido de tu materia</p>
+            <p className="text-gray-600 mt-1">
+              Gestiona las unidades y contenido de tu materia
+            </p>
           </div>
           <button
             onClick={() => setShowAddUnit(true)}
@@ -229,9 +254,12 @@ const UnitAccordion: React.FC<UnitAccordionProps> = ({ subjectId, subjectName })
       {/* Unidades Desplegables */}
       <div className="space-y-3">
         {units.map((unit) => (
-          <div key={unit.id} className="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border-2 border-yellow-100 overflow-hidden">
+          <div
+            key={unit.id}
+            className="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border-2 border-yellow-100 overflow-hidden"
+          >
             {/* Header de la Unidad */}
-            <div 
+            <div
               className="p-4 cursor-pointer hover:bg-yellow-50/50 transition-colors duration-200"
               onClick={() => toggleUnit(unit.id)}
             >
@@ -246,7 +274,9 @@ const UnitAccordion: React.FC<UnitAccordionProps> = ({ subjectId, subjectName })
                     Unidad {unit.unit_number}
                   </div>
                   <div>
-                    <h3 className="font-semibold text-gray-800">{unit.title}</h3>
+                    <h3 className="font-semibold text-gray-800">
+                      {unit.title}
+                    </h3>
                     <p className="text-sm text-gray-600">{unit.description}</p>
                   </div>
                 </div>
@@ -264,17 +294,25 @@ const UnitAccordion: React.FC<UnitAccordionProps> = ({ subjectId, subjectName })
                 {/* Secciones */}
                 <div className="p-4 space-y-3">
                   {sections[unit.id]?.map((section) => (
-                    <div key={section.id} className="bg-gray-50/50 rounded-lg p-3 border border-gray-200 hover:shadow-md transition-shadow duration-200">
+                    <div
+                      key={section.id}
+                      className="bg-gray-50/50 rounded-lg p-3 border border-gray-200 hover:shadow-md transition-shadow duration-200"
+                    >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                           {getSectionIcon(section)}
                           <div className="flex-1">
                             <div className="flex items-center gap-2">
-                              <h4 className="font-medium text-gray-800">{section.title}</h4>
-                              {hasAttachment(section.content || '', section.file_url) && (
+                              <h4 className="font-medium text-gray-800">
+                                {section.title}
+                              </h4>
+                              {hasAttachment(
+                                section.content || "",
+                                section.file_url
+                              ) && (
                                 <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full flex items-center gap-1">
                                   <i className="fas fa-paperclip"></i>
-                                  {section.file_name || 'Archivo'}
+                                  {section.file_name || "Archivo"}
                                 </span>
                               )}
                             </div>
@@ -285,30 +323,37 @@ const UnitAccordion: React.FC<UnitAccordionProps> = ({ subjectId, subjectName })
                               {section.due_date && (
                                 <span className="text-xs text-red-500 flex items-center gap-1">
                                   <i className="fas fa-clock"></i>
-                                  Vence: {new Date(section.due_date).toLocaleDateString()}
+                                  Vence:{" "}
+                                  {new Date(
+                                    section.due_date
+                                  ).toLocaleDateString()}
                                 </span>
                               )}
                             </div>
+                            {/* BOTÓN DE DESCARGA MEJORADO */}
+                            {section.file_url && (
+                              <div className="flex items-center gap-2 mt-2">
+                                <a
+                                  href={section.file_url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors font-semibold shadow"
+                                  title="Descargar archivo"
+                                >
+                                  <DownloadIcon className="w-5 h-5 mr-2" />
+                                  {section.file_name || "Descargar archivo"}
+                                </a>
+                              </div>
+                            )}
                           </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          {section.file_url && (
-                            <a
-                              href={section.file_url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors duration-200 flex items-center gap-1"
-                              title="Descargar archivo"
-                            >
-                              <DownloadIcon className="w-4 h-4" />
-                              <span className="text-xs hidden sm:inline">Descargar</span>
-                            </a>
-                          )}
                         </div>
                       </div>
                       {section.content && (
                         <p className="text-sm text-gray-600 mt-2 line-clamp-2 bg-white p-2 rounded border-l-2 border-yellow-200">
-                          {extractOriginalContentType(section.content).cleanContent}
+                          {
+                            extractOriginalContentType(section.content)
+                              .cleanContent
+                          }
                         </p>
                       )}
                     </div>
@@ -341,9 +386,15 @@ const UnitAccordion: React.FC<UnitAccordionProps> = ({ subjectId, subjectName })
                 </label>
                 <input
                   type="number"
-                  value={newUnit.unit_number}
-                  onChange={(e) => setNewUnit({ ...newUnit, unit_number: parseInt(e.target.value) })}
+                  value={newUnit.unit_number || ""}
+                  onChange={(e) =>
+                    setNewUnit({
+                      ...newUnit,
+                      unit_number: parseInt(e.target.value) || 1,
+                    })
+                  }
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                  min="1"
                 />
               </div>
               <div>
@@ -353,7 +404,9 @@ const UnitAccordion: React.FC<UnitAccordionProps> = ({ subjectId, subjectName })
                 <input
                   type="text"
                   value={newUnit.title}
-                  onChange={(e) => setNewUnit({ ...newUnit, title: e.target.value })}
+                  onChange={(e) =>
+                    setNewUnit({ ...newUnit, title: e.target.value })
+                  }
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
                   placeholder="Ej: Introducción a la Programación"
                 />
@@ -364,7 +417,9 @@ const UnitAccordion: React.FC<UnitAccordionProps> = ({ subjectId, subjectName })
                 </label>
                 <textarea
                   value={newUnit.description}
-                  onChange={(e) => setNewUnit({ ...newUnit, description: e.target.value })}
+                  onChange={(e) =>
+                    setNewUnit({ ...newUnit, description: e.target.value })
+                  }
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 h-20"
                   placeholder="Descripción de la unidad..."
                 />
@@ -401,7 +456,9 @@ const UnitAccordion: React.FC<UnitAccordionProps> = ({ subjectId, subjectName })
                 <input
                   type="text"
                   value={newSection.title}
-                  onChange={(e) => setNewSection({ ...newSection, title: e.target.value })}
+                  onChange={(e) =>
+                    setNewSection({ ...newSection, title: e.target.value })
+                  }
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
                   placeholder="Título de la sección"
                 />
@@ -414,11 +471,11 @@ const UnitAccordion: React.FC<UnitAccordionProps> = ({ subjectId, subjectName })
                   value={newSection.content_type}
                   onChange={(e) => {
                     const newType = e.target.value as any;
-                    setNewSection({ 
-                      ...newSection, 
+                    setNewSection({
+                      ...newSection,
                       content_type: newType,
                       // Limpiar archivo si se cambia de documento a otro tipo
-                      file: newType === 'document' ? newSection.file : null
+                      file: newType === "document" ? newSection.file : null,
                     });
                   }}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
@@ -427,7 +484,7 @@ const UnitAccordion: React.FC<UnitAccordionProps> = ({ subjectId, subjectName })
                   <option value="document">📄 Documento</option>
                   <option value="assignment">✅ Tarea</option>
                 </select>
-                {newSection.content_type === 'document' && (
+                {newSection.content_type === "document" && (
                   <p className="text-xs text-blue-600 mt-1">
                     <i className="fas fa-info-circle mr-1"></i>
                     Se requiere subir un archivo para este tipo de contenido
@@ -436,22 +493,28 @@ const UnitAccordion: React.FC<UnitAccordionProps> = ({ subjectId, subjectName })
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {newSection.content_type === 'document' ? 'Descripción del Documento' : 
-                   newSection.content_type === 'assignment' ? 'Instrucciones de la Tarea' : 
-                   'Descripción'}
+                  {newSection.content_type === "document"
+                    ? "Descripción del Documento"
+                    : newSection.content_type === "assignment"
+                    ? "Instrucciones de la Tarea"
+                    : "Descripción"}
                 </label>
                 <textarea
                   value={newSection.content}
-                  onChange={(e) => setNewSection({ ...newSection, content: e.target.value })}
+                  onChange={(e) =>
+                    setNewSection({ ...newSection, content: e.target.value })
+                  }
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 h-20"
                   placeholder={
-                    newSection.content_type === 'document' ? 'Descripción del documento que estás subiendo...' :
-                    newSection.content_type === 'assignment' ? 'Instrucciones detalladas de la tarea...' :
-                    'Descripción del contenido...'
+                    newSection.content_type === "document"
+                      ? "Descripción del documento que estás subiendo..."
+                      : newSection.content_type === "assignment"
+                      ? "Instrucciones detalladas de la tarea..."
+                      : "Descripción del contenido..."
                   }
                 />
               </div>
-              {newSection.content_type === 'assignment' && (
+              {newSection.content_type === "assignment" && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Fecha de Entrega
@@ -459,22 +522,30 @@ const UnitAccordion: React.FC<UnitAccordionProps> = ({ subjectId, subjectName })
                   <input
                     type="date"
                     value={newSection.due_date}
-                    onChange={(e) => setNewSection({ ...newSection, due_date: e.target.value })}
+                    onChange={(e) =>
+                      setNewSection({ ...newSection, due_date: e.target.value })
+                    }
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
                   />
                 </div>
               )}
-              
+
               {/* Campo de archivo - Obligatorio para documentos */}
-              {newSection.content_type === 'document' ? (
+              {newSection.content_type === "document" ? (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Archivo del Documento <span className="text-red-500">*</span>
+                    Archivo del Documento{" "}
+                    <span className="text-red-500">*</span>
                   </label>
                   <div className="space-y-2">
                     <input
                       type="file"
-                      onChange={(e) => setNewSection({ ...newSection, file: e.target.files?.[0] || null })}
+                      onChange={(e) =>
+                        setNewSection({
+                          ...newSection,
+                          file: e.target.files?.[0] || null,
+                        })
+                      }
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-yellow-50 file:text-yellow-700 hover:file:bg-yellow-100"
                       accept=".pdf,.doc,.docx,.txt,.ppt,.pptx,.xls,.xlsx"
                       required
@@ -485,7 +556,9 @@ const UnitAccordion: React.FC<UnitAccordionProps> = ({ subjectId, subjectName })
                     {newSection.file && (
                       <div className="flex items-center gap-2 text-sm text-green-600 bg-green-50 p-2 rounded-lg">
                         <i className="fas fa-check-circle"></i>
-                        <span>Archivo seleccionado: {newSection.file.name}</span>
+                        <span>
+                          Archivo seleccionado: {newSection.file.name}
+                        </span>
                       </div>
                     )}
                   </div>
@@ -497,7 +570,12 @@ const UnitAccordion: React.FC<UnitAccordionProps> = ({ subjectId, subjectName })
                   </label>
                   <input
                     type="file"
-                    onChange={(e) => setNewSection({ ...newSection, file: e.target.files?.[0] || null })}
+                    onChange={(e) =>
+                      setNewSection({
+                        ...newSection,
+                        file: e.target.files?.[0] || null,
+                      })
+                    }
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-yellow-50 file:text-yellow-700 hover:file:bg-yellow-100"
                   />
                   {newSection.file && (
@@ -517,7 +595,9 @@ const UnitAccordion: React.FC<UnitAccordionProps> = ({ subjectId, subjectName })
                 Cancelar
               </button>
               <button
-                onClick={() => showAddSection && handleAddSection(showAddSection)}
+                onClick={() =>
+                  showAddSection && handleAddSection(showAddSection)
+                }
                 className="flex-1 px-4 py-2 bg-gradient-to-r from-yellow-500 to-rose-500 text-white rounded-lg hover:shadow-lg"
               >
                 Agregar Sección
