@@ -1,20 +1,10 @@
-// 🎯 Nuevo componente de Unidades Desplegables para Profesores
-"use client";
-
 import React, { useState, useEffect } from "react";
-import {
-  ChevronDownIcon,
-  ChevronRightIcon,
-  PlusIcon,
-  FileTextIcon,
-  ClipboardIcon,
-  DownloadIcon,
-} from "lucide-react";
-import {
-  extractOriginalContentType,
-  getContentTypeLabel,
-  hasAttachment,
-} from "@/app/lib/utils/contentTypes";
+
+interface UnitAccordionProps {
+  subjectId: string;
+  subjectName: string;
+  isTeacher?: boolean;
+}
 
 interface Unit {
   id: string;
@@ -28,41 +18,30 @@ interface Unit {
 interface Section {
   id: string;
   title: string;
-  content_type: "document" | "assignment" | "content";
-  content?: string;
+  content_type: string;
+  content: string;
+  due_date?: string;
   file_url?: string;
   file_name?: string;
-  due_date?: string;
-  is_active: boolean;
   created_at: string;
-}
-
-interface UnitAccordionProps {
-  subjectId: string;
-  subjectName: string;
+  creator_name?: string;
 }
 
 const UnitAccordion: React.FC<UnitAccordionProps> = ({
   subjectId,
   subjectName,
+  isTeacher = true,
 }) => {
   const [units, setUnits] = useState<Unit[]>([]);
-  const [sections, setSections] = useState<{ [unitId: string]: Section[] }>({});
-  const [expandedUnits, setExpandedUnits] = useState<Set<string>>(new Set());
+  const [expandedUnit, setExpandedUnit] = useState<string | null>(null);
+  const [sections, setSections] = useState<Record<string, Section[]>>({});
   const [loading, setLoading] = useState(true);
   const [showAddUnit, setShowAddUnit] = useState(false);
   const [showAddSection, setShowAddSection] = useState<string | null>(null);
-
-  // Estados para formularios
-  const [newUnit, setNewUnit] = useState({
-    unit_number: 1,
-    title: "",
-    description: "",
-  });
-
+  const [newUnit, setNewUnit] = useState({ title: "", description: "" });
   const [newSection, setNewSection] = useState({
     title: "",
-    content_type: "content" as "document" | "assignment" | "content",
+    content_type: "content",
     content: "",
     due_date: "",
     file: null as File | null,
@@ -73,157 +52,114 @@ const UnitAccordion: React.FC<UnitAccordionProps> = ({
   }, [subjectId]);
 
   const fetchUnits = async () => {
+    setLoading(true);
     try {
-      const response = await fetch(`/api/subjects/${subjectId}/units`);
-      const data = await response.json();
-
-      if (response.ok) {
-        setUnits(data);
-        // Cargar secciones para cada unidad
-        data.forEach((unit: Unit) => {
-          fetchSections(unit.id);
-        });
+      const res = await fetch(`/api/subjects/${subjectId}/units`);
+      const data = await res.json();
+      setUnits(data);
+      // Fetch sections for each unit
+      const sectionsObj: Record<string, Section[]> = {};
+      for (const unit of data) {
+        const secRes = await fetch(`/api/units/${unit.id}/sections`);
+        const secData = await secRes.json();
+        sectionsObj[unit.id] = secData;
       }
-    } catch (error) {
-      console.error("Error fetching units:", error);
+      setSections(sectionsObj);
+    } catch {
+      // handle error
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchSections = async (unitId: string) => {
-    try {
-      const response = await fetch(
-        `/api/subjects/${subjectId}/units/${unitId}/contents`
-      );
-      const data = await response.json();
-
-      if (response.ok) {
-        setSections((prev) => ({ ...prev, [unitId]: data }));
-      }
-    } catch (error) {
-      console.error("Error fetching sections:", error);
-    }
-  };
-
-  const toggleUnit = (unitId: string) => {
-    const newExpanded = new Set(expandedUnits);
-    if (newExpanded.has(unitId)) {
-      newExpanded.delete(unitId);
-    } else {
-      newExpanded.add(unitId);
-    }
-    setExpandedUnits(newExpanded);
+  const handleExpand = (unitId: string) => {
+    setExpandedUnit(expandedUnit === unitId ? null : unitId);
   };
 
   const handleAddUnit = async () => {
+    if (!newUnit.title.trim()) return;
+    setLoading(true);
     try {
-      const response = await fetch(`/api/subjects/${subjectId}/units`, {
+      await fetch(`/api/subjects/${subjectId}/units`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newUnit),
       });
-
-      if (response.ok) {
-        setShowAddUnit(false);
-        setNewUnit({
-          unit_number: units.length + 1,
-          title: "",
-          description: "",
-        });
-        fetchUnits();
-      }
-    } catch (error) {
-      console.error("Error adding unit:", error);
+      setShowAddUnit(false);
+      setNewUnit({ title: "", description: "" });
+      fetchUnits();
+    } catch {
+      // handle error
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleAddSection = async (unitId: string) => {
+    if (!newSection.title.trim()) return;
+    setLoading(true);
     try {
-      // Validaciones
-      if (!newSection.title.trim()) {
-        alert("El título es requerido");
-        return;
-      }
-
-      if (newSection.content_type === "document" && !newSection.file) {
-        alert("Debe seleccionar un archivo para el documento");
-        return;
-      }
-
-      if (newSection.content_type === "assignment" && !newSection.due_date) {
-        alert("La fecha de entrega es requerida para las tareas");
-        return;
-      }
-
       const formData = new FormData();
       formData.append("title", newSection.title);
       formData.append("content_type", newSection.content_type);
       formData.append("content", newSection.content);
+      if (newSection.due_date) formData.append("due_date", newSection.due_date);
+      if (newSection.file) formData.append("file", newSection.file);
 
-      if (newSection.content_type === "assignment" && newSection.due_date) {
-        formData.append("due_date", newSection.due_date);
-      }
-
-      if (newSection.file) {
-        formData.append("file", newSection.file);
-      }
-
-      const response = await fetch(
-        `/api/subjects/${subjectId}/units/${unitId}/contents`,
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
-
-      if (response.ok) {
-        setShowAddSection(null);
-        setNewSection({
-          title: "",
-          content_type: "content",
-          content: "",
-          due_date: "",
-          file: null,
-        });
-        fetchSections(unitId);
-
-        // Mostrar mensaje de éxito
-        if (newSection.content_type === "document") {
-          alert("Documento subido exitosamente");
-        }
-      } else {
-        const error = await response.text();
-        alert(`Error al crear la sección: ${error}`);
-      }
-    } catch (error) {
-      console.error("Error adding section:", error);
-      alert("Error al crear la sección");
+      await fetch(`/api/units/${unitId}/sections`, {
+        method: "POST",
+        body: formData,
+      });
+      setShowAddSection(null);
+      setNewSection({
+        title: "",
+        content_type: "content",
+        content: "",
+        due_date: "",
+        file: null,
+      });
+      fetchUnits();
+    } catch {
+      // handle error
+    } finally {
+      setLoading(false);
     }
   };
 
   const getSectionIcon = (section: Section) => {
-    const { originalType } = extractOriginalContentType(section.content || "");
-
-    switch (originalType) {
+    switch (section.content_type) {
+      case "video":
+        return "🎥";
       case "document":
-        return <FileTextIcon className="w-4 h-4 text-blue-500" />;
+        return "📄";
+      case "link":
+        return "🔗";
       case "assignment":
-        return <ClipboardIcon className="w-4 h-4 text-red-500" />;
-      case "content":
+        return "📝";
       default:
-        return <FileTextIcon className="w-4 h-4 text-gray-500" />;
+        return "📖";
     }
   };
 
   const getSectionTypeLabel = (section: Section) => {
-    return getContentTypeLabel(section.content || "");
+    switch (section.content_type) {
+      case "video":
+        return "Video";
+      case "document":
+        return "Documento";
+      case "link":
+        return "Enlace";
+      case "assignment":
+        return "Tarea";
+      default:
+        return "Contenido";
+    }
   };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center p-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-500"></div>
+      <div className="flex justify-center items-center py-12">
+        <span className="text-gray-500">Cargando unidades...</span>
       </div>
     );
   }
@@ -238,135 +174,117 @@ const UnitAccordion: React.FC<UnitAccordionProps> = ({
               {subjectName}
             </h1>
             <p className="text-gray-600 mt-1">
-              Gestiona las unidades y contenido de tu materia
+              Unidades y contenidos de la materia
             </p>
           </div>
-          <button
-            onClick={() => setShowAddUnit(true)}
-            className="px-4 py-2 bg-gradient-to-r from-yellow-500 to-rose-500 text-white rounded-lg hover:shadow-lg transition-all duration-300 flex items-center gap-2"
-          >
-            <PlusIcon className="w-4 h-4" />
-            Nueva Unidad
-          </button>
+          {isTeacher && (
+            <button
+              onClick={() => setShowAddUnit(true)}
+              className="px-4 py-2 bg-gradient-to-r from-yellow-500 to-rose-500 text-white rounded-lg hover:shadow-lg transition-all duration-300 flex items-center gap-2"
+            >
+              <span className="font-bold text-lg">+</span>
+              Nueva Unidad
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Unidades Desplegables */}
+      {/* Unidades */}
       <div className="space-y-3">
+        {units.length === 0 && (
+          <div className="text-center py-8 text-gray-500">
+            <i className="fas fa-book-open text-2xl mb-2"></i>
+            <p>No hay unidades disponibles aún.</p>
+          </div>
+        )}
         {units.map((unit) => (
           <div
             key={unit.id}
-            className="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border-2 border-yellow-100 overflow-hidden"
+            className="bg-white/90 backdrop-blur-sm rounded-xl shadow border-2 border-yellow-100"
           >
-            {/* Header de la Unidad */}
-            <div
-              className="p-4 cursor-pointer hover:bg-yellow-50/50 transition-colors duration-200"
-              onClick={() => toggleUnit(unit.id)}
+            <button
+              className="w-full flex justify-between items-center px-6 py-4 focus:outline-none"
+              onClick={() => handleExpand(unit.id)}
             >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  {expandedUnits.has(unit.id) ? (
-                    <ChevronDownIcon className="w-5 h-5 text-gray-500" />
-                  ) : (
-                    <ChevronRightIcon className="w-5 h-5 text-gray-500" />
-                  )}
-                  <div className="bg-gradient-to-r from-yellow-100 to-rose-100 text-yellow-800 px-3 py-1 rounded-full text-sm font-medium">
-                    Unidad {unit.unit_number}
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-800">
-                      {unit.title}
-                    </h3>
-                    <p className="text-sm text-gray-600">{unit.description}</p>
-                  </div>
+              <div>
+                <div className="font-bold text-gray-800">
+                  Unidad {unit.unit_number}: {unit.title}
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-gray-500">
-                    {sections[unit.id]?.length || 0} secciones
-                  </span>
-                </div>
+                {unit.description && (
+                  <div className="text-sm text-gray-600">
+                    {unit.description}
+                  </div>
+                )}
               </div>
-            </div>
-
-            {/* Contenido Desplegable */}
-            {expandedUnits.has(unit.id) && (
-              <div className="border-t border-gray-100">
-                {/* Secciones */}
-                <div className="p-4 space-y-3">
-                  {sections[unit.id]?.map((section) => (
+              <span className="text-xl">
+                {expandedUnit === unit.id ? "▲" : "▼"}
+              </span>
+            </button>
+            {expandedUnit === unit.id && (
+              <div className="px-6 pb-4">
+                <div className="space-y-3">
+                  {(sections[unit.id] || []).map((section) => (
                     <div
                       key={section.id}
-                      className="bg-gray-50/50 rounded-lg p-3 border border-gray-200 hover:shadow-md transition-shadow duration-200"
+                      className="bg-yellow-50 border border-yellow-200 rounded-lg p-4"
                     >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-lg">
                           {getSectionIcon(section)}
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2">
-                              <h4 className="font-medium text-gray-800">
-                                {section.title}
-                              </h4>
-                              {hasAttachment(
-                                section.content || "",
-                                section.file_url
-                              ) && (
-                                <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full flex items-center gap-1">
-                                  <i className="fas fa-paperclip"></i>
-                                  {section.file_name || "Archivo"}
-                                </span>
-                              )}
-                            </div>
-                            <div className="flex items-center gap-2 mt-1">
-                              <span className="text-xs text-gray-500 bg-white px-2 py-1 rounded-full">
-                                {getSectionTypeLabel(section)}
-                              </span>
-                              {section.due_date && (
-                                <span className="text-xs text-red-500 flex items-center gap-1">
-                                  <i className="fas fa-clock"></i>
-                                  Vence:{" "}
-                                  {new Date(
-                                    section.due_date
-                                  ).toLocaleDateString()}
-                                </span>
-                              )}
-                            </div>
-                            {/* BOTÓN DE DESCARGA MEJORADO */}
-                            {section.file_url && (
-                              <div className="flex items-center gap-2 mt-2">
-                                <a
-                                  href={section.file_url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors font-semibold shadow"
-                                  title="Descargar archivo"
-                                >
-                                  <DownloadIcon className="w-5 h-5 mr-2" />
-                                  {section.file_name || "Descargar archivo"}
-                                </a>
-                              </div>
-                            )}
-                          </div>
-                        </div>
+                        </span>
+                        <span className="font-medium text-gray-900">
+                          {section.title}
+                        </span>
+                        <span className="px-2 py-1 bg-gray-100 text-gray-800 text-xs rounded-full capitalize">
+                          {getSectionTypeLabel(section)}
+                        </span>
                       </div>
-                      {section.content && (
-                        <p className="text-sm text-gray-600 mt-2 line-clamp-2 bg-white p-2 rounded border-l-2 border-yellow-200">
-                          {
-                            extractOriginalContentType(section.content)
-                              .cleanContent
-                          }
-                        </p>
+                      <div className="text-gray-700 mb-2 whitespace-pre-wrap">
+                        {section.content}
+                      </div>
+                      {section.content_type === "link" && (
+                        <a
+                          href={section.content}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center px-3 py-2 bg-yellow-100 text-yellow-700 rounded-lg hover:bg-yellow-200 transition-colors text-sm"
+                        >
+                          🔗 Abrir enlace
+                        </a>
                       )}
+                      {section.content_type === "document" &&
+                        section.file_url && (
+                          <a
+                            href={section.file_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center px-3 py-2 bg-yellow-100 text-yellow-700 rounded-lg hover:bg-yellow-200 transition-colors text-sm"
+                          >
+                            📄 Descargar {section.file_name}
+                          </a>
+                        )}
+                      {section.content_type === "assignment" &&
+                        section.due_date && (
+                          <div className="text-xs text-gray-500 mt-1">
+                            Fecha entrega:{" "}
+                            {new Date(section.due_date).toLocaleDateString()}
+                          </div>
+                        )}
+                      <div className="text-xs text-gray-500 mt-1">
+                        Por {section.creator_name || "Desconocido"} •{" "}
+                        {new Date(section.created_at).toLocaleDateString()}
+                      </div>
                     </div>
                   ))}
-
-                  {/* Botón Agregar Sección */}
-                  <button
-                    onClick={() => setShowAddSection(unit.id)}
-                    className="w-full p-3 border-2 border-dashed border-gray-300 rounded-lg hover:border-yellow-400 hover:bg-yellow-50/50 transition-all duration-200 flex items-center justify-center gap-2 text-gray-600"
-                  >
-                    <PlusIcon className="w-4 h-4" />
-                    Agregar Sección
-                  </button>
+                  {isTeacher && (
+                    <button
+                      onClick={() => setShowAddSection(unit.id)}
+                      className="w-full p-3 border-2 border-dashed border-gray-300 rounded-lg hover:border-yellow-400 hover:bg-yellow-50/50 transition-all duration-200 flex items-center justify-center gap-2 text-gray-600"
+                    >
+                      <span className="font-bold text-lg">+</span>
+                      Agregar Sección
+                    </button>
+                  )}
                 </div>
               </div>
             )}
@@ -375,55 +293,28 @@ const UnitAccordion: React.FC<UnitAccordionProps> = ({
       </div>
 
       {/* Modal Agregar Unidad */}
-      {showAddUnit && (
+      {isTeacher && showAddUnit && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-xl p-6 w-full max-w-md">
             <h3 className="text-lg font-bold mb-4">Nueva Unidad</h3>
             <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Número de Unidad
-                </label>
-                <input
-                  type="number"
-                  value={newUnit.unit_number || ""}
-                  onChange={(e) =>
-                    setNewUnit({
-                      ...newUnit,
-                      unit_number: parseInt(e.target.value) || 1,
-                    })
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
-                  min="1"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Título
-                </label>
-                <input
-                  type="text"
-                  value={newUnit.title}
-                  onChange={(e) =>
-                    setNewUnit({ ...newUnit, title: e.target.value })
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
-                  placeholder="Ej: Introducción a la Programación"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Descripción
-                </label>
-                <textarea
-                  value={newUnit.description}
-                  onChange={(e) =>
-                    setNewUnit({ ...newUnit, description: e.target.value })
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 h-20"
-                  placeholder="Descripción de la unidad..."
-                />
-              </div>
+              <input
+                type="text"
+                value={newUnit.title}
+                onChange={(e) =>
+                  setNewUnit({ ...newUnit, title: e.target.value })
+                }
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                placeholder="Título de la unidad"
+              />
+              <textarea
+                value={newUnit.description}
+                onChange={(e) =>
+                  setNewUnit({ ...newUnit, description: e.target.value })
+                }
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 h-20"
+                placeholder="Descripción de la unidad"
+              />
             </div>
             <div className="flex gap-3 mt-6">
               <button
@@ -444,124 +335,79 @@ const UnitAccordion: React.FC<UnitAccordionProps> = ({
       )}
 
       {/* Modal Agregar Sección */}
-      {showAddSection && (
+      {isTeacher && showAddSection && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-xl p-6 w-full max-w-md">
             <h3 className="text-lg font-bold mb-4">Nueva Sección</h3>
             <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Título
-                </label>
-                <input
-                  type="text"
-                  value={newSection.title}
-                  onChange={(e) =>
-                    setNewSection({ ...newSection, title: e.target.value })
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
-                  placeholder="Título de la sección"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Tipo de Contenido
-                </label>
-                <select
-                  value={newSection.content_type}
-                  onChange={(e) => {
-                    const newType = e.target.value as any;
-                    setNewSection({
-                      ...newSection,
-                      content_type: newType,
-                      // Limpiar archivo si se cambia de documento a otro tipo
-                      file: newType === "document" ? newSection.file : null,
-                    });
-                  }}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
-                >
-                  <option value="content">📝 Contenido</option>
-                  <option value="document">📄 Documento</option>
-                  <option value="assignment">✅ Tarea</option>
-                </select>
-                {newSection.content_type === "document" && (
-                  <p className="text-xs text-blue-600 mt-1">
-                    <i className="fas fa-info-circle mr-1"></i>
-                    Se requiere subir un archivo para este tipo de contenido
-                  </p>
-                )}
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {newSection.content_type === "document"
-                    ? "Descripción del Documento"
+              <input
+                type="text"
+                value={newSection.title}
+                onChange={(e) =>
+                  setNewSection({ ...newSection, title: e.target.value })
+                }
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                placeholder="Título de la sección"
+              />
+              <select
+                value={newSection.content_type}
+                onChange={(e) =>
+                  setNewSection({
+                    ...newSection,
+                    content_type: e.target.value,
+                    due_date: "",
+                    file: null,
+                  })
+                }
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
+              >
+                <option value="content">Contenido</option>
+                <option value="document">Documento</option>
+                <option value="assignment">Tarea</option>
+                <option value="link">Enlace</option>
+                <option value="video">Video</option>
+              </select>
+              <textarea
+                value={newSection.content}
+                onChange={(e) =>
+                  setNewSection({ ...newSection, content: e.target.value })
+                }
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 h-20"
+                placeholder={
+                  newSection.content_type === "document"
+                    ? "Descripción del documento que estás subiendo..."
                     : newSection.content_type === "assignment"
-                    ? "Instrucciones de la Tarea"
-                    : "Descripción"}
-                </label>
-                <textarea
-                  value={newSection.content}
-                  onChange={(e) =>
-                    setNewSection({ ...newSection, content: e.target.value })
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 h-20"
-                  placeholder={
-                    newSection.content_type === "document"
-                      ? "Descripción del documento que estás subiendo..."
-                      : newSection.content_type === "assignment"
-                      ? "Instrucciones detalladas de la tarea..."
-                      : "Descripción del contenido..."
-                  }
-                />
-              </div>
+                    ? "Instrucciones detalladas de la tarea..."
+                    : "Descripción del contenido..."
+                }
+              />
               {newSection.content_type === "assignment" && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Fecha de Entrega
-                  </label>
-                  <input
-                    type="date"
-                    value={newSection.due_date}
-                    onChange={(e) =>
-                      setNewSection({ ...newSection, due_date: e.target.value })
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
-                  />
-                </div>
+                <input
+                  type="date"
+                  value={newSection.due_date}
+                  onChange={(e) =>
+                    setNewSection({ ...newSection, due_date: e.target.value })
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                />
               )}
-
-              {/* Campo de archivo - Obligatorio para documentos */}
               {newSection.content_type === "document" ? (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Archivo del Documento{" "}
-                    <span className="text-red-500">*</span>
+                    Archivo del Documento
                   </label>
-                  <div className="space-y-2">
-                    <input
-                      type="file"
-                      onChange={(e) =>
-                        setNewSection({
-                          ...newSection,
-                          file: e.target.files?.[0] || null,
-                        })
-                      }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-yellow-50 file:text-yellow-700 hover:file:bg-yellow-100"
-                      accept=".pdf,.doc,.docx,.txt,.ppt,.pptx,.xls,.xlsx"
-                      required
-                    />
-                    <p className="text-xs text-gray-500">
-                      Formatos permitidos: PDF, Word, PowerPoint, Excel, TXT
-                    </p>
-                    {newSection.file && (
-                      <div className="flex items-center gap-2 text-sm text-green-600 bg-green-50 p-2 rounded-lg">
-                        <i className="fas fa-check-circle"></i>
-                        <span>
-                          Archivo seleccionado: {newSection.file.name}
-                        </span>
-                      </div>
-                    )}
-                  </div>
+                  <input
+                    type="file"
+                    onChange={(e) =>
+                      setNewSection({
+                        ...newSection,
+                        file: e.target.files?.[0] || null,
+                      })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-yellow-50 file:text-yellow-700 hover:file:bg-yellow-100"
+                    accept=".pdf,.doc,.docx,.txt,.ppt,.pptx,.xls,.xlsx"
+                    required
+                  />
                 </div>
               ) : (
                 <div>
@@ -578,12 +424,6 @@ const UnitAccordion: React.FC<UnitAccordionProps> = ({
                     }
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-yellow-50 file:text-yellow-700 hover:file:bg-yellow-100"
                   />
-                  {newSection.file && (
-                    <div className="flex items-center gap-2 text-sm text-blue-600 bg-blue-50 p-2 rounded-lg mt-2">
-                      <i className="fas fa-paperclip"></i>
-                      <span>Archivo: {newSection.file.name}</span>
-                    </div>
-                  )}
                 </div>
               )}
             </div>
