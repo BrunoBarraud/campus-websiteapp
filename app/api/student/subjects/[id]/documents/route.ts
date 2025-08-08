@@ -4,8 +4,8 @@ import { requireRole } from "@/app/lib/auth";
 
 // GET - Obtener documentos de una materia para el estudiante autenticado
 export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+  _request: NextRequest,
+  { params }: { params: { id: string } | any }
 ) {
   try {
     const currentUser = await requireRole(["student"]);

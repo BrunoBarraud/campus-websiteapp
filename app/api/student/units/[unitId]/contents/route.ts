@@ -1,15 +1,14 @@
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import { supabaseAdmin } from "@/app/lib/supabaseClient";
 import { requireRole } from "@/app/lib/auth";
 
 // GET - Obtener contenidos/secciones de una unidad para el estudiante autenticado
 export async function GET(
-  request: Request,
-  { params }: { params: { id: string; unitId: string } }
+  _request: NextRequest,
+  { params }: { params: { unitId: string } }
 ) {
   try {
     const currentUser = await requireRole(["student"]);
-    const subjectId = params.id;
     const unitId = params.unitId;
 
     // Verifica que el estudiante esté inscripto en la materia
@@ -17,7 +16,7 @@ export async function GET(
       .from("student_subjects")
       .select("subject_id")
       .eq("student_id", currentUser.id)
-      .eq("subject_id", subjectId);
+      .eq("subject_id", unitId);
 
     if (error || !relations || relations.length === 0) {
       return NextResponse.json(

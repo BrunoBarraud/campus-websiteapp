@@ -1,9 +1,9 @@
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import { supabaseAdmin } from "@/app/lib/supabaseClient";
 import { requireRole } from "@/app/lib/auth";
 
 // GET - Obtener materias del estudiante autenticado
-export async function GET(request: Request) {
+export async function GET(_request: NextRequest) {
   try {
     const currentUser = await requireRole(["student"]);
     // Busca las materias a las que está inscripto el estudiante

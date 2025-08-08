@@ -6,11 +6,11 @@ import { requireRole } from "@/app/lib/auth";
 // GET - Obtener entregas de una tarea (para profesores) o la entrega del estudiante
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string; assignmentId: string }> }
+  { params }: { params: { id: string; assignmentId: string } }
 ) {
   try {
     const currentUser = await requireRole(["admin", "teacher", "student"]);
-    const { assignmentId } = await params;
+    const { assignmentId } = params;
 
     if (currentUser.role === "student") {
       // Estudiantes solo pueden ver su propia entrega
@@ -77,11 +77,11 @@ export async function GET(
 // POST - Crear entrega de estudiante
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string; assignmentId: string }> }
+  { params }: { params: { id: string; assignmentId: string } }
 ) {
   try {
     const currentUser = await requireRole(["student"]);
-    const { assignmentId } = await params;
+    const { assignmentId } = params;
 
     // Verificar que la tarea existe y está activa
     const { data: assignment, error: assignmentError } = await supabaseAdmin
@@ -242,11 +242,11 @@ export async function POST(
 // PUT - Calificar entrega (solo profesores y admin)
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string; assignmentId: string }> }
+  { params }: { params: { id: string; assignmentId: string } }
 ) {
   try {
-    const currentUser = await requireRole(["admin", "teacher"]);
-    const { assignmentId } = await params;
+    await requireRole(["admin", "teacher"]);
+    const { assignmentId } = params;
 
     const { submission_id, score, feedback } = await request.json();
 
