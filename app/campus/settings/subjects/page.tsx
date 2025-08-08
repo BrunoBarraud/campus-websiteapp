@@ -110,10 +110,7 @@ function EditSubjectModal({
         <p
           style={{ color: "#047857", fontWeight: "bold", textAlign: "center" }}
         >
-          ✅ Modal Actualizado - Con Selector de Profesor
-        </p>
-        <p style={{ color: "#6b7280", textAlign: "center", marginTop: "8px" }}>
-          Ahora puedes asignar profesor y se removieron los créditos
+          Actualizar Materia
         </p>
       </div>
 
