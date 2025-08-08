@@ -34,6 +34,7 @@ interface Assignment {
   instructions?: string;
   unit_id?: string;
   created_at: string;
+  is_active: boolean;
   unit?: {
     title: string;
   };
@@ -85,7 +86,14 @@ export default function StudentAssignmentsPage({
       );
       if (response.ok) {
         const data = await response.json();
-        setAssignments(Array.isArray(data) ? data : data.assignments || []);
+        //Fitrado de tareas activas y no vencidas
+        const filtered = (
+          Array.isArray(data) ? data : data.assignments || []
+        ).filter(
+          (a: Assignment) =>
+            a.is_active && (a.submission || new Date(a.due_date) >= new Date())
+        );
+        setAssignments(filtered);
       } else {
         toast.error("Error al cargar las tareas.");
         console.error("Error fetching assignments");

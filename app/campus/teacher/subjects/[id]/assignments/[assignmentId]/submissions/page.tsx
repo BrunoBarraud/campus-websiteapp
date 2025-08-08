@@ -128,7 +128,7 @@ export default function AssignmentSubmissionsPage({
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            submissionId: gradingSubmission.id,
+            submission_id: gradingSubmission.id,
             score: parseInt(gradeData.score),
             feedback: gradeData.feedback,
           }),

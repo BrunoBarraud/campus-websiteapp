@@ -28,15 +28,15 @@ export async function POST(
       );
     }
 
-    // Verifica que la tarea exista y esté activa
+    // Verifica que la tarea exista, esté activa y no esté vencida
     const { data: assignment } = await supabaseAdmin
       .from("assignments")
       .select("id")
       .eq("id", assignmentId)
       .eq("subject_id", subjectId)
       .eq("is_active", true)
+      .gte("due_date", new Date().toISOString()) // Solo tareas no vencidas
       .single();
-
     if (!assignment) {
       return NextResponse.json(
         { error: "Tarea no encontrada" },
@@ -56,13 +56,12 @@ export async function POST(
       // Sube el archivo a Supabase Storage (ajusta el bucket si es necesario)
       const fileExt = file.name.split(".").pop();
       const filePath = `submissions/${user.id}/${uuidv4()}.${fileExt}`;
-      const { data: uploadData, error: uploadError } =
-        await supabaseAdmin.storage
-          .from("submission-files")
-          .upload(filePath, file, {
-            cacheControl: "3600",
-            upsert: false,
-          });
+      const { error: uploadError } = await supabaseAdmin.storage
+        .from("submission-files")
+        .upload(filePath, file, {
+          cacheControl: "3600",
+          upsert: false,
+        });
 
       if (uploadError) {
         return NextResponse.json(

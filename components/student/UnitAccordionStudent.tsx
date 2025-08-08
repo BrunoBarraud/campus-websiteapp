@@ -24,6 +24,8 @@ interface Section {
   file_name?: string;
   created_at: string;
   creator_name?: string;
+  is_active?: boolean; // <-- agregado
+  due_date?: string; // <-- agregado
 }
 
 const UnitAccordionStudent: React.FC<UnitAccordionProps> = ({
@@ -172,9 +174,7 @@ const UnitAccordionStudent: React.FC<UnitAccordionProps> = ({
                   </div>
                 )}
               </div>
-              <span className="text-xl">
-                {expandedUnit === unit.id ? "▲" : "▼"}
-              </span>
+              <span className="text-xl">{expandedUnit === unit.id}</span>
             </button>
             {expandedUnit === unit.id && (
               <div
@@ -185,66 +185,74 @@ const UnitAccordionStudent: React.FC<UnitAccordionProps> = ({
               >
                 <div className="space-y-3">
                   {Array.isArray(sections[unit.id]) &&
-                    sections[unit.id].map((section) => (
-                      <div
-                        key={section.id}
-                        className="bg-yellow-50 border border-yellow-200 rounded-lg p-4"
-                      >
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-lg">
-                            {getSectionIcon(section)}
-                          </span>
-                          <span className="font-medium text-gray-900">
-                            {section.title}
-                          </span>
-                          <span className="px-2 py-1 bg-gray-100 text-gray-800 text-xs rounded-full capitalize">
-                            {getSectionTypeLabel(section)}
-                          </span>
+                    sections[unit.id]
+                      .filter(
+                        (section) =>
+                          section.content_type !== "assignment" ||
+                          (section.is_active &&
+                            section.due_date &&
+                            new Date(section.due_date) >= new Date())
+                      )
+                      .map((section) => (
+                        <div
+                          key={section.id}
+                          className="bg-yellow-50 border border-yellow-200 rounded-lg p-4"
+                        >
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-lg">
+                              {getSectionIcon(section)}
+                            </span>
+                            <span className="font-medium text-gray-900">
+                              {section.title}
+                            </span>
+                            <span className="px-2 py-1 bg-gray-100 text-gray-800 text-xs rounded-full capitalize">
+                              {getSectionTypeLabel(section)}
+                            </span>
+                          </div>
+                          <div className="text-gray-700 mb-2 whitespace-pre-wrap">
+                            {section.content}
+                          </div>
+                          {section.content_type === "link" && (
+                            <a
+                              href={section.content}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center px-3 py-2 bg-yellow-100 text-yellow-700 rounded-lg hover:bg-yellow-200 transition-colors text-sm"
+                            >
+                              🔗 Abrir enlace
+                            </a>
+                          )}
+                          {/* Mostrar botón de descarga si hay archivo */}
+                          {section.file_url && section.file_name && (
+                            <a
+                              href={section.file_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center px-3 py-2 bg-yellow-100 text-yellow-700 rounded-lg hover:bg-yellow-200 transition-colors text-sm"
+                              download
+                            >
+                              📄 Descargar {section.file_name}
+                            </a>
+                          )}
+                          {/* Botón para entregar tarea */}
+                          {section.content_type === "assignment" && (
+                            <button
+                              onClick={() =>
+                                router.push(
+                                  `/campus/student/subjects/${subjectId}/assignments`
+                                )
+                              }
+                              className="inline-flex items-center px-3 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors text-sm"
+                            >
+                              📝 Realizar Entrega
+                            </button>
+                          )}
+                          <div className="text-xs text-gray-500 mt-1">
+                            Por {section.creator_name || "Desconocido"} •{" "}
+                            {new Date(section.created_at).toLocaleDateString()}
+                          </div>
                         </div>
-                        <div className="text-gray-700 mb-2 whitespace-pre-wrap">
-                          {section.content}
-                        </div>
-                        {section.content_type === "link" && (
-                          <a
-                            href={section.content}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center px-3 py-2 bg-yellow-100 text-yellow-700 rounded-lg hover:bg-yellow-200 transition-colors text-sm"
-                          >
-                            🔗 Abrir enlace
-                          </a>
-                        )}
-                        {/* Mostrar botón de descarga si hay archivo */}
-                        {section.file_url && section.file_name && (
-                          <a
-                            href={section.file_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center px-3 py-2 bg-yellow-100 text-yellow-700 rounded-lg hover:bg-yellow-200 transition-colors text-sm"
-                            download
-                          >
-                            📄 Descargar {section.file_name}
-                          </a>
-                        )}
-                        {/* Botón para entregar tarea */}
-                        {section.content_type === "assignment" && (
-                          <button
-                            onClick={() =>
-                              router.push(
-                                `/campus/student/subjects/${subjectId}/assignments`
-                              )
-                            }
-                            className="inline-flex items-center px-3 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors text-sm"
-                          >
-                            📝 Realizar Entrega
-                          </button>
-                        )}
-                        <div className="text-xs text-gray-500 mt-1">
-                          Por {section.creator_name || "Desconocido"} •{" "}
-                          {new Date(section.created_at).toLocaleDateString()}
-                        </div>
-                      </div>
-                    ))}
+                      ))}
                 </div>
               </div>
             )}

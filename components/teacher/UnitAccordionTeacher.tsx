@@ -23,6 +23,7 @@ interface Section {
   file_name?: string;
   created_at: string;
   creator_name?: string;
+  assignment_id?: string;
 }
 
 const UnitAccordionTeacher: React.FC<UnitAccordionProps> = ({
@@ -41,6 +42,8 @@ const UnitAccordionTeacher: React.FC<UnitAccordionProps> = ({
     content_type: "content",
     content: "",
     file: null as File | null,
+    due_date: "",
+    is_active: true,
   });
   const [error, setError] = useState<string | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
@@ -149,6 +152,10 @@ const UnitAccordionTeacher: React.FC<UnitAccordionProps> = ({
       formData.append("content_type", newSection.content_type);
       formData.append("content", newSection.content);
       if (newSection.file) formData.append("file", newSection.file);
+      if (newSection.content_type === "assignment") {
+        formData.append("due_date", newSection.due_date || "");
+        formData.append("is_active", String(newSection.is_active));
+      }
 
       const response = await fetch(`/api/units/${unitId}/sections`, {
         method: "POST",
@@ -165,6 +172,8 @@ const UnitAccordionTeacher: React.FC<UnitAccordionProps> = ({
         content_type: "content",
         content: "",
         file: null,
+        due_date: "",
+        is_active: true,
       });
       await fetchUnits();
       setShowAddSection(null);
@@ -274,9 +283,7 @@ const UnitAccordionTeacher: React.FC<UnitAccordionProps> = ({
                   </div>
                 )}
               </div>
-              <span className="text-xl">
-                {expandedUnit === unit.id ? "▲" : "▼"}
-              </span>
+              <span className="text-xl">{expandedUnit === unit.id}</span>
             </button>
             {expandedUnit === unit.id && (
               <div
@@ -305,16 +312,26 @@ const UnitAccordionTeacher: React.FC<UnitAccordionProps> = ({
                             <span className="px-2 py-1 bg-gray-100 text-gray-800 text-xs rounded-full capitalize">
                               {getSectionTypeLabel(section)}
                             </span>
-                            {/* Botón eliminar solo para tareas */}
+                            {/* Botón eliminar y ver entregas solo para tareas */}
                             {section.content_type === "assignment" && (
-                              <button
-                                onClick={() =>
-                                  handleDeleteAssignment(unit.id, section.id)
-                                }
-                                className="ml-2 px-2 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 text-xs"
-                              >
-                                Eliminar tarea
-                              </button>
+                              <>
+                                <button
+                                  onClick={() =>
+                                    handleDeleteAssignment(unit.id, section.id)
+                                  }
+                                  className="ml-2 px-2 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 text-xs"
+                                >
+                                  Eliminar tarea
+                                </button>
+                                <button
+                                  onClick={() =>
+                                    (window.location.href = `/campus/teacher/subjects/${subjectId}/assignments/${section.assignment_id}/submissions`)
+                                  }
+                                  className="ml-2 px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs"
+                                >
+                                  Ver entregas
+                                </button>
+                              </>
                             )}
                           </div>
                           <div className="text-gray-700 mb-2 whitespace-pre-wrap">
@@ -337,6 +354,7 @@ const UnitAccordionTeacher: React.FC<UnitAccordionProps> = ({
                               target="_blank"
                               rel="noopener noreferrer"
                               className="inline-flex items-center px-3 py-2 bg-yellow-100 text-yellow-700 rounded-lg hover:bg-yellow-200 transition-colors text-sm"
+                              download
                             >
                               📄 Descargar {section.file_name}
                             </a>
@@ -433,8 +451,6 @@ const UnitAccordionTeacher: React.FC<UnitAccordionProps> = ({
                 <option value="content">Contenido</option>
                 <option value="document">Documento</option>
                 <option value="assignment">Tarea</option>
-                <option value="link">Enlace</option>
-                <option value="video">Video</option>
               </select>
               <textarea
                 value={newSection.content}
@@ -450,6 +466,40 @@ const UnitAccordionTeacher: React.FC<UnitAccordionProps> = ({
                     : "Descripción del contenido..."
                 }
               />
+              {/* Campos extra solo para tareas */}
+              {newSection.content_type === "assignment" && (
+                <>
+                  <label className="block text-sm font-medium text-gray-700 mb-1 mt-2">
+                    Fecha de entrega
+                  </label>
+                  <input
+                    type="datetime-local"
+                    value={newSection.due_date}
+                    onChange={(e) =>
+                      setNewSection({ ...newSection, due_date: e.target.value })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                    required
+                  />
+                  <label className="block text-sm font-medium text-gray-700 mb-1 mt-2">
+                    Estado
+                  </label>
+                  <select
+                    value={newSection.is_active ? "true" : "false"}
+                    onChange={(e) =>
+                      setNewSection({
+                        ...newSection,
+                        is_active: e.target.value === "true",
+                      })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                  >
+                    <option value="true">Activa</option>
+                    <option value="false">Inactiva</option>
+                  </select>
+                </>
+              )}
+              {/* Archivos */}
               {newSection.content_type === "document" ? (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">

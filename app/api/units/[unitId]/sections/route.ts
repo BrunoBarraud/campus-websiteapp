@@ -9,10 +9,7 @@ export async function GET(
 ) {
   try {
     const { unitId } = await context.params;
-    console.log("GET /api/units/[unitId]/sections - unitId:", unitId);
-
     if (!unitId) {
-      console.log("Falta el ID de la unidad");
       return NextResponse.json(
         { error: "Falta el ID de la unidad" },
         { status: 400 }
@@ -31,45 +28,50 @@ export async function GET(
       .order("created_at", { ascending: true });
 
     if (error) {
-      console.error("Error fetching sections:", error.message);
       return NextResponse.json(
         { error: "Error al obtener las secciones de la unidad" },
         { status: 500 }
       );
     }
 
-    const sections = data.map((section) => {
-      const { creator, ...rest } = section;
-      return {
-        ...rest,
-        creator_name: creator ? creator.name : "Desconocido",
-      };
-    });
+    // Modificación: agregar assignment_id si es tarea
+    const sections = await Promise.all(
+      data.map(async (section) => {
+        const { creator, ...rest } = section;
+        let assignment_id = null;
+        if (section.content_type === "assignment") {
+          const { data: assignment } = await supabaseAdmin
+            .from("assignments")
+            .select("id")
+            .eq("subject_content_id", section.id)
+            .single();
+          assignment_id = assignment?.id || null;
+        }
+        return {
+          ...rest,
+          creator_name: creator ? creator.name : "Desconocido",
+          assignment_id,
+        };
+      })
+    );
 
     return NextResponse.json(sections);
-  } catch (error: any) {
-    console.error("Error en GET /api/units/[unitId]/sections:", error);
+  } catch {
     return NextResponse.json(
       { error: "Error interno del servidor" },
       { status: 500 }
     );
   }
 }
-
 export async function POST(
   request: NextRequest,
   context: { params: { unitId: string } }
 ) {
-  console.log("Entrando al POST /api/units/[unitId]/sections");
   try {
     const user = await requireRole(["teacher", "admin"]);
-    console.log("Usuario autenticado:", user);
-
-    const { unitId } = await context.params;
-    console.log("unitId recibido:", unitId);
+    const { unitId } = context.params;
 
     if (!unitId) {
-      console.log("Falta el ID de la unidad");
       return NextResponse.json(
         { error: "Falta el ID de la unidad" },
         { status: 400 }
@@ -83,29 +85,21 @@ export async function POST(
       .eq("id", unitId)
       .single();
 
-    console.log("unitData:", unitData, "unitError:", unitError);
-
     if (unitError || !unitData) {
-      console.error("Error fetching unit or unit not found:", unitError);
       return NextResponse.json(
         { error: "Unidad no encontrada" },
         { status: 404 }
       );
     }
 
-    console.log("Obteniendo formData...");
     const formData = await request.formData();
-    console.log("formData obtenido");
 
     const title = formData.get("title") as string;
     const content_type = formData.get("content_type") as string;
     const content = formData.get("content") as string;
     const file = formData.get("file") as File | null;
 
-    console.log("Datos recibidos:", { title, content_type, content, file });
-
     if (!title || !content_type) {
-      console.log("Faltan campos requeridos");
       return NextResponse.json(
         { error: "Faltan campos requeridos (título, tipo de contenido)" },
         { status: 400 }
@@ -120,14 +114,12 @@ export async function POST(
       const bucket =
         content_type === "assignment" ? "submission-files" : "assignment-files";
       const filePath = `subject_content/${unitId}/${uuidv4()}-${file.name}`;
-      console.log("Subiendo archivo a bucket:", bucket, "con path:", filePath);
 
       const { error: uploadError } = await supabaseAdmin.storage
         .from(bucket)
         .upload(filePath, file);
 
       if (uploadError) {
-        console.error("Error subiendo archivo:", uploadError);
         return NextResponse.json(
           { error: "Error al subir el archivo", detalle: uploadError.message },
           { status: 500 }
@@ -140,9 +132,9 @@ export async function POST(
 
       file_url = publicUrlData.publicUrl;
       file_name = file.name;
-      console.log("Archivo subido. file_url:", file_url);
     }
 
+    // Insertar en subject_content. Despues de crear el subject_content
     const { data: newContent, error: insertError } = await supabaseAdmin
       .from("subject_content")
       .insert({
@@ -159,7 +151,6 @@ export async function POST(
       .single();
 
     if (insertError) {
-      console.error("Error insertando contenido:", insertError);
       return NextResponse.json(
         {
           error: "Error al crear el contenido en la base de datos",
@@ -169,18 +160,10 @@ export async function POST(
       );
     }
 
-    console.log("Contenido creado:", newContent);
-
+    // Si es tarea, crear también en assignments
     if (content_type === "assignment") {
-      // Log para depuración
-      console.log("Intentando crear assignment con:", {
-        title,
-        description: content,
-        subject_id: unitData.subject_id,
-        unit_id: unitId,
-        created_by: user.id,
-        is_active: true,
-      });
+      const due_date = formData.get("due_date") as string | null;
+      const is_active = formData.get("is_active") === "true";
 
       const { error: assignmentError } = await supabaseAdmin
         .from("assignments")
@@ -190,12 +173,12 @@ export async function POST(
           subject_id: unitData.subject_id,
           unit_id: unitId,
           created_by: user.id,
-          is_active: true,
-          due_date: new Date().toISOString(),
+          is_active,
+          due_date,
+          subject_content_id: newContent.id, // <--- RELACIÓN DIRECTA
         });
 
       if (assignmentError) {
-        console.error("Error creating assignment entry:", assignmentError);
         return NextResponse.json(
           {
             error:
@@ -208,19 +191,14 @@ export async function POST(
     }
 
     if (!newContent) {
-      console.error(
-        "Contenido creado pero no se pudo recuperar la información."
-      );
       return NextResponse.json(
         { error: "Contenido creado pero no se pudo recuperar la información." },
         { status: 500 }
       );
     }
 
-    console.log("POST /api/units/[unitId]/sections finalizado OK");
     return NextResponse.json(newContent, { status: 201 });
   } catch (error: any) {
-    console.error("Error en POST /api/units/[unitId]/sections:", error);
     if (error?.message?.includes("User role")) {
       return NextResponse.json(
         { error: "No tienes permiso para realizar esta acción" },
@@ -247,6 +225,21 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
+    // Busca el assignment para obtener el subject_content_id
+    const { data: assignment, error: findError } = await supabaseAdmin
+      .from("assignments")
+      .select("id, subject_content_id")
+      .eq("id", assignmentId)
+      .single();
+
+    if (findError || !assignment) {
+      return NextResponse.json(
+        { error: "Tarea no encontrada" },
+        { status: 404 }
+      );
+    }
+
+    // Elimina la tarea en assignments
     const { error } = await supabaseAdmin
       .from("assignments")
       .delete()
@@ -259,8 +252,11 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    // También borra la sección en subject_content
-    await supabaseAdmin.from("subject_content").delete().eq("id", assignmentId);
+    // Elimina la sección en subject_content usando el id relacionado
+    await supabaseAdmin
+      .from("subject_content")
+      .delete()
+      .eq("id", assignment.subject_content_id);
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
