@@ -1,10 +1,10 @@
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import { supabaseAdmin } from "@/app/lib/supabaseClient";
 import { requireRole } from "@/app/lib/auth";
 
 // GET - Obtener documentos de una materia para el estudiante autenticado
 export async function GET(
-  request: Request,
+  request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
