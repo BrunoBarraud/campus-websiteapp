@@ -1,9 +1,10 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { signIn } from 'next-auth/react';
 import { yearHasDivisions, getAvailableDivisions, isValidDivisionForYear } from '@/app/lib/utils/divisions';
+import TwoFactorPrompt from '@/components/auth/TwoFactorPrompt';
 
 export default function AuthForm({ mode }: { mode: 'login' | 'register' }) {
   const [email, setEmail] = useState('');
@@ -13,6 +14,9 @@ export default function AuthForm({ mode }: { mode: 'login' | 'register' }) {
   const [division, setDivision] = useState<string>('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [twoFactorCode, setTwoFactorCode] = useState('');
+  const [requiresTwoFactor, setRequiresTwoFactor] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
   const router = useRouter();
 
   // Limpiar división cuando se selecciona 5° o 6° año
@@ -33,6 +37,12 @@ export default function AuthForm({ mode }: { mode: 'login' | 'register' }) {
     e.preventDefault();
     setError('');
     setIsLoading(true);
+    
+    // Si ya estamos en modo de verificación 2FA, no reiniciar el proceso
+    if (requiresTwoFactor && mode === 'login' && !twoFactorCode) {
+      setIsLoading(false);
+      return;
+    }
 
     try {
       if (mode === 'register') {
@@ -107,10 +117,22 @@ export default function AuthForm({ mode }: { mode: 'login' | 'register' }) {
         const result = await signIn('credentials', {
           email,
           password,
+          twoFactorCode,
           redirect: false,
         });
 
         if (result?.error) {
+          // Verificar si el error es porque se requiere 2FA
+          if (result.error.includes('two_factor_required')) {
+            // Extraer el ID de usuario si está presente en el mensaje de error
+            const userIdMatch = result.error.match(/user_id:([^,]+)/);
+            if (userIdMatch && userIdMatch[1]) {
+              setUserId(userIdMatch[1].trim());
+            }
+            setRequiresTwoFactor(true);
+            setError('');
+            return;
+          }
           throw new Error('Credenciales inválidas');
         }
       }
@@ -272,6 +294,45 @@ export default function AuthForm({ mode }: { mode: 'login' | 'register' }) {
               </label>
             </div>
 
+            {/* Mostrar el componente TwoFactorPrompt si se requiere 2FA */}
+            {requiresTwoFactor && mode === 'login' && (
+              <div className="my-4">
+                <TwoFactorPrompt 
+                  onVerify={async (code) => {
+                    setTwoFactorCode(code);
+                    setIsLoading(true);
+                    
+                    try {
+                      // Iniciar sesión directamente con el código 2FA
+                      const result = await signIn('credentials', {
+                        email,
+                        password,
+                        twoFactorCode: code,
+                        redirect: false,
+                      });
+                      
+                      if (result?.error) {
+                        setError('Código de verificación incorrecto. Inténtalo de nuevo.');
+                      } else {
+                        router.push('/campus/dashboard');
+                      }
+                    } catch (err) {
+                      setError('Error al verificar el código. Inténtalo de nuevo.');
+                    } finally {
+                      setIsLoading(false);
+                    }
+                  }}
+                  onCancel={() => {
+                    setRequiresTwoFactor(false);
+                    setTwoFactorCode('');
+                    setUserId(null);
+                  }}
+                  isLoading={isLoading}
+                  error={error}
+                />
+              </div>
+            )}
+
             {/* Mensaje de error */}
             {error && <p className="text-red-500 text-center text-xs sm:text-sm">{error}</p>}
 
@@ -285,6 +346,8 @@ export default function AuthForm({ mode }: { mode: 'login' | 'register' }) {
                 ? mode === 'login'
                   ? 'Accediendo...'
                   : 'Creando cuenta...'
+                : requiresTwoFactor
+                ? 'Verificar código'
                 : mode === 'login'
                 ? 'Acceder ahora'
                 : 'Crear cuenta'}

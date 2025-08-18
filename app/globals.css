@@ -7,41 +7,40 @@
   --color-foreground: #171717;
 }
 
-/* Forzar modo claro para evitar problemas con el dark mode del sistema */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #ffffff;
-    --foreground: #171717;
-  }
-  
-  * {
-    color-scheme: light !important;
-  }
+/* Variables para tema oscuro */
+:root.dark {
+  --background: #111827;
+  --foreground: #f9fafb;
+  --color-background: #111827;
+  --color-foreground: #f9fafb;
 }
 
-/* Asegurar que todos los elementos tengan un fondo y texto adecuados */
-* {
-  color-scheme: light;
+/* Soporte para tema oscuro */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #111827;
+    --foreground: #f9fafb;
+  }
 }
 
 body {
-  background: var(--background) !important;
-  color: var(--foreground) !important;
+  background: var(--background);
+  color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* Forzar colores claros en inputs y selects */
+/* Estilos para inputs con soporte de tema oscuro */
 input, select, textarea {
-  background-color: white !important;
-  color: #171717 !important;
-  border-color: #d1d5db !important;
+  @apply bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600;
+  transition: all 0.3s ease;
 }
 
 input:focus, select:focus, textarea:focus {
-  background-color: white !important;
-  color: #171717 !important;
+  @apply bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border-yellow-500 dark:border-yellow-400;
 }
 
+/* Animaciones */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(20px); }
   to { opacity: 1; transform: translateY(0); }
@@ -104,6 +103,10 @@ input:focus, select:focus, textarea:focus {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+.dark .campus-hover:hover {
+  box-shadow: 0 20px 25px -5px rgba(245, 158, 11, 0.2), 0 10px 10px -5px rgba(239, 68, 68, 0.1);
+}
+
 .campus-underline {
   position: relative;
   overflow: hidden;
@@ -136,6 +139,16 @@ input:focus, select:focus, textarea:focus {
   animation: shimmer 2s ease-in-out infinite;
 }
 
+.dark .campus-shimmer {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(245, 158, 11, 0.2),
+    rgba(239, 68, 68, 0.2),
+    transparent
+  );
+}
+
 .campus-gradient-text {
   background: linear-gradient(90deg, #f59e0b, #ef4444);
   background-size: 200% 100%;
@@ -150,6 +163,10 @@ input:focus, select:focus, textarea:focus {
   transform: translateY(-8px) scale(1.03);
   box-shadow: 0 25px 50px -12px rgba(245, 158, 11, 0.15), 0 12px 25px -8px rgba(239, 68, 68, 0.1);
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dark .card-hover:hover {
+  box-shadow: 0 25px 50px -12px rgba(245, 158, 11, 0.25), 0 12px 25px -8px rgba(239, 68, 68, 0.2);
 }
 
 .delay-1 { animation-delay: 0.1s; }
@@ -252,4 +269,144 @@ input:focus, select:focus, textarea:focus {
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 3;
   line-clamp: 3;
+}
+
+/* Scrollbar personalizado para tema oscuro */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-gray-100 dark:bg-gray-800;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-gray-300 dark:bg-gray-600 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-400 dark:bg-gray-500;
+}
+
+/* Mejoras de accesibilidad */
+.focus-visible:focus {
+  @apply outline-none ring-2 ring-yellow-500 ring-offset-2 dark:ring-offset-gray-900;
+}
+
+/* Transiciones suaves para cambios de tema */
+* {
+  transition-property: background-color, border-color, color, fill, stroke;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+/* Estilos para modales y overlays en tema oscuro */
+.modal-overlay {
+  @apply bg-black/50 dark:bg-black/70;
+  backdrop-filter: blur(4px);
+}
+
+.modal-content {
+  @apply bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700;
+}
+
+/* Estilos para tooltips */
+.tooltip {
+  @apply bg-gray-900 dark:bg-gray-700 text-white dark:text-gray-200 text-xs px-2 py-1 rounded shadow-lg;
+}
+
+/* Estilos para notificaciones */
+.notification-success {
+  @apply bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-green-800 dark:text-green-200;
+}
+
+.notification-error {
+  @apply bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-800 dark:text-red-200;
+}
+
+.notification-warning {
+  @apply bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800 text-yellow-800 dark:text-yellow-200;
+}
+
+.notification-info {
+  @apply bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 text-blue-800 dark:text-blue-200;
+}
+
+/* Estilos para skeleton loading */
+.skeleton {
+  @apply bg-gray-200 dark:bg-gray-700 animate-pulse rounded;
+}
+
+/* Mejoras para formularios en tema oscuro */
+.form-input {
+  @apply bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400;
+}
+
+.form-input:focus {
+  @apply border-yellow-500 dark:border-yellow-400 ring-yellow-500 dark:ring-yellow-400;
+}
+
+.form-label {
+  @apply text-gray-700 dark:text-gray-300 font-medium;
+}
+
+/* Estilos para tablas en tema oscuro */
+.table-header {
+  @apply bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300;
+}
+
+.table-row {
+  @apply bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700;
+}
+
+.table-row:hover {
+  @apply bg-gray-50 dark:bg-gray-800;
+}
+
+/* Estilos para badges y chips */
+.badge {
+  @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+}
+
+.badge-primary {
+  @apply bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200;
+}
+
+.badge-secondary {
+  @apply bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200;
+}
+
+.badge-success {
+  @apply bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200;
+}
+
+.badge-danger {
+  @apply bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200;
+}
+
+/* Estilos para el calendario en tema oscuro */
+.calendar-day {
+  @apply text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800;
+}
+
+.calendar-day-selected {
+  @apply bg-yellow-500 text-white;
+}
+
+.calendar-day-today {
+  @apply bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 font-semibold;
+}
+
+.calendar-event {
+  @apply text-xs px-1 py-0.5 rounded text-white truncate;
+}
+
+/* Estilos para el sidebar en tema oscuro */
+.sidebar-item {
+  @apply text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700;
+}
+
+.sidebar-item-active {
+  @apply bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 border-r-2 border-yellow-500;
 }

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import "./globals.css";
 import { NextAuthProvider } from "../app/components/auth/AuthProvider";
+import { ThemeProvider } from "@/app/lib/contexts/ThemeContext";
 import ConditionalNav from "@/app/ConditionalNav";
 import { ToastProvider } from "@/components/ui/toast-provider";
 
@@ -16,7 +17,7 @@ export const metadata: Metadata = {
   description:
     "Campus Virtual del Instituto Privado Dalmacio Vélez Sarsfield - Accede a tus cursos, recursos académicos y más",
   other: {
-    "color-scheme": "light only",
+    "color-scheme": "light dark",
   },
 };
 
@@ -31,23 +32,26 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="light">
+    <html lang="es" suppressHydrationWarning>
       <head>
         <link
           rel="stylesheet"
           href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
         />
+        <meta name="theme-color" content="#ffffff" />
       </head>
       <body
-        className={`${font.className} antialiased bg-white text-gray-900 dark:bg-white dark:text-gray-900`}
+        className={`${font.className} antialiased bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100 transition-colors duration-300`}
       >
-        <NextAuthProvider>
-          <div id="app-content">
-            <ConditionalNav />
-            {children}
-            <ToastProvider />
-          </div>
-        </NextAuthProvider>
+        <ThemeProvider>
+          <NextAuthProvider>
+            <div id="app-content">
+              <ConditionalNav />
+              {children}
+              <ToastProvider />
+            </div>
+          </NextAuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
