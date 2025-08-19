@@ -51,7 +51,11 @@ export async function GET(
           content,
           file_url,
           file_name,
-          student:users!assignment_submissions_student_id_fkey(id, name, email)
+          submitted_at,
+          score,
+          feedback,
+          status,
+          student:users!assignment_submissions_student_id_fkey(id, name, email, avatar_url)
         `
         )
         .eq("assignment_id", assignmentId);

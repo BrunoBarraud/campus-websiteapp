@@ -37,7 +37,7 @@ interface Assignment {
 interface Submission {
   id: string;
   student_id: string;
-  submission_text?: string;
+  content?: string;
   file_url?: string;
   file_name?: string;
   submitted_at: string;
@@ -45,8 +45,10 @@ interface Submission {
   feedback?: string;
   status: string;
   student: {
+    id: string;
     name: string;
     email: string;
+    avatar_url?: string;
   };
 }
 
@@ -158,13 +160,26 @@ export default function AssignmentSubmissionsPage({
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("es-ES", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) {
+        return "Fecha no válida";
+      }
+      return date.toLocaleDateString("es-ES", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    } catch (error) {
+      console.error("Error al formatear fecha:", error);
+      return "Fecha no válida";
+    }
+  };
+
+  const getInitials = (name: string) => {
+    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   };
 
   const getStatusBadge = (submission: Submission) => {
@@ -198,186 +213,233 @@ export default function AssignmentSubmissionsPage({
   }
 
   return (
-    <div className="container mx-auto p-6">
-      <div className="mb-6">
-        <Button
-          variant="outline"
-          onClick={() => router.back()}
-          className="mb-4"
-        >
-          ← Volver
-        </Button>
+    <div className="bg-gray-50 min-h-screen">
+      <div className="container mx-auto p-6 max-w-6xl">
+        <div className="mb-6">
+          <Button
+            variant="outline"
+            onClick={() => router.back()}
+            className="mb-4"
+          >
+            ← Volver
+          </Button>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>{assignment.title}</CardTitle>
-            <p className="text-gray-600">{assignment.description}</p>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-              <div className="flex items-center gap-2">
-                <CalendarIcon className="h-4 w-4 text-gray-500" />
-                <span>Vence: {formatDate(assignment.due_date)}</span>
-              </div>
+          {/* Header de la tarea */}
+          <div className="bg-white rounded-xl shadow-soft p-6 mb-8 border border-gray-100">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <div>
-                <span>Puntuación máxima: {assignment.max_score} puntos</span>
-              </div>
-              <div>
-                <span>Entregas: {submissions.length}</span>
+                <h1 className="text-3xl font-bold bg-gradient-to-r from-yellow-600 to-pink-500 bg-clip-text text-transparent">
+                  {assignment.title}
+                </h1>
+                <p className="text-gray-600 mt-2">{assignment.description}</p>
               </div>
             </div>
-          </CardContent>
-        </Card>
-      </div>
+            
+            <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                <CalendarIcon className="h-5 w-5 text-yellow-600" />
+                <div>
+                  <p className="text-sm text-gray-500">Fecha límite</p>
+                  <p className="font-medium">{formatDate(assignment.due_date)}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                <StarIcon className="h-5 w-5 text-yellow-600" />
+                <div>
+                  <p className="text-sm text-gray-500">Puntuación máxima</p>
+                  <p className="font-medium">{assignment.max_score} puntos</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                <FileIcon className="h-5 w-5 text-yellow-600" />
+                <div>
+                  <p className="text-sm text-gray-500">Total entregas</p>
+                  <p className="font-medium">{submissions.length}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
 
-      <div className="space-y-4">
-        <h2 className="text-xl font-semibold">Entregas de Estudiantes</h2>
+        <div className="space-y-6">
+          <h2 className="text-xl font-semibold text-gray-800">Entregas de Estudiantes</h2>
 
-        {submissions.length === 0 ? (
-          <Card>
-            <CardContent className="p-6 text-center">
-              <FileIcon className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-              <p className="text-gray-600">No hay entregas aún</p>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid gap-4">
-            {submissions.map((submission) => (
-              <Card key={submission.id}>
-                <CardHeader>
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <CardTitle className="flex items-center gap-2">
-                        <UserIcon className="h-5 w-5" />
-                        {submission.student.name}
-                        {getStatusBadge(submission)}
-                      </CardTitle>
-                      <p className="text-sm text-gray-600">
-                        {submission.student.email}
-                      </p>
-                    </div>
-                    <div className="text-right text-sm">
-                      <p>Entregado: {formatDate(submission.submitted_at)}</p>
-                      {submission.score !== null &&
-                        submission.score !== undefined && (
-                          <p className="font-semibold text-lg">
-                            {submission.score}/{assignment.max_score} puntos
-                          </p>
-                        )}
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  {submission.submission_text && (
-                    <div className="mb-4">
-                      <h4 className="font-medium mb-2">Texto de la entrega:</h4>
-                      <p className="bg-gray-50 p-3 rounded text-sm">
-                        {submission.submission_text}
-                      </p>
-                    </div>
-                  )}
-
-                  {submission.file_url && (
-                    <div className="mb-4">
-                      <h4 className="font-medium mb-2">Archivo:</h4>
-                      <div className="flex items-center gap-2">
-                        <FileIcon className="h-4 w-4" />
-                        <span className="text-sm">{submission.file_name}</span>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() =>
-                            window.open(submission.file_url, "_blank")
-                          }
-                        >
-                          <DownloadIcon className="h-4 w-4 mr-1" />
-                          Descargar
-                        </Button>
+          {submissions.length === 0 ? (
+            <div className="bg-white rounded-xl shadow-soft p-8 text-center border border-gray-100">
+              <FileIcon className="h-16 w-16 mx-auto mb-4 text-gray-300" />
+              <h3 className="text-lg font-medium text-gray-600 mb-2">No hay entregas aún</h3>
+              <p className="text-gray-500">Los estudiantes aún no han enviado sus entregas para esta tarea.</p>
+            </div>
+          ) : (
+            <div className="grid gap-6">
+              {submissions.map((submission) => (
+                <div key={submission.id} className="bg-white rounded-xl shadow-soft border border-gray-100 overflow-hidden">
+                  <div className="p-6">
+                    <div className="flex items-start gap-4">
+                      {/* Avatar del estudiante */}
+                      <div className="flex-shrink-0">
+                        <div className="h-12 w-12 rounded-full overflow-hidden border-2 border-gray-200">
+                          {submission.student.avatar_url ? (
+                            <img 
+                              src={submission.student.avatar_url} 
+                              alt={submission.student.name}
+                              className="h-full w-full object-cover" 
+                            />
+                          ) : (
+                            <div className="h-full w-full bg-gradient-to-r from-yellow-400 to-pink-400 flex items-center justify-center">
+                              <span className="text-sm font-bold text-white">
+                                {getInitials(submission.student.name)}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      
+                      {/* Información del estudiante */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                              {submission.student.name}
+                              {getStatusBadge(submission)}
+                            </h3>
+                            <p className="text-sm text-gray-500">{submission.student.email}</p>
+                            <p className="text-sm text-gray-500 mt-1">
+                              Entregado: {formatDate(submission.submitted_at)}
+                            </p>
+                          </div>
+                          
+                          <div className="text-right">
+                            {submission.score !== null && submission.score !== undefined && (
+                              <div className="text-right">
+                                <div className="text-2xl font-bold text-yellow-600">
+                                  {submission.score}<span className="text-lg text-gray-400">/{assignment.max_score}</span>
+                                </div>
+                                <p className="text-sm text-gray-500">puntos</p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
                       </div>
                     </div>
-                  )}
 
-                  {submission.feedback && (
-                    <div className="mb-4">
-                      <h4 className="font-medium mb-2">Retroalimentación:</h4>
-                      <p className="bg-blue-50 p-3 rounded text-sm">
-                        {submission.feedback}
-                      </p>
+                    {/* Contenido de la entrega */}
+                    <div className="mt-6 space-y-4">
+                      {submission.content && (
+                        <div>
+                          <h4 className="font-medium text-gray-800 mb-2">Texto de la entrega:</h4>
+                          <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                            <p className="text-gray-700 whitespace-pre-wrap">{submission.content}</p>
+                          </div>
+                        </div>
+                      )}
+
+                      {submission.file_url && (
+                        <div>
+                          <h4 className="font-medium text-gray-800 mb-2">Archivo adjunto:</h4>
+                          <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                            <FileIcon className="h-5 w-5 text-blue-600" />
+                            <span className="text-sm font-medium text-blue-800 flex-1">{submission.file_name}</span>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => window.open(submission.file_url, "_blank")}
+                              className="border-blue-300 text-blue-700 hover:bg-blue-100"
+                            >
+                              <DownloadIcon className="h-4 w-4 mr-1" />
+                              Descargar
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+
+                      {submission.feedback && (
+                        <div>
+                          <h4 className="font-medium text-gray-800 mb-2">Retroalimentación:</h4>
+                          <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+                            <p className="text-yellow-800">{submission.feedback}</p>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  )}
 
-                  <div className="flex justify-end">
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button
-                          variant="outline"
-                          onClick={() => openGradingDialog(submission)}
-                        >
-                          <StarIcon className="h-4 w-4 mr-2" />
-                          {submission.score !== null &&
-                          submission.score !== undefined
-                            ? "Editar Calificación"
-                            : "Calificar"}
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>
-                            Calificar entrega de {submission.student.name}
-                          </DialogTitle>
-                        </DialogHeader>
-                        <form onSubmit={handleGrade} className="space-y-4">
-                          <div>
-                            <Label htmlFor="score">
-                              Puntuación (máximo {assignment.max_score} puntos)
-                            </Label>
-                            <Input
-                              id="score"
-                              type="number"
-                              min="0"
-                              max={assignment.max_score}
-                              value={gradeData.score}
-                              onChange={(e) =>
-                                setGradeData({
-                                  ...gradeData,
-                                  score: e.target.value,
-                                })
-                              }
-                              required
-                            />
-                          </div>
-                          <div>
-                            <Label htmlFor="feedback">Retroalimentación</Label>
-                            <Textarea
-                              id="feedback"
-                              value={gradeData.feedback}
-                              onChange={(e) =>
-                                setGradeData({
-                                  ...gradeData,
-                                  feedback: e.target.value,
-                                })
-                              }
-                              rows={4}
-                              placeholder="Comentarios para el estudiante..."
-                            />
-                          </div>
-                          <div className="flex justify-end gap-2">
-                            <DialogTrigger asChild>
-                              <Button type="button" variant="outline">
-                                Cancelar
+                    {/* Botón de calificación */}
+                    <div className="mt-6 flex justify-end">
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button
+                            onClick={() => openGradingDialog(submission)}
+                            className="bg-yellow-600 hover:bg-yellow-700 text-white"
+                          >
+                            <StarIcon className="h-4 w-4 mr-2" />
+                            {submission.score !== null && submission.score !== undefined
+                              ? "Editar Calificación"
+                              : "Calificar"}
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-md">
+                          <DialogHeader>
+                            <DialogTitle>
+                              Calificar entrega de {submission.student.name}
+                            </DialogTitle>
+                          </DialogHeader>
+                          <form onSubmit={handleGrade} className="space-y-4">
+                            <div>
+                              <Label htmlFor="score">
+                                Puntuación (máximo {assignment.max_score} puntos)
+                              </Label>
+                              <Input
+                                id="score"
+                                type="number"
+                                min="0"
+                                max={assignment.max_score}
+                                value={gradeData.score}
+                                onChange={(e) =>
+                                  setGradeData({
+                                    ...gradeData,
+                                    score: e.target.value,
+                                  })
+                                }
+                                required
+                                className="mt-1"
+                              />
+                            </div>
+                            <div>
+                              <Label htmlFor="feedback">Retroalimentación</Label>
+                              <Textarea
+                                id="feedback"
+                                value={gradeData.feedback}
+                                onChange={(e) =>
+                                  setGradeData({
+                                    ...gradeData,
+                                    feedback: e.target.value,
+                                  })
+                                }
+                                rows={4}
+                                placeholder="Comentarios para el estudiante..."
+                                className="mt-1"
+                              />
+                            </div>
+                            <div className="flex justify-end gap-2 pt-4">
+                              <DialogTrigger asChild>
+                                <Button type="button" variant="outline">
+                                  Cancelar
+                                </Button>
+                              </DialogTrigger>
+                              <Button type="submit" className="bg-yellow-600 hover:bg-yellow-700">
+                                Guardar Calificación
                               </Button>
-                            </DialogTrigger>
-                            <Button type="submit">Guardar Calificación</Button>
-                          </div>
-                        </form>
-                      </DialogContent>
-                    </Dialog>
+                            </div>
+                          </form>
+                        </DialogContent>
+                      </Dialog>
+                    </div>
                   </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

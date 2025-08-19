@@ -18,6 +18,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   const navigation = [
     { name: "Cursos", href: "/campus/dashboard", icon: "🏠" },
     { name: "Calendario", href: "/campus/calendar", icon: "📅" },
+  { name: "Mensajería", href: "/campus/mensajeria", icon: <i className="fas fa-comments"></i> },
     { name: "Perfil", href: "/campus/profile", icon: "👤" },
     { name: "Notificaciones", href: "/campus/notifications", icon: "🔔" },
     ...(session?.user?.role === "admin"
@@ -45,7 +46,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
                   : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100"
               }`}
             >
-              <span className="mr-3 text-lg">{item.icon}</span>
+              <span className="mr-3 text-lg">{typeof item.icon === 'string' ? item.icon : item.icon}</span>
               {item.name}
             </Link>
           ))}
@@ -163,7 +164,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
               }`}
             >
               <span className="text-sm sm:text-base md:text-lg mb-0.5 sm:mb-1">
-                {item.icon}
+                {typeof item.icon === 'string' ? item.icon : item.icon}
               </span>
               <span className="truncate text-xs">{item.name}</span>
             </Link>

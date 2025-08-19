@@ -2,7 +2,7 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/app/lib/supabaseClient';
 import { checkAdminAccess } from '@/app/lib/auth/adminCheck';
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 
 export async function GET(request: Request) {
   try {
@@ -84,96 +84,83 @@ export async function GET(request: Request) {
       }
     }
 
-    // Crear workbook de Excel
-    const wb = XLSX.utils.book_new();
+    // Crear workbook de Excel con ExcelJS
+    const workbook = new ExcelJS.Workbook();
 
     // Hoja 1: Usuarios principales
-    const usersData = users.map((user, index) => {
-      const baseData: any = {
-        'Nº': index + 1,
-        'Nombre': user.name,
-        'Email': user.email,
-        'Rol': user.role === 'admin' ? 'Administrador' : 
-               user.role === 'teacher' ? 'Profesor' : 'Estudiante',
-        'Año Académico': user.year || '-',
-        'Estado': user.is_active ? 'Activo' : 'Inactivo',
-        'Fecha Creación': new Date(user.created_at).toLocaleDateString('es-ES'),
-        'Última Actualización': user.updated_at ? 
-          new Date(user.updated_at).toLocaleDateString('es-ES') : '-'
-      };
+    const usersSheet = workbook.addWorksheet('Usuarios');
 
-      // Si es profesor y se incluyen materias, agregar resumen de materias
-      if (user.role === 'teacher' && includeSubjects) {
-        const subjects = teacherSubjects[user.id] || [];
-        baseData['Materias Asignadas'] = subjects.length;
-        baseData['Años que Enseña'] = [...new Set(subjects.map(s => s.year))].sort().join(', ') || '-';
-      }
-
-      return baseData;
-    });
-
-    const usersWS = XLSX.utils.json_to_sheet(usersData);
-
-    // Configurar ancho de columnas para usuarios
-    const userColWidths = [
-      { wch: 5 },  // Nº
-      { wch: 25 }, // Nombre
-      { wch: 30 }, // Email
-      { wch: 15 }, // Rol
-      { wch: 15 }, // Año
-      { wch: 10 }, // Estado
-      { wch: 15 }, // Fecha Creación
-      { wch: 20 }  // Última Actualización
+    // Definir columnas
+    const userColumns: any[] = [
+      { header: 'Nº', key: 'no', width: 5 },
+      { header: 'Nombre', key: 'nombre', width: 25 },
+      { header: 'Email', key: 'email', width: 30 },
+      { header: 'Rol', key: 'rol', width: 15 },
+      { header: 'Año Académico', key: 'anio', width: 15 },
+      { header: 'Estado', key: 'estado', width: 10 },
+      { header: 'Fecha Creación', key: 'fecha_creacion', width: 15 },
+      { header: 'Última Actualización', key: 'ultima_actualizacion', width: 20 }
     ];
 
-    if (includeSubjects && users.some(u => u.role === 'teacher')) {
-      userColWidths.push({ wch: 15 }); // Materias Asignadas
-      userColWidths.push({ wch: 20 }); // Años que Enseña
+    if (includeSubjects && users.some((u: any) => u.role === 'teacher')) {
+      userColumns.push({ header: 'Materias Asignadas', key: 'materias_asignadas', width: 15 });
+      userColumns.push({ header: 'Años que Enseña', key: 'anos_que_ensea', width: 20 });
     }
 
-    usersWS['!cols'] = userColWidths;
-    XLSX.utils.book_append_sheet(wb, usersWS, 'Usuarios');
+    usersSheet.columns = userColumns;
+
+    users.forEach((user: any, index: number) => {
+      const rowData: any = {
+        no: index + 1,
+        nombre: user.name,
+        email: user.email,
+        rol: user.role === 'admin' ? 'Administrador' : user.role === 'teacher' ? 'Profesor' : 'Estudiante',
+        anio: user.year || '-',
+        estado: user.is_active ? 'Activo' : 'Inactivo',
+        fecha_creacion: user.created_at ? new Date(user.created_at).toLocaleDateString('es-ES') : '-',
+        ultima_actualizacion: user.updated_at ? new Date(user.updated_at).toLocaleDateString('es-ES') : '-'
+      };
+
+      if (user.role === 'teacher' && includeSubjects) {
+        const subjects = teacherSubjects[user.id] || [];
+        rowData.materias_asignadas = subjects.length;
+        rowData.anos_que_ensea = [...new Set(subjects.map((s: any) => s.year))].sort().join(', ') || '-';
+      }
+
+      usersSheet.addRow(rowData);
+    });
 
     // Hoja 2: Detalle de materias por profesor (solo si se incluyen materias)
     if (includeSubjects && Object.keys(teacherSubjects).length > 0) {
-      const subjectsData: any[] = [];
-      
-      Object.entries(teacherSubjects).forEach(([teacherId, subjects]) => {
-        const teacher = users.find(u => u.id === teacherId);
+      const subjectsSheet = workbook.addWorksheet('Materias por Profesor');
+      subjectsSheet.columns = [
+        { header: 'Profesor', key: 'profesor', width: 25 },
+        { header: 'Email Profesor', key: 'email_profesor', width: 30 },
+        { header: 'Materia', key: 'materia', width: 35 },
+        { header: 'Código', key: 'codigo', width: 15 },
+        { header: 'Año', key: 'anio', width: 10 },
+        { header: 'Estado Materia', key: 'estado_materia', width: 15 }
+      ];
+
+      Object.entries(teacherSubjects).forEach(([teacherId, subjects]: any) => {
+        const teacher = users.find((u: any) => u.id === teacherId);
         if (teacher) {
-          subjects.forEach((subject) => {
-            subjectsData.push({
-              'Profesor': teacher.name,
-              'Email Profesor': teacher.email,
-              'Materia': subject.name,
-              'Código': subject.code || '-',
-              'Año': subject.year,
-              'Estado Materia': subject.is_active ? 'Activa' : 'Inactiva'
+          subjects.forEach((subject: any) => {
+            subjectsSheet.addRow({
+              profesor: teacher.name,
+              email_profesor: teacher.email,
+              materia: subject.name,
+              codigo: subject.code || '-',
+              anio: subject.year,
+              estado_materia: subject.is_active ? 'Activa' : 'Inactiva'
             });
           });
         }
       });
-
-      if (subjectsData.length > 0) {
-        const subjectsWS = XLSX.utils.json_to_sheet(subjectsData);
-        
-        // Configurar ancho de columnas para materias
-        const subjectColWidths = [
-          { wch: 25 }, // Profesor
-          { wch: 30 }, // Email Profesor
-          { wch: 35 }, // Materia
-          { wch: 15 }, // Código
-          { wch: 10 }, // Año
-          { wch: 15 }  // Estado Materia
-        ];
-        subjectsWS['!cols'] = subjectColWidths;
-        
-        XLSX.utils.book_append_sheet(wb, subjectsWS, 'Materias por Profesor');
-      }
     }
 
-    // Generar archivo Excel
-    const excelBuffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+    // Generar buffer con workbook
+    const buffer = await workbook.xlsx.writeBuffer();
 
     // Crear nombre de archivo con timestamp
     const timestamp = new Date().toISOString().split('T')[0];
@@ -182,12 +169,12 @@ export async function GET(request: Request) {
     console.log(`✅ Excel generado exitosamente: ${users.length} usuarios exportados`);
 
     // Retornar archivo Excel
-    return new NextResponse(excelBuffer, {
+    return new NextResponse(buffer, {
       status: 200,
       headers: {
         'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         'Content-Disposition': `attachment; filename="${filename}"`,
-        'Content-Length': excelBuffer.length.toString(),
+        'Content-Length': buffer.byteLength.toString(),
       },
     });
 

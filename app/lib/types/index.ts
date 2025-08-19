@@ -81,6 +81,9 @@ export interface CalendarEvent {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+  // Visibilidad y alcance
+  is_personal?: boolean; // true si es solo para el usuario que lo creó
+  is_global?: boolean;   // true si es para todos los usuarios
 }
 
 export interface Document {
@@ -198,6 +201,9 @@ export interface CreateEventForm {
   type: EventType;
   subject_id?: string;
   year?: number;
+  // Visibilidad y alcance
+  is_personal?: boolean;
+  is_global?: boolean;
 }
 
 export interface CreateDocumentForm {

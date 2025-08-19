@@ -117,7 +117,7 @@ export async function POST(
       data = await request.json();
     }
 
-    const { title, description, due_date, max_score = 100, instructions, unit_id, is_active = false } = data;
+    const { title, description, due_date, max_score = 100, instructions, unit_id, is_active = true } = data;
 
     if (!title || !description || !due_date) {
       return NextResponse.json(
@@ -126,11 +126,12 @@ export async function POST(
       );
     }
 
-    // Validar fecha
+    // Validar que la fecha de entrega sea futura
     const dueDate = new Date(due_date);
-    if (isNaN(dueDate.getTime())) {
+    const now = new Date();
+    if (isNaN(dueDate.getTime()) || dueDate < now) {
       return NextResponse.json(
-        { error: 'Fecha de entrega inválida' },
+        { error: 'La fecha de entrega debe ser válida y futura' },
         { status: 400 }
       );
     }
@@ -152,8 +153,15 @@ export async function POST(
       }
     }
 
-    // let fileUrl: string | null = null;
-    // let fileName: string | null = null;
+    console.log('Datos de la tarea a guardar:', {
+      title,
+      description,
+      due_date,
+      max_score,
+      instructions,
+      unit_id,
+      is_active,
+    });
 
     // Subir archivo a Supabase Storage si existe
     if (file && file.size > 0) {

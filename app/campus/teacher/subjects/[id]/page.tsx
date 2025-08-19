@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter, useParams } from "next/navigation";
 import UnitAccordionTeacher from "../../../../../components/teacher/UnitAccordionTeacher";
+import SubjectImageEditor from "../../../../../components/dashboard/SubjectImageEditor";
 import LoadingSpinner from "../../../../../components/ui/LoadingSpinner";
 interface Subject {
   id: string;
@@ -162,7 +163,7 @@ export default function TeacherSubjectPage() {
 
         {/* Subject Info Card */}
         <div className="bg-white/90 backdrop-blur-sm rounded-xl p-6 shadow-lg border-2 border-yellow-100 mb-6">
-          <div className="flex items-start justify-between">
+            <div className="flex items-start justify-between">
             <div className="flex items-center gap-4">
               {subject.image_url ? (
                 <img
@@ -197,7 +198,17 @@ export default function TeacherSubjectPage() {
                   </span>
                 </div>
               </div>
+            
+            {/* Editor para que el profesor pueda cambiar la imagen de la materia */}
+            <div className="flex gap-2 items-start">
+              <SubjectImageEditor
+                subjectId={subjectId}
+                currentImage={subject.image_url || ""}
+                canEdit={true}
+                onUpdated={(newUrl: string) => setSubject((prev) => prev ? { ...prev, image_url: newUrl } : prev)}
+              />
             </div>
+          </div>
             <div className="flex gap-2"></div>
           </div>
         </div>

@@ -24,8 +24,9 @@ interface Section {
   file_name?: string;
   created_at: string;
   creator_name?: string;
-  is_active?: boolean; // <-- agregado
-  due_date?: string; // <-- agregado
+  assignment_id?: string; // ID real del assignment
+  is_active?: boolean; // Estado activo de la tarea
+  due_date?: string; // Fecha de vencimiento
 }
 
 const UnitAccordionStudent: React.FC<UnitAccordionProps> = ({
@@ -132,14 +133,16 @@ const UnitAccordionStudent: React.FC<UnitAccordionProps> = ({
       )}
 
       {/* Header */}
-      <div className="bg-white/90 backdrop-blur-sm rounded-xl p-6 shadow-lg border-2 border-yellow-100">
-        <div>
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-yellow-600 to-rose-600 bg-clip-text text-transparent">
-            {subjectName}
-          </h1>
-          <p className="text-gray-600 mt-1">
-            Unidades y contenidos de la materia
-          </p>
+      <div className="bg-white rounded-xl shadow-soft p-6 mb-8 border border-gray-100">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-yellow-600 to-pink-500 gradient-text">
+              {subjectName}
+            </h1>
+            <p className="text-gray-600 mt-2">
+              Unidades y contenidos de la materia
+            </p>
+          </div>
         </div>
       </div>
 
@@ -154,87 +157,68 @@ const UnitAccordionStudent: React.FC<UnitAccordionProps> = ({
         {units.map((unit) => (
           <div
             key={unit.id}
-            className="bg-white/90 backdrop-blur-sm rounded-xl shadow border-2 border-yellow-100"
+            className="bg-white rounded-xl shadow-soft overflow-hidden border border-gray-100 hover:border-yellow-200 transition-colors duration-200"
           >
             <button
-              className="w-full flex justify-between items-center px-6 py-4 focus:outline-none"
+              className="unit-header w-full flex justify-between items-center px-6 py-5 focus:outline-none hover:bg-gray-50 transition-colors duration-150"
               onClick={() => handleExpand(unit.id)}
               aria-expanded={expandedUnit === unit.id}
               aria-controls={`unit-panel-${unit.id}`}
               id={`unit-header-${unit.id}`}
               role="button"
             >
-              <div>
-                <div className="font-bold text-gray-800">
-                  Unidad {unit.unit_number}: {unit.title}
+              <div className="text-left">
+                <div className="font-bold text-gray-800 text-lg flex items-center gap-2">
+                  <span className="bg-yellow-100 text-yellow-800 rounded-full w-8 h-8 flex items-center justify-center text-sm">
+                    {unit.unit_number}
+                  </span>
+                  <span>{unit.title}</span>
                 </div>
                 {unit.description && (
-                  <div className="text-sm text-gray-600">
+                  <div className="text-sm text-gray-600 mt-1">
                     {unit.description}
                   </div>
                 )}
               </div>
-              <span className="text-xl">{expandedUnit === unit.id}</span>
+              <i
+                className={`fas fa-chevron-down text-gray-400 transition-transform duration-200 ${
+                  expandedUnit === unit.id ? "transform rotate-180" : ""
+                }`}
+              ></i>
             </button>
-            {expandedUnit === unit.id && (
-              <div
-                className="px-6 pb-4"
-                id={`unit-panel-${unit.id}`}
-                role="region"
-                aria-labelledby={`unit-header-${unit.id}`}
-              >
-                <div className="space-y-3">
-                  {Array.isArray(sections[unit.id]) &&
-                    sections[unit.id]
-                      .filter(
-                        (section) =>
-                          section.content_type !== "assignment" ||
-                          (section.is_active &&
-                            section.due_date &&
-                            new Date(section.due_date) >= new Date())
-                      )
-                      .map((section) => (
-                        <div
-                          key={section.id}
-                          className="bg-yellow-50 border border-yellow-200 rounded-lg p-4"
-                        >
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="text-lg">
+            <div
+              className={`accordion-content ${
+                expandedUnit === unit.id
+                  ? "max-h-[2000px] opacity-100"
+                  : "max-h-0 opacity-0"
+              } transition-all duration-300 overflow-hidden`}
+            >
+              <div className="px-6 pb-6 space-y-4">
+                {Array.isArray(sections[unit.id]) &&
+                sections[unit.id].length > 0 ? (
+                  sections[unit.id]
+                    .filter(
+                      (section) =>
+                        section.content_type !== "assignment" ||
+                        (section.is_active && (!section.due_date || new Date(section.due_date) >= new Date()))
+                    )
+                    .map((section) => (
+                      <div
+                        key={section.id}
+                        className="bg-yellow-50 border border-yellow-100 rounded-lg p-5 fade-in"
+                      >
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
+                          <div className="flex items-center gap-3">
+                            <span className="bg-yellow-100 text-yellow-800 rounded-full w-8 h-8 flex items-center justify-center">
                               {getSectionIcon(section)}
                             </span>
                             <span className="font-medium text-gray-900">
                               {section.title}
                             </span>
-                            <span className="px-2 py-1 bg-gray-100 text-gray-800 text-xs rounded-full capitalize">
+                            <span className="px-2.5 py-0.5 bg-yellow-100 text-yellow-800 text-xs rounded-full font-medium">
                               {getSectionTypeLabel(section)}
                             </span>
                           </div>
-                          <div className="text-gray-700 mb-2 whitespace-pre-wrap">
-                            {section.content}
-                          </div>
-                          {section.content_type === "link" && (
-                            <a
-                              href={section.content}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center px-3 py-2 bg-yellow-100 text-yellow-700 rounded-lg hover:bg-yellow-200 transition-colors text-sm"
-                            >
-                              🔗 Abrir enlace
-                            </a>
-                          )}
-                          {/* Mostrar botón de descarga si hay archivo */}
-                          {section.file_url && section.file_name && (
-                            <a
-                              href={section.file_url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center px-3 py-2 bg-yellow-100 text-yellow-700 rounded-lg hover:bg-yellow-200 transition-colors text-sm"
-                              download
-                            >
-                              📄 Descargar {section.file_name}
-                            </a>
-                          )}
-                          {/* Botón para entregar tarea */}
                           {section.content_type === "assignment" && (
                             <button
                               onClick={() =>
@@ -242,20 +226,52 @@ const UnitAccordionStudent: React.FC<UnitAccordionProps> = ({
                                   `/campus/student/subjects/${subjectId}/assignments`
                                 )
                               }
-                              className="inline-flex items-center px-3 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors text-sm"
+                              className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full hover:bg-blue-200 text-xs font-medium flex items-center gap-1"
                             >
                               📝 Realizar Entrega
                             </button>
                           )}
-                          <div className="text-xs text-gray-500 mt-1">
-                            Por {section.creator_name || "Desconocido"} •{" "}
-                            {new Date(section.created_at).toLocaleDateString()}
-                          </div>
                         </div>
-                      ))}
-                </div>
+                        <div className="text-gray-700 mb-3 pl-11 whitespace-pre-wrap">
+                          {section.content}
+                        </div>
+                        {section.file_url && section.file_name && (
+                          <div className="pl-11 mb-3">
+                            <a
+                              href={section.file_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center px-3 py-2 bg-yellow-100 text-yellow-800 rounded-lg hover:bg-yellow-200 transition-colors text-sm font-medium"
+                              download
+                            >
+                              📄 Descargar {section.file_name}
+                            </a>
+                          </div>
+                        )}
+                        {section.content_type === "link" && (
+                          <div className="pl-11 mb-3">
+                            <a
+                              href={section.content}
+                              target="_blank"
+                              className="inline-flex items-center px-3 py-2 bg-yellow-100 text-yellow-800 rounded-lg hover:bg-yellow-200 transition-colors text-sm font-medium"
+                            >
+                              🔗 Abrir enlace
+                            </a>
+                          </div>
+                        )}
+                        <div className="text-xs text-gray-500 pl-11">
+                          Por {section.creator_name || "Desconocido"} •{" "}
+                          {new Date(section.created_at).toLocaleDateString()}
+                        </div>
+                      </div>
+                    ))
+                ) : (
+                  <div className="text-center text-gray-500 py-6">
+                    No hay secciones en esta unidad.
+                  </div>
+                )}
               </div>
-            )}
+            </div>
           </div>
         ))}
       </div>

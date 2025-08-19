@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from "uuid";
 
 export async function GET(
   request: NextRequest,
-  context: { params: { unitId: string } }
+  context: { params: Promise<{ unitId: string }> }
 ) {
   try {
     const { unitId } = await context.params;
@@ -28,35 +28,43 @@ export async function GET(
       .order("created_at", { ascending: true });
 
     if (error) {
+      console.error("Error fetching sections:", error);
       return NextResponse.json(
         { error: "Error al obtener las secciones de la unidad" },
         { status: 500 }
       );
     }
 
-    // Modificación: agregar assignment_id si es tarea
+    // Modificación: agregar assignment_id, due_date, is_active si es tarea
     const sections = await Promise.all(
       data.map(async (section) => {
         const { creator, ...rest } = section;
         let assignment_id = null;
+        let due_date = null;
+        let is_active = null;
         if (section.content_type === "assignment") {
           const { data: assignment } = await supabaseAdmin
             .from("assignments")
-            .select("id")
+            .select("id, due_date, is_active")
             .eq("subject_content_id", section.id)
             .single();
           assignment_id = assignment?.id || null;
+          due_date = assignment?.due_date || null;
+          is_active = assignment?.is_active ?? null;
         }
         return {
           ...rest,
           creator_name: creator ? creator.name : "Desconocido",
           assignment_id,
+          due_date,
+          is_active,
         };
       })
     );
 
     return NextResponse.json(sections);
-  } catch {
+  } catch (error) {
+    console.error("Error interno del servidor en GET:", error);
     return NextResponse.json(
       { error: "Error interno del servidor" },
       { status: 500 }
@@ -65,11 +73,11 @@ export async function GET(
 }
 export async function POST(
   request: NextRequest,
-  context: { params: { unitId: string } }
+  context: { params: Promise<{ unitId: string }> }
 ) {
   try {
     const user = await requireRole(["teacher", "admin"]);
-    const { unitId } = context.params;
+    const { unitId } = await context.params;
 
     if (!unitId) {
       return NextResponse.json(
@@ -102,6 +110,15 @@ export async function POST(
     if (!title || !content_type) {
       return NextResponse.json(
         { error: "Faltan campos requeridos (título, tipo de contenido)" },
+        { status: 400 }
+      );
+    }
+
+    // Validar tipos de contenido permitidos
+    const allowedContentTypes = ["assignment", "document", "video", "link"];
+    if (!allowedContentTypes.includes(content_type)) {
+      return NextResponse.json(
+        { error: "Tipo de contenido no válido" },
         { status: 400 }
       );
     }
@@ -165,6 +182,14 @@ export async function POST(
       const due_date = formData.get("due_date") as string | null;
       const is_active = formData.get("is_active") === "true";
 
+      // Validar fecha de vencimiento
+      if (due_date && new Date(due_date) < new Date()) {
+        return NextResponse.json(
+          { error: "La fecha de vencimiento no puede ser anterior a la fecha actual" },
+          { status: 400 }
+        );
+      }
+
       const { error: assignmentError } = await supabaseAdmin
         .from("assignments")
         .insert({
@@ -212,56 +237,91 @@ export async function POST(
   }
 }
 
-export async function DELETE(request: NextRequest) {
+export async function DELETE(
+  request: NextRequest,
+  context: { params: Promise<{ unitId: string }> }
+) {
   try {
-    await requireRole(["teacher", "admin"]);
+    const user = await requireRole(["teacher", "admin"]);
+    const { unitId } = await context.params;
     const { searchParams } = new URL(request.url);
-    const assignmentId = searchParams.get("assignmentId");
+    const subjectContentId = searchParams.get("assignmentId"); // Es realmente el subject_content_id
 
-    if (!assignmentId) {
+    console.log("DELETE Request: unitId=", unitId, "subjectContentId=", subjectContentId);
+
+    if (!unitId || !subjectContentId) {
+      console.error("DELETE Error: Missing parameters", { unitId, subjectContentId });
       return NextResponse.json(
-        { error: "Falta el ID de la tarea" },
+        { error: "Faltan parámetros unitId o assignmentId" },
         { status: 400 }
       );
     }
 
-    // Busca el assignment para obtener el subject_content_id
-    const { data: assignment, error: findError } = await supabaseAdmin
-      .from("assignments")
-      .select("id, subject_content_id")
-      .eq("id", assignmentId)
+    // Verificar si el subject_content existe
+    console.log("Verificando si existe subject_content:", {
+      table: "subject_content",
+      condition: { id: subjectContentId },
+    });
+
+    const { data: contentData, error: contentFetchError } = await supabaseAdmin
+      .from("subject_content")
+      .select("id, content_type")
+      .eq("id", subjectContentId)
       .single();
 
-    if (findError || !assignment) {
+    if (contentFetchError || !contentData) {
+      console.error("DELETE Error: Contenido no encontrado", {
+        contentFetchError,
+        subjectContentId,
+      });
       return NextResponse.json(
-        { error: "Tarea no encontrada" },
+        { error: "Contenido no encontrado" },
         { status: 404 }
       );
     }
 
-    // Elimina la tarea en assignments
-    const { error } = await supabaseAdmin
-      .from("assignments")
-      .delete()
-      .eq("id", assignmentId);
+    console.log("Datos del contenido encontrado:", contentData);
 
-    if (error) {
+    // Si es una tarea, eliminar primero de assignments
+    if (contentData.content_type === "assignment") {
+      console.log("Eliminando assignment relacionado");
+      
+      const { error: assignmentDeleteError } = await supabaseAdmin
+        .from("assignments")
+        .delete()
+        .eq("subject_content_id", subjectContentId);
+
+      if (assignmentDeleteError) {
+        console.error("DELETE Error al eliminar assignment:", assignmentDeleteError);
+        return NextResponse.json(
+          { error: assignmentDeleteError.message || "Error al eliminar la tarea" },
+          { status: 500 }
+        );
+      }
+    }
+
+    // Luego eliminar de subject_content
+    console.log("Eliminando subject_content");
+    
+    const { error: contentDeleteError } = await supabaseAdmin
+      .from("subject_content")
+      .delete()
+      .eq("id", subjectContentId);
+
+    if (contentDeleteError) {
+      console.error("DELETE Error al eliminar subject_content:", contentDeleteError);
       return NextResponse.json(
-        { error: "Error al eliminar la tarea", detalle: error.message },
+        { error: contentDeleteError.message || "Error al eliminar el contenido" },
         { status: 500 }
       );
     }
 
-    // Elimina la sección en subject_content usando el id relacionado
-    await supabaseAdmin
-      .from("subject_content")
-      .delete()
-      .eq("id", assignment.subject_content_id);
-
+    console.log("DELETE Success: Contenido eliminado exitosamente");
     return NextResponse.json({ success: true });
-  } catch (error: any) {
+  } catch (error) {
+    console.error("DELETE Error: Error interno del servidor", error);
     return NextResponse.json(
-      { error: "Error interno del servidor", detalle: error?.message },
+      { error: "Error interno del servidor" },
       { status: 500 }
     );
   }

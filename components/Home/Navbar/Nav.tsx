@@ -66,7 +66,6 @@ const Nav = ({ onMenuClick }: { onMenuClick?: () => void }) => {
             </span>
           </div>
         </div>
-
         {/* Mobile Menu Button - Solo en pantallas del campus y móviles */}
         {pathname?.startsWith("/campus") && session && onMenuClick && (
           <div className="lg:hidden">

@@ -55,6 +55,9 @@ export default function StudentAssignmentsPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  // Log para verificar si el componente se monta
+  console.log("StudentAssignmentsPage montado");
+
   const { data: session } = useSession();
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -86,13 +89,26 @@ export default function StudentAssignmentsPage({
       );
       if (response.ok) {
         const data = await response.json();
-        //Fitrado de tareas activas y no vencidas
+        console.log("Datos recibidos del endpoint:", data);
+        console.log("Propiedades de las tareas recibidas:", data.map((a: Assignment) => ({
+          id: a.id,
+          title: a.title,
+          due_date: a.due_date,
+          submission: a.submission,
+        })));
+
+        // Filtro de tareas
         const filtered = (
           Array.isArray(data) ? data : data.assignments || []
-        ).filter(
-          (a: Assignment) =>
-            a.is_active && (a.submission || new Date(a.due_date) >= new Date())
-        );
+        ).filter((a: Assignment) => {
+          const dueDate = a.due_date ? new Date(a.due_date).getTime() : null;
+          const now = new Date().getTime();
+          const isActive = a.is_active;
+          const condition = isActive && (a.submission || (dueDate && dueDate >= now));
+          console.log(`Evaluando tarea: ${a.id}, condición: ${condition}, isActive: ${isActive}, dueDate: ${dueDate}, now: ${now}`);
+          return condition;
+        });
+        console.log("Tareas filtradas después de ajustar la lógica:", filtered);
         setAssignments(filtered);
       } else {
         toast.error("Error al cargar las tareas.");

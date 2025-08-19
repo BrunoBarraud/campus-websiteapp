@@ -2,7 +2,7 @@
 import { NextResponse } from 'next/server';
 import { calendarService } from '@/app/lib/services';
 import { CreateEventForm, EventType } from '@/app/lib/types';
-import { requireRole } from '@/app/lib/permissions';
+import { requireRole } from '@/app/lib/auth';
 
 // GET - Obtener eventos según el rol del usuario
 export async function GET(request: Request) {
@@ -14,13 +14,13 @@ export async function GET(request: Request) {
     const month = searchParams.get('month');
 
     // Get authenticated user using role-based authentication
-    const currentUser = await requireRole(['admin', 'teacher', 'student']);
-    
-    if (!currentUser) {
-      return NextResponse.json(
-        { success: false, error: 'Usuario no autenticado' },
-        { status: 401 }
-      );
+    let currentUser;
+    try {
+      currentUser = await requireRole(['admin', 'teacher', 'student']);
+    } catch (authErr: unknown) {
+      console.warn('Authentication/authorization failed when getting events:', authErr);
+      const msg = authErr instanceof Error ? authErr.message : 'No autenticado';
+      return NextResponse.json({ success: false, error: msg }, { status: 401 });
     }
 
     const filter = {
@@ -31,9 +31,9 @@ export async function GET(request: Request) {
     };
 
     const events = await calendarService.getEvents(
-      currentUser.role, 
-      currentUser.id, 
-      currentUser.year || undefined, 
+      currentUser.role,
+      currentUser.id,
+      currentUser.year || undefined,
       filter
     );
 

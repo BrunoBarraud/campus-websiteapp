@@ -46,7 +46,7 @@ const CourseCard: React.FC<CourseCardProps> = memo(({ course, delay }) => {
   };
 
   return (
-    <Link href={getSubjectUrl()} className="block group">
+    <div className="block group relative">
       <div className={`bg-white/80 backdrop-blur-sm rounded-xl overflow-hidden shadow-lg border-2 border-yellow-100 transition-all duration-300 card-hover fade-in delay-${delay} hover:shadow-2xl hover:border-rose-200 cursor-pointer transform hover:scale-105`}>
         <div className="overflow-hidden relative aspect-video">
           <Image 
@@ -60,6 +60,8 @@ const CourseCard: React.FC<CourseCardProps> = memo(({ course, delay }) => {
             loading={delay <= 4 ? "eager" : "lazy"} // Lazy loading para las imágenes que no están en el fold
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+
+          {/* (Editor removed from card image; editor remains available on subject/admin pages) */}
         </div>
         <div className="p-3 sm:p-5">
           <div className="flex justify-between items-start mb-2">
@@ -88,7 +90,12 @@ const CourseCard: React.FC<CourseCardProps> = memo(({ course, delay }) => {
           </div>
         </div>
       </div>
-    </Link>
+
+      {/* Full area link placed after content; sits below editor (z-10) so editor clicks don't navigate */}
+      <Link href={getSubjectUrl()} className="absolute inset-0 z-10" aria-hidden>
+        <span className="sr-only">Ver materia</span>
+      </Link>
+    </div>
   );
 });
 

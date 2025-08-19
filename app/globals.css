@@ -15,13 +15,15 @@
   --color-foreground: #f9fafb;
 }
 
-/* Soporte para tema oscuro */
+/* COMENTADO: Soporte automático para tema oscuro del sistema */
+/* 
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #111827;
     --foreground: #f9fafb;
   }
 }
+*/
 
 body {
   background: var(--background);

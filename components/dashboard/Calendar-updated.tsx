@@ -39,7 +39,7 @@ const Calendar: React.FC<CalendarProps> = ({
     date: '',
     time: '',
     type: 'class',
-    subject_id: '',
+    subject_id: undefined,
     year: userYear
   });
 
@@ -60,13 +60,22 @@ const Calendar: React.FC<CalendarProps> = ({
       const user = session.user as User;
       setCurrentUser(user);
 
-      // Cargar eventos del calendario
-      const userEvents = await calendarService.getEvents(user.role, user.id, user.year || undefined);
-      setCalendarEvents(userEvents);
-
       // Cargar materias del usuario
       const subjects = await subjectService.getSubjects(user.role, user.id, user.year || undefined);
       setUserSubjects(subjects);
+
+      // Obtener lista de subjectIds para el usuario
+      const subjectIds = subjects.map(s => s.id);
+
+      // Cargar eventos del calendario con filtrado por materias
+      const userEvents = await calendarService.getEvents(
+        user.role,
+        user.id,
+        user.year || undefined,
+        undefined,
+        subjectIds
+      );
+      setCalendarEvents(userEvents);
     } catch (error) {
       console.error('Error loading initial data:', error);
     } finally {
@@ -74,51 +83,8 @@ const Calendar: React.FC<CalendarProps> = ({
     }
   };
 
-  // Eventos de ejemplo si no se proporcionan y no hay usuario
-  const defaultEvents: CalendarEvent[] = [
-    {
-      id: '1',
-      title: 'Examen de Matemática',
-      date: '2025-07-25',
-      type: 'exam',
-      description: 'Examen parcial - Unidades 1 y 2',
-      is_active: true,
-      created_at: '',
-      updated_at: ''
-    },
-    {
-      id: '2',
-      title: 'Entrega de ensayo',
-      date: '2025-07-28',
-      type: 'assignment',
-      description: 'Ensayo sobre literatura contemporánea',
-      is_active: true,
-      created_at: '',
-      updated_at: ''
-    },
-    {
-      id: '3',
-      title: 'Práctica de laboratorio',
-      date: '2025-07-30',
-      type: 'class',
-      description: 'Laboratorio de química orgánica',
-      is_active: true,
-      created_at: '',
-      updated_at: ''
-    },
-    {
-      id: '4',
-      title: 'Día del Estudiante',
-      date: '2025-09-21',
-      type: 'holiday',
-      description: 'Feriado nacional',
-      is_active: true,
-      created_at: '',
-      updated_at: ''
-    }
-  ];
-
-  const displayEvents = calendarEvents.length > 0 ? calendarEvents : defaultEvents;
+  // Usar únicamente los eventos cargados desde el servicio (no usar datos mock)
+  const displayEvents = calendarEvents;
 
   const getDaysInMonth = (date: Date) => {
     return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
@@ -155,13 +121,19 @@ const Calendar: React.FC<CalendarProps> = ({
   const handleCreateEvent = async () => {
     if (!currentUser || !canUserEdit()) return;
 
+    // Corregir subject_id vacío para que sea null
+    const safeEventForm = {
+      ...eventForm,
+      subject_id: eventForm.subject_id === '' ? undefined : eventForm.subject_id
+    };
+
     try {
-      const newEvent = await calendarService.createEvent(eventForm, currentUser.id);
+      const newEvent = await calendarService.createEvent(safeEventForm, currentUser.id);
       if (newEvent) {
         setCalendarEvents([...calendarEvents, newEvent]);
         setShowEventModal(false);
         resetEventForm();
-        if (onEventCreate) onEventCreate(eventForm);
+        if (onEventCreate) onEventCreate(safeEventForm);
       }
     } catch (error) {
       console.error('Error creating event:', error);
@@ -244,7 +216,7 @@ const Calendar: React.FC<CalendarProps> = ({
       date: '',
       time: '',
       type: 'class',
-      subject_id: '',
+      subject_id: undefined,
       year: userYear
     });
   };
@@ -278,59 +250,50 @@ const Calendar: React.FC<CalendarProps> = ({
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6">
-      {/* Header del calendario */}
-      <div className="flex items-center justify-between mb-6">
-        <button
-          onClick={prevMonth}
-          className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
-        </button>
-        
-        <h2 className="text-xl font-semibold text-gray-800">
-          {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
-        </h2>
 
-        <div className="flex items-center space-x-2">
+    <div className="bg-white rounded-xl shadow-xl overflow-hidden">
+      {/* Calendar Header */}
+      <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white p-6">
+        <div className="flex flex-col sm:flex-row justify-between items-center">
+          <div className="flex items-center space-x-4 mb-4 sm:mb-0">
+            <button onClick={prevMonth} className="p-2 rounded-full hover:bg-blue-700 transition-colors">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <h2 className="text-2xl font-bold" id="month-year">
+              {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
+            </h2>
+            <button onClick={nextMonth} className="p-2 rounded-full hover:bg-blue-700 transition-colors">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          </div>
           {canUserEdit() && (
-            <button
-              onClick={() => openEventModal()}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
-            >
-              + Evento
+            <button onClick={() => openEventModal()} className="px-4 py-2 bg-white text-blue-600 rounded-lg font-medium hover:bg-gray-100 transition-colors flex items-center">
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              Nuevo Evento
             </button>
           )}
-          
-          <button
-            onClick={nextMonth}
-            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
         </div>
       </div>
 
-      {/* Días de la semana */}
-      <div className="grid grid-cols-7 mb-2">
+      {/* Weekday Headers */}
+      <div className="grid grid-cols-7 bg-gray-100 border-b border-gray-200">
         {dayNames.map(day => (
-          <div key={day} className="p-2 text-center text-sm font-medium text-gray-600">
-            {day}
-          </div>
+          <div key={day} className="p-3 text-center text-sm font-semibold text-gray-600">{day}</div>
         ))}
       </div>
 
-      {/* Días del mes */}
-      <div className="grid grid-cols-7 gap-1">
+      {/* Calendar Grid */}
+      <div className="grid grid-cols-7 gap-px bg-gray-200">
         {/* Espacios en blanco para los días antes del primer día del mes */}
         {Array.from({ length: firstDay }, (_, i) => (
-          <div key={`empty-${i}`} className="h-24 p-1"></div>
+          <div key={`empty-${i}`} className="bg-white min-h-[100px]"></div>
         ))}
-
         {/* Días del mes */}
         {Array.from({ length: daysInMonth }, (_, i) => {
           const day = i + 1;
@@ -338,24 +301,19 @@ const Calendar: React.FC<CalendarProps> = ({
           const dayEvents = getEventsForDate(dateString);
           const isToday = dateString === new Date().toISOString().split('T')[0];
           const isSelected = selectedDate === dateString;
-
           return (
             <div
               key={day}
-              className={`h-24 p-1 border border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors ${
-                isToday ? 'bg-blue-50 border-blue-200' : ''
-              } ${isSelected ? 'bg-blue-100 border-blue-300' : ''}`}
+              className={`calendar-day bg-white min-h-[100px] p-2 border border-gray-100 cursor-pointer transition-all ${isToday ? 'bg-blue-50 border-blue-200' : ''} ${isSelected ? 'bg-blue-100 border-blue-300' : ''}`}
               onClick={() => setSelectedDate(selectedDate === dateString ? null : dateString)}
               onDoubleClick={() => canUserEdit() && openEventModal(dateString)}
             >
-              <div className={`text-sm font-medium ${isToday ? 'text-blue-600' : 'text-gray-700'}`}>
-                {day}
-              </div>
+              <div className={`day-number text-sm font-medium ${isToday ? 'text-blue-600' : 'text-gray-700'}`}>{day}</div>
               <div className="mt-1 space-y-1">
                 {dayEvents.slice(0, 2).map(event => (
                   <div
                     key={event.id}
-                    className={`text-xs p-1 rounded text-white truncate cursor-pointer ${getEventTypeColor(event.type)}`}
+                    className={`event-preview text-xs p-1 rounded text-white truncate cursor-pointer ${getEventTypeColor(event.type)}`}
                     title={event.title}
                     onClick={(e) => {
                       e.stopPropagation();
@@ -444,25 +402,147 @@ const Calendar: React.FC<CalendarProps> = ({
 
       {/* Modal para crear/editar eventos */}
       {showEventModal && canUserEdit() && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
-            <h3 className="text-lg font-semibold mb-4">
-              {editingEvent ? 'Editar Evento' : 'Crear Nuevo Evento'}
-            </h3>
-            
-            <form onSubmit={(e) => {
-              e.preventDefault();
-              if (editingEvent) {
-                handleEditEvent();
-              } else {
-                handleCreateEvent();
-              }
-            }}>
-              <div className="space-y-4">
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[100] p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md animate-fade-in">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xl font-bold text-gray-800">{editingEvent ? 'Editar Evento' : 'Nuevo Evento'}</h3>
+                <button
+                  className="text-gray-500 hover:text-gray-700"
+                  onClick={() => {
+                    setShowEventModal(false);
+                    setEditingEvent(null);
+                    resetEventForm();
+                  }}
+                  aria-label="Cerrar"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                if (editingEvent) {
+                  handleEditEvent();
+                } else {
+                  handleCreateEvent();
+                }
+              }} className="space-y-4">
+                {/* Selector de visibilidad */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Título *
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Visibilidad *</label>
+                  <div className="space-y-2">
+                    <label className="flex items-center space-x-2">
+                      <input
+                        type="radio"
+                        name="visibility"
+                        checked={!!eventForm.is_personal}
+                        onChange={() => setEventForm({
+                          ...eventForm,
+                          is_personal: true,
+                          is_global: false,
+                          year: undefined,
+                          subject_id: ''
+                        })}
+                        className="text-blue-600 focus:ring-blue-500"
+                      />
+                      <span>Personal (solo tú lo ves)</span>
+                    </label>
+                    <label className="flex items-center space-x-2">
+                      <input
+                        type="radio"
+                        name="visibility"
+                        checked={!!eventForm.is_global}
+                        onChange={() => setEventForm({
+                          ...eventForm,
+                          is_personal: false,
+                          is_global: true,
+                          year: undefined,
+                          subject_id: ''
+                        })}
+                        className="text-blue-600 focus:ring-blue-500"
+                      />
+                      <span>Global (todos lo ven)</span>
+                    </label>
+                    <div className="flex items-center space-x-2">
+                      <label className="flex items-center space-x-2">
+                        <input
+                          type="radio"
+                          name="visibility"
+                          checked={!eventForm.is_personal && !eventForm.is_global && !!eventForm.year}
+                          onChange={() => setEventForm({
+                            ...eventForm,
+                            is_personal: false,
+                            is_global: false,
+                            year: currentUser?.year || 1,
+                            subject_id: ''
+                          })}
+                          className="text-blue-600 focus:ring-blue-500"
+                        />
+                        <span>Por año</span>
+                      </label>
+                      <input
+                        type="number"
+                        min={1}
+                        max={6}
+                        value={eventForm.year || ''}
+                        onChange={e => setEventForm({
+                          ...eventForm,
+                          year: Number(e.target.value),
+                          is_personal: false,
+                          is_global: false,
+                          subject_id: ''
+                        })}
+                        className="w-16 px-2 py-1 border border-gray-300 rounded text-sm"
+                        disabled={!eventForm.year}
+                      />
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      {userSubjects.length > 0 && (
+                        <>
+                          <label className="flex items-center space-x-2">
+                            <input
+                              type="radio"
+                              name="visibility"
+                              checked={!eventForm.is_personal && !eventForm.is_global && !!eventForm.subject_id}
+                              onChange={() => setEventForm({
+                                ...eventForm,
+                                is_personal: false,
+                                is_global: false,
+                                year: undefined,
+                                subject_id: userSubjects[0].id
+                              })}
+                              className="text-blue-600 focus:ring-blue-500"
+                            />
+                            <span>Por materia</span>
+                          </label>
+                          <select
+                            value={eventForm.subject_id}
+                            onChange={e => setEventForm({
+                              ...eventForm,
+                              subject_id: e.target.value,
+                              is_personal: false,
+                              is_global: false,
+                              year: undefined
+                            })}
+                            className="ml-2 px-2 py-1 border border-gray-300 rounded text-sm"
+                            disabled={!eventForm.subject_id}
+                          >
+                            {userSubjects.map(subject => (
+                              <option key={subject.id} value={subject.id}>
+                                {subject.name} ({subject.year}° año)
+                              </option>
+                            ))}
+                          </select>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                {/* Título */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Título *</label>
                   <input
                     type="text"
                     required
@@ -471,36 +551,31 @@ const Calendar: React.FC<CalendarProps> = ({
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Fecha *
-                  </label>
-                  <input
-                    type="date"
-                    required
-                    value={eventForm.date}
-                    onChange={(e) => setEventForm({...eventForm, date: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
+                {/* Fecha y hora */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Fecha *</label>
+                    <input
+                      type="date"
+                      required
+                      value={eventForm.date}
+                      onChange={(e) => setEventForm({...eventForm, date: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Hora</label>
+                    <input
+                      type="time"
+                      value={eventForm.time}
+                      onChange={(e) => setEventForm({...eventForm, time: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
                 </div>
-
+                {/* Tipo */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Hora
-                  </label>
-                  <input
-                    type="time"
-                    value={eventForm.time}
-                    onChange={(e) => setEventForm({...eventForm, time: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Tipo *
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Tipo *</label>
                   <select
                     required
                     value={eventForm.type}
@@ -514,12 +589,10 @@ const Calendar: React.FC<CalendarProps> = ({
                     <option value="holiday">Feriado</option>
                   </select>
                 </div>
-
+                {/* Materia */}
                 {userSubjects.length > 0 && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Materia
-                    </label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Materia</label>
                     <select
                       value={eventForm.subject_id}
                       onChange={(e) => setEventForm({...eventForm, subject_id: e.target.value})}
@@ -534,11 +607,9 @@ const Calendar: React.FC<CalendarProps> = ({
                     </select>
                   </div>
                 )}
-
+                {/* Descripción */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Descripción
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
                   <textarea
                     value={eventForm.description}
                     onChange={(e) => setEventForm({...eventForm, description: e.target.value})}
@@ -546,57 +617,57 @@ const Calendar: React.FC<CalendarProps> = ({
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
-              </div>
-
-              <div className="flex justify-end space-x-3 mt-6">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowEventModal(false);
-                    setEditingEvent(null);
-                    resetEventForm();
-                  }}
-                  className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                >
-                  {editingEvent ? 'Actualizar' : 'Crear'}
-                </button>
-              </div>
-            </form>
+                {/* Acciones */}
+                <div className="flex justify-end space-x-3 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowEventModal(false);
+                      setEditingEvent(null);
+                      resetEventForm();
+                    }}
+                    className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    {editingEvent ? 'Actualizar' : 'Crear Evento'}
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
       )}
 
       {/* Leyenda */}
-      <div className="mt-6 flex flex-wrap gap-4 text-sm">
-        <div className="flex items-center space-x-2">
-          <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-          <span>Exámenes</span>
+      <div className="p-4 bg-gray-50 border-t border-gray-200 flex flex-wrap gap-4 text-sm mt-6">
+        <div className="flex items-center">
+          <span className="w-2 h-2 rounded-full bg-red-500 inline-block mr-2"></span>
+          <span className="text-gray-700">Exámenes</span>
         </div>
-        <div className="flex items-center space-x-2">
-          <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
-          <span>Tareas</span>
+        <div className="flex items-center">
+          <span className="w-2 h-2 rounded-full bg-yellow-500 inline-block mr-2"></span>
+          <span className="text-gray-700">Tareas</span>
         </div>
-        <div className="flex items-center space-x-2">
-          <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-          <span>Clases</span>
+        <div className="flex items-center">
+          <span className="w-2 h-2 rounded-full bg-blue-500 inline-block mr-2"></span>
+          <span className="text-gray-700">Clases</span>
         </div>
-        <div className="flex items-center space-x-2">
-          <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-          <span>Feriados</span>
+        <div className="flex items-center">
+          <span className="w-2 h-2 rounded-full bg-green-500 inline-block mr-2"></span>
+          <span className="text-gray-700">Feriados</span>
         </div>
-        <div className="flex items-center space-x-2">
-          <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
-          <span>Reuniones</span>
+        <div className="flex items-center">
+          <span className="w-2 h-2 rounded-full bg-purple-500 inline-block mr-2"></span>
+          <span className="text-gray-700">Reuniones</span>
         </div>
         {currentUser && (
-          <div className="ml-auto text-gray-600">
-            Rol: <span className="font-medium">{currentUser.role === 'admin' ? 'Administrador' : currentUser.role === 'teacher' ? 'Profesor' : 'Estudiante'}</span>
+          <div className="ml-auto flex items-center text-gray-600">
+            <span>Rol: <span className="font-medium">{currentUser.role === 'admin' ? 'Administrador' : currentUser.role === 'teacher' ? 'Profesor' : 'Estudiante'}</span></span>
             {canUserEdit() && <span className="text-green-600 ml-2">• Puedes editar</span>}
           </div>
         )}

@@ -4,6 +4,7 @@
 export const dynamic = "force-dynamic";
 
 import React, { useState, useEffect } from "react";
+import SubjectImageEditor from "@/components/dashboard/SubjectImageEditor";
 import {
   FiPlus,
   FiEdit,
@@ -319,6 +320,49 @@ function EditSubjectModal({
               </option>
             ))}
           </select>
+        </div>
+      </div>
+
+      {/* Imagen de la materia y editor */}
+      <div style={{ marginBottom: "24px" }}>
+        <label
+          style={{
+            display: "block",
+            fontWeight: "bold",
+            marginBottom: "8px",
+            color: "#374151",
+          }}
+        >
+          Imagen de la Materia:
+        </label>
+        <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+          {formData.image_url ? (
+            <img
+              src={formData.image_url}
+              alt="Imagen materia"
+              style={{ width: 80, height: 80, objectFit: "cover", borderRadius: 8, border: "1px solid #e5e7eb" }}
+              onError={(e: any) => (e.currentTarget.src = "https://via.placeholder.com/80x80/f3f4f6/9ca3af?text=?")}
+            />
+          ) : (
+            <div style={{ width: 80, height: 80, borderRadius: 8, background: "#f8fafc", display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid #e5e7eb" }}>
+              <i className="fas fa-book text-yellow-600"></i>
+            </div>
+          )}
+
+          <div>
+            <p style={{ margin: 0, color: "#374151", fontSize: 14 }}>Pegar URL o subir archivo</p>
+            <div style={{ marginTop: 8 }}>
+              <SubjectImageEditor
+                subjectId={subject?.id || ""}
+                currentImage={formData.image_url || ""}
+                canEdit={true}
+                onUpdated={(newUrl: string) => {
+                  // Actualizar el formulario con la nueva URL para que al guardar incluya la imagen
+                  setFormData((prev) => ({ ...prev, image_url: newUrl }));
+                }}
+              />
+            </div>
+          </div>
         </div>
       </div>
 
@@ -804,6 +848,25 @@ export default function SubjectsManagementPage() {
                               }}
                             />
                           )}
+                          {/* Botón editor para admins */}
+                          <div className="ml-1">
+                            {/* Import dinámica del editor */}
+                            <SubjectImageEditor
+                              subjectId={subject.id}
+                              currentImage={subject.image_url || ""}
+                              canEdit={true}
+                              onUpdated={(newUrl: string) => {
+                                // Actualizar en memoria para reflejar el cambio en la tabla
+                                setSubjects((prev) =>
+                                  prev.map((s) => (s.id === subject.id ? { ...s, image_url: newUrl } : s))
+                                );
+                                // Si estamos editando esta materia en el modal, sincronizar
+                                if (editingSubject && editingSubject.id === subject.id) {
+                                  setEditingSubject({ ...editingSubject, image_url: newUrl });
+                                }
+                              }}
+                            />
+                          </div>
                           <div>
                             <div className="text-xs sm:text-sm font-medium text-gray-900">
                               {subject.name}

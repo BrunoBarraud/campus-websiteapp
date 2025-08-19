@@ -282,78 +282,97 @@ export const subjectService = {
 };
 
 // 📅 SERVICIOS DE CALENDARIO
+
 export const calendarService = {
   // Obtener eventos según el rol del usuario
   async getEvents(
     userRole: UserRole,
     userId?: string,
     year?: number,
-    filter?: EventFilter
+    filter?: EventFilter,
+    subjectIds?: string[]
   ): Promise<CalendarEvent[]> {
-    let query = supabase
-      .from("calendar_events")
-      .select(
-        `
+    const baseSelect = `
         *,
         subject:subjects(id, name, code, year),
         creator:users!created_by(id, name)
-      `
-      )
-      .eq("is_active", true)
-      .order("date", { ascending: true });
+      `;
 
-    // Filtrar según el rol
-    if (userRole === "student" && year) {
-      query = query.or(`year.is.null,year.eq.${year}`);
-    } else if (userRole === "teacher" && userId) {
-      // Los profesores ven eventos de sus materias o eventos generales
-      query = query.or(
-        `year.is.null,subject_id.in.(select id from subjects where teacher_id = '${userId}')`
-      );
+    let query = supabase.from("calendar_events").select(baseSelect).order("date", { ascending: true });
+
+    // Filtrado por visibilidad
+    if (userRole === "student" && userId) {
+      // Eventos personales, globales, por año, por materia
+      let orFilters = [
+        `is_personal.eq.true,created_by.eq.${userId}`,
+        `is_global.eq.true`,
+      ];
+      if (year) {
+        orFilters.push(`year.eq.${year}`);
+      }
+      if (subjectIds && subjectIds.length > 0) {
+        orFilters.push(`subject_id.in.(${subjectIds.join(",")})`);
+      }
+      query = query.or(orFilters.join(","));
+    } else if ((userRole === "teacher" || userRole === "admin") && userId) {
+      // Profesores y admins ven globales, por año, por materia, personales
+      let orFilters = [
+        `is_global.eq.true`,
+        `is_personal.eq.true,created_by.eq.${userId}`,
+      ];
+      if (year) {
+        orFilters.push(`year.eq.${year}`);
+      }
+      if (subjectIds && subjectIds.length > 0) {
+        orFilters.push(`subject_id.in.(${subjectIds.join(",")})`);
+      }
+      query = query.or(orFilters.join(","));
     }
-    // Los admins ven todos los eventos (sin filtro adicional)
+    // Si es admin sin userId, ve todos los eventos
 
-    // Aplicar filtros adicionales
+    // Filtros adicionales
     if (filter?.year) {
       query = query.eq("year", filter.year);
     }
-
     if (filter?.subject_id) {
       query = query.eq("subject_id", filter.subject_id);
     }
-
     if (filter?.type) {
       query = query.eq("type", filter.type);
     }
-
     if (filter?.month) {
-      const year = new Date().getFullYear();
-      const startDate = `${year}-${String(filter.month).padStart(2, "0")}-01`;
-      const endDate = `${year}-${String(filter.month).padStart(2, "0")}-31`;
+      const yearNow = new Date().getFullYear();
+      const startDate = `${yearNow}-${String(filter.month).padStart(2, "0")}-01`;
+      const endDate = `${yearNow}-${String(filter.month).padStart(2, "0")}-31`;
       query = query.gte("date", startDate).lte("date", endDate);
     }
 
     const { data, error } = await query;
-
     if (error) {
       console.error("Error getting events:", error);
       return [];
     }
-
     return data || [];
   },
 
-  // Crear nuevo evento
+  // Crear nuevo evento con visibilidad personalizada
   async createEvent(
     eventData: CreateEventForm,
     userId: string
   ): Promise<CalendarEvent | null> {
+    // Los campos de visibilidad se pasan directamente
+    const { is_personal, is_global, year, subject_id, ...rest } = eventData;
+    const insertData: any = {
+      ...rest,
+      created_by: userId,
+      is_personal: !!is_personal,
+      is_global: !!is_global,
+      year: year || null,
+      subject_id: subject_id || null,
+    };
     const { data, error } = await supabase
       .from("calendar_events")
-      .insert({
-        ...eventData,
-        created_by: userId,
-      })
+      .insert(insertData)
       .select(
         `
         *,
@@ -399,17 +418,39 @@ export const calendarService = {
 
   // Eliminar evento
   async deleteEvent(id: string): Promise<boolean> {
-    const { error } = await supabase
-      .from("calendar_events")
-      .update({ is_active: false })
-      .eq("id", id);
+    // Preferimos marcar como inactivo si existe la columna `is_active`,
+    // pero si la columna no existe (error SQL 42703), intentamos eliminar el registro.
+    try {
+      const { error } = await supabase
+        .from("calendar_events")
+        .update({ is_active: false })
+        .eq("id", id);
 
-    if (error) {
-      console.error("Error deleting event:", error);
+      if (error) {
+        // Si la columna no existe en la tabla, `code` suele ser '42703' en Postgres
+        if ((error as any).code === '42703' || /is_active/.test(String((error as any).message || ''))) {
+          const { error: delError } = await supabase
+            .from("calendar_events")
+            .delete()
+            .eq("id", id);
+
+          if (delError) {
+            console.error("Error deleting event (fallback delete):", delError);
+            return false;
+          }
+
+          return true;
+        }
+
+        console.error("Error deleting event:", error);
+        return false;
+      }
+
+      return true;
+    } catch (err) {
+      console.error('Unexpected error deleting event:', err);
       return false;
     }
-
-    return true;
   },
 };
 
@@ -747,11 +788,22 @@ export const statsService = {
           .from("subjects")
           .select("*", { count: "exact" })
           .eq("is_active", true),
-        supabase
-          .from("calendar_events")
-          .select("*", { count: "exact" })
-          .eq("is_active", true)
-          .gte("date", new Date().toISOString().split("T")[0]),
+        (async () => {
+            // Contar eventos futuros, pero si la columna `date` no existe, caer al fallback sin filtro
+            try {
+              return await supabase
+                .from("calendar_events")
+                .select("*", { count: "exact" })
+                .eq("is_active", true)
+                .gte("date", new Date().toISOString().split("T")[0]);
+            } catch (e) {
+              console.warn('dashboard stats: calendar_events.date not available, using fallback count', e);
+              return await supabase
+                .from("calendar_events")
+                .select("*", { count: "exact" })
+                .eq("is_active", true);
+            }
+          })(),
         supabase
           .from("documents")
           .select("*", { count: "exact" })

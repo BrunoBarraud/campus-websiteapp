@@ -24,10 +24,9 @@ const Calendar: React.FC<CalendarProps> = ({
   // const canEdit = canEdit; // Already passed as prop
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
-  const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>(events);
+  const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>(events || []);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [userSubjects] = useState<Subject[]>([]);
-  // const [userSubjects, setUserSubjects] = useState<Subject[]>([]);
   const [showEventModal, setShowEventModal] = useState(false);
   const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
   const [loading, setLoading] = useState(true);
@@ -43,110 +42,39 @@ const Calendar: React.FC<CalendarProps> = ({
     year: userYear
   });
 
-  // Cargar datos iniciales
   useEffect(() => {
-    loadInitialData();
+    // Load events and current user from API
+    (async () => {
+      setLoading(true);
+      try {
+        // Get events
+        const res = await fetch('/api/calendar/events');
+        if (res.ok) {
+          const json = await res.json();
+          if (json.success) setCalendarEvents(json.data || []);
+        } else {
+          console.error('Failed to load events', res.status);
+        }
+
+        // Try to get current user (from a lightweight endpoint if exists)
+        try {
+          const userRes = await fetch('/api/users/me');
+          if (userRes.ok) {
+            const userJson = await userRes.json();
+            if (userJson.success) setCurrentUser(userJson.data);
+          }
+        } catch (e) {
+          // ignore - non critical
+        }
+      } catch (error) {
+        console.error('Error loading calendar data:', error);
+      } finally {
+        setLoading(false);
+      }
+    })();
   }, []);
 
-  const loadInitialData = async () => {
-    try {
-      setLoading(true);
-      
-      // Por ahora usar datos mock hasta que la BD esté configurada
-      // TODO: Descomentar cuando la migración esté completa
-      
-      // Simulamos un usuario admin para testing
-      const mockUser: User = {
-        id: '1',
-        email: 'brunobarraud13@gmail.com',
-        name: 'Bruno Admin',
-        role: 'admin',
-        is_active: true,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      };
-      
-      setCurrentUser(mockUser);
-      
-      // Usar eventos por defecto por ahora
-      setCalendarEvents(defaultEvents);
-      
-      /* 
-      // Código original para cuando la BD esté lista:
-      const user = await userService.getCurrentUser();
-      setCurrentUser(user);
-
-      if (user) {
-        const userEvents = await calendarService.getEvents(user.role, user.id, user.year);
-        setCalendarEvents(userEvents);
-
-        const subjects = await subjectService.getSubjects(user.role, user.id, user.year);
-        setUserSubjects(subjects);
-      }
-      */
-    } catch (error) {
-      console.error('Error loading initial data:', error);
-      // En caso de error, usar datos mock
-      setCurrentUser({
-        id: '1',
-        email: 'brunobarraud13@gmail.com',
-        name: 'Bruno Admin',
-        role: 'admin',
-        is_active: true,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      });
-      setCalendarEvents(defaultEvents);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Eventos de ejemplo si no se proporcionan y no hay usuario
-  const defaultEvents: CalendarEvent[] = [
-    {
-      id: '1',
-      title: 'Examen de Matemática',
-      date: '2025-07-25',
-      type: 'exam',
-      description: 'Examen parcial - Unidades 1 y 2',
-      is_active: true,
-      created_at: '',
-      updated_at: ''
-    },
-    {
-      id: '2',
-      title: 'Entrega de ensayo',
-      date: '2025-07-28',
-      type: 'assignment',
-      description: 'Ensayo sobre literatura contemporánea',
-      is_active: true,
-      created_at: '',
-      updated_at: ''
-    },
-    {
-      id: '3',
-      title: 'Práctica de laboratorio',
-      date: '2025-07-30',
-      type: 'class',
-      description: 'Laboratorio de química orgánica',
-      is_active: true,
-      created_at: '',
-      updated_at: ''
-    },
-    {
-      id: '4',
-      title: 'Día del Estudiante',
-      date: '2025-09-21',
-      type: 'holiday',
-      description: 'Feriado nacional',
-      is_active: true,
-      created_at: '',
-      updated_at: ''
-    }
-  ];
-
-  const displayEvents = calendarEvents.length > 0 ? calendarEvents : defaultEvents;
+  const displayEvents = calendarEvents;
 
   const getDaysInMonth = (date: Date) => {
     return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
@@ -181,118 +109,82 @@ const Calendar: React.FC<CalendarProps> = ({
   };
 
   const handleCreateEvent = async () => {
-    if (!currentUser || !canUserEdit()) return;
+    if (!canUserEdit()) return;
 
     try {
-      // Por ahora crear evento mock localmente
-      // TODO: Usar API cuando esté lista
-      
-      const newEvent: CalendarEvent = {
-        id: Date.now().toString(), // ID temporal
-        title: eventForm.title,
-        description: eventForm.description,
-        date: eventForm.date,
-        time: eventForm.time,
-        type: eventForm.type,
-        subject_id: eventForm.subject_id,
-        year: eventForm.year,
-        is_active: true,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      };
-      
-      setCalendarEvents([...calendarEvents, newEvent]);
-      setShowEventModal(false);
-      resetEventForm();
-      
-      if (onEventCreate) onEventCreate(eventForm);
-      
-      /*
-      // Código original para cuando la API esté lista:
-      const newEvent = await calendarService.createEvent(eventForm, currentUser.id);
-      if (newEvent) {
-        setCalendarEvents([...calendarEvents, newEvent]);
+      const res = await fetch('/api/calendar/events', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(eventForm),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Error creating event');
+      }
+
+      const json = await res.json();
+      if (json.success && json.data) {
+        setCalendarEvents((prev) => [...prev, json.data]);
         setShowEventModal(false);
         resetEventForm();
         if (onEventCreate) onEventCreate(eventForm);
       }
-      */
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating event:', error);
-      alert('Error al crear el evento');
+      alert(error.message || 'Error al crear el evento');
     }
   };
 
   const handleEditEvent = async () => {
-    if (!editingEvent || !currentUser || !canUserEdit()) return;
+    if (!editingEvent || !canUserEdit()) return;
 
     try {
-      // Por ahora editar evento mock localmente
-      // TODO: Usar API cuando esté lista
-      
-      const updatedEvent: CalendarEvent = {
-        ...editingEvent,
-        title: eventForm.title,
-        description: eventForm.description,
-        date: eventForm.date,
-        time: eventForm.time,
-        type: eventForm.type,
-        subject_id: eventForm.subject_id,
-        year: eventForm.year,
-        updated_at: new Date().toISOString()
-      };
-      
-      setCalendarEvents(calendarEvents.map(event => 
-        event.id === editingEvent.id ? updatedEvent : event
-      ));
-      setShowEventModal(false);
-      setEditingEvent(null);
-      resetEventForm();
-      
-      if (onEventEdit) onEventEdit(editingEvent.id, updatedEvent);
-      
-      /*
-      // Código original para cuando la API esté lista:
-      const updatedEvent = await calendarService.updateEvent(editingEvent.id, eventForm);
-      if (updatedEvent) {
-        setCalendarEvents(calendarEvents.map(event => 
-          event.id === editingEvent.id ? updatedEvent : event
-        ));
+      const res = await fetch(`/api/calendar/events/${editingEvent.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(eventForm),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Error updating event');
+      }
+
+      const json = await res.json();
+      if (json.success && json.data) {
+        setCalendarEvents((prev) => prev.map(e => e.id === json.data.id ? json.data : e));
         setShowEventModal(false);
         setEditingEvent(null);
         resetEventForm();
-        if (onEventEdit) onEventEdit(editingEvent.id, updatedEvent);
+        if (onEventEdit) onEventEdit(json.data.id, json.data);
       }
-      */
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating event:', error);
-      alert('Error al actualizar el evento');
+      alert(error.message || 'Error al actualizar el evento');
     }
   };
 
   const handleDeleteEvent = async (eventId: string) => {
-    if (!currentUser || !canUserEdit()) return;
-    
-    if (confirm('¿Estás seguro de que quieres eliminar este evento?')) {
-      try {
-        // Por ahora eliminar evento mock localmente
-        // TODO: Usar API cuando esté lista
-        
-        setCalendarEvents(calendarEvents.filter(event => event.id !== eventId));
-        if (onEventDelete) onEventDelete(eventId);
-        
-        /*
-        // Código original para cuando la API esté lista:
-        const success = await calendarService.deleteEvent(eventId);
-        if (success) {
-          setCalendarEvents(calendarEvents.filter(event => event.id !== eventId));
-          if (onEventDelete) onEventDelete(eventId);
-        }
-        */
-      } catch (error) {
-        console.error('Error deleting event:', error);
-        alert('Error al eliminar el evento');
+    if (!canUserEdit()) return;
+
+    if (!confirm('¿Estás seguro de que quieres eliminar este evento?')) return;
+
+    try {
+      const res = await fetch(`/api/calendar/events/${eventId}`, { method: 'DELETE' });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Error deleting event');
       }
+
+      const json = await res.json();
+      if (json.success) {
+        setCalendarEvents((prev) => prev.filter(event => event.id !== eventId));
+        if (onEventDelete) onEventDelete(eventId);
+      }
+    } catch (error: any) {
+      console.error('Error deleting event:', error);
+      alert(error.message || 'Error al eliminar el evento');
     }
   };
 

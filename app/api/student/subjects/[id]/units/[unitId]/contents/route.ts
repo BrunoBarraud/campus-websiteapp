@@ -44,7 +44,10 @@ export async function GET(
     // Trae los contenidos de la unidad
     const { data: sections, error: sectionsError } = await supabaseAdmin
       .from("subject_content")
-      .select("*")
+      .select(`
+        *,
+        creator:users ( name )
+      `)
       .eq("unit_id", unitId)
       .order("created_at", { ascending: true });
 
@@ -55,36 +58,40 @@ export async function GET(
       );
     }
 
-    // Obtener los IDs únicos de creadores
-    const creatorIds = [
-      ...new Set((sections || []).map((s) => s.created_by).filter(Boolean)),
-    ];
-
-    // Traer los nombres de los creadores
-    let creatorsMap: Record<string, string> = {};
-    if (creatorIds.length > 0) {
-      const { data: creators } = await supabaseAdmin
-        .from("users")
-        .select("id, name")
-        .in("id", creatorIds);
-
-      creatorsMap = (creators || []).reduce(
-        (acc, user) => ({ ...acc, [user.id]: user.name }),
-        {}
-      );
-    }
-
-    // Agregar el nombre del creador y asegurar file_url/file_name en cada sección
-    const sectionsWithCreator = (sections || []).map((section) => ({
-      ...section,
-      creator_name: creatorsMap[section.created_by] || "Desconocido",
-      file_url: section.file_url ?? null,
-      file_name: section.file_name ?? null,
-    }));
+    // Agregar assignment_id, due_date, is_active si es tarea (igual que en el otro endpoint)
+    const sectionsWithAssignmentInfo = await Promise.all(
+      (sections || []).map(async (section) => {
+        const { creator, ...rest } = section;
+        let assignment_id = null;
+        let due_date = null;
+        let is_active = null;
+        
+        if (section.content_type === "assignment") {
+          const { data: assignment } = await supabaseAdmin
+            .from("assignments")
+            .select("id, due_date, is_active")
+            .eq("subject_content_id", section.id)
+            .single();
+          assignment_id = assignment?.id || null;
+          due_date = assignment?.due_date || null;
+          is_active = assignment?.is_active ?? null;
+        }
+        
+        return {
+          ...rest,
+          creator_name: creator ? creator.name : "Desconocido",
+          assignment_id,
+          due_date,
+          is_active,
+          file_url: section.file_url ?? null,
+          file_name: section.file_name ?? null,
+        };
+      })
+    );
 
     return NextResponse.json({
       ...unit,
-      sections: sectionsWithCreator,
+      sections: sectionsWithAssignmentInfo,
     });
   } catch (error: any) {
     return NextResponse.json(
