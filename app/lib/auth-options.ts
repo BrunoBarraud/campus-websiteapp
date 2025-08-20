@@ -284,7 +284,7 @@ export const authOptions: AuthOptions = {
     }
   },
   pages: {
-    signIn: "/campus/login",
-    signOut: "/campus/logout",
+    signIn: "/campus/auth/login",
+    signOut: "/campus/auth/logout",
   },
 };
