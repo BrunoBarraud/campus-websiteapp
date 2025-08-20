@@ -82,7 +82,7 @@ const nextConfig: NextConfig = {
     return config;
   },
 
-  serverExternalPackages: ["next-auth"],
+
 
   // Headers para cache y seguridad
   async headers() {
