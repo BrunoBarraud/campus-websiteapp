@@ -1,8 +1,8 @@
 import { withAuth } from "next-auth/middleware";
 import { NextRequest, NextResponse } from "next/server";
+import type { NextFetchEvent } from "next/server";
 import { csrfMiddleware } from "./lib/middleware/csrf";
 import { loginRateLimitMiddleware, apiRateLimitMiddleware } from "./lib/middleware/rate-limit";
-import { securityHeadersMiddleware } from "./lib/middleware/security-headers";
 
 // Middleware compuesto que combina autenticación y CSRF
 const authMiddleware = withAuth({
@@ -35,7 +35,7 @@ const authMiddleware = withAuth({
 });
 
 // Middleware principal que aplica seguridad y autenticación
-export default function middleware(req: NextRequest) {
+export default function middleware(req: NextRequest, event: NextFetchEvent) {
   // Excluir rutas públicas de la protección
   const isPublicRoute = (
     req.nextUrl.pathname.startsWith('/_next') ||
@@ -68,11 +68,7 @@ export default function middleware(req: NextRequest) {
   }
 
   // Aplicar middleware de autenticación
-  const authResponse = authMiddleware(req as any, NextResponse.next() as any);
-  
-  // Aplicar encabezados de seguridad a todas las respuestas
-  // Esto debe ser lo último para asegurar que se apliquen a todas las respuestas
-  return securityHeadersMiddleware(req);
+  return authMiddleware(req as any, event);
 }
 
 export const config = {

@@ -9,7 +9,7 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ m
   const body = await request.json();
   const { status } = body; // 'delivered' | 'read'
 
-  let updateFields: any = {};
+  const updateFields: any = {};
   if (status === "delivered") updateFields.delivered_at = new Date().toISOString();
   if (status === "read") updateFields.read_at = new Date().toISOString();
 

@@ -116,11 +116,11 @@ export async function GET(
 // POST - Crear nuevo contenido en una unidad
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string; unitId: string } }
+  { params }: { params: Promise<{ id: string; unitId: string }> }
 ) {
   try {
     const currentUser = await requireRole(["admin", "teacher"]);
-    const { id: subjectId, unitId } = params;
+    const { id: subjectId, unitId } = await params;
 
     // Verificar que la materia existe y el profesor tiene acceso
     const { data: subject, error: subjectError } = await supabaseAdmin
@@ -295,11 +295,11 @@ export async function POST(
 // PUT - Actualizar contenido de una unidad
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string; unitId: string } }
+  { params }: { params: Promise<{ id: string; unitId: string }> }
 ) {
   try {
     const currentUser = await requireRole(["admin", "teacher"]);
-    const { id: subjectId, unitId } = params;
+    const { id: subjectId, unitId } = await params;
 
     // Verificar que la materia existe y el profesor tiene acceso
     const { data: subject, error: subjectError } = await supabaseAdmin

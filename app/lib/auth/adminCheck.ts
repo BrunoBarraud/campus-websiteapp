@@ -1,6 +1,6 @@
 // 🔒 Utilidades para verificar permisos de administrador en el servidor
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/lib/auth/config';
+import { authOptions } from '@/app/lib/auth-options';
 import { NextResponse } from 'next/server';
 
 export async function checkAdminAccess() {

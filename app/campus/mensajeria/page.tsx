@@ -12,11 +12,25 @@ const MensajeriaPage: React.FC = () => {
 
   // Obtener el usuario actual al montar el componente
   React.useEffect(() => {
-    fetch('/api/user/me')
-      .then(res => res.json())
-      .then(data => {
-        if (data?.id) setCurrentUserId(data.id);
-      });
+    const fetchCurrentUser = async () => {
+      try {
+        const res = await fetch('/api/user/me');
+        if (res.ok) {
+          const data = await res.json();
+          if (data?.id) {
+            setCurrentUserId(data.id);
+          } else {
+            console.error('No se pudo obtener el ID del usuario:', data);
+          }
+        } else {
+          console.error('Error al obtener usuario actual:', res.status);
+        }
+      } catch (error) {
+        console.error('Error al obtener usuario actual:', error);
+      }
+    };
+    
+    fetchCurrentUser();
   }, []);
 
   // Cuando seleccionas un usuario, busca o crea la conversación
@@ -64,11 +78,15 @@ const MensajeriaPage: React.FC = () => {
             <div className="flex flex-1 items-center justify-center text-amber-400 text-2xl animate-pulse">
               Cargando chat...
             </div>
-          ) : conversationId && currentUserId ? (
+          ) : conversationId && currentUserId && conversationId.trim() !== '' && currentUserId.trim() !== '' ? (
             <ChatWindow conversationId={conversationId} currentUserId={currentUserId} />
-          ) : (
+          ) : currentUserId ? (
             <div className="flex flex-1 items-center justify-center text-gray-400 text-2xl">
               Selecciona un usuario para comenzar a chatear
+            </div>
+          ) : (
+            <div className="flex flex-1 items-center justify-center text-amber-400 text-2xl animate-pulse">
+              Cargando usuario...
             </div>
           )}
         </div>

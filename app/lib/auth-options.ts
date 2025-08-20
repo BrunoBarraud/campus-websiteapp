@@ -7,6 +7,7 @@ import { isAccountLocked, recordLoginAttempt } from "./security/brute-force-prot
 import { notifySuspiciousLogin, notifyAccountLocked } from "./services/security-notifications";
 import { UAParser } from './utils/user-agent-parser';
 import { logAuditEvent, AuditAction } from './services/audit-service';
+import speakeasy from 'speakeasy';
 
 export const authOptions: AuthOptions = {
   providers: [
@@ -83,8 +84,7 @@ export const authOptions: AuthOptions = {
           
           // Verificar autenticación de dos factores si está habilitada
           if (user.two_factor_enabled && (credentials as any).twoFactorCode) {
-            // Importar speakeasy para verificar el código
-            const speakeasy = require('speakeasy');
+            // Verificar el código 2FA usando speakeasy
             
             // Verificar el código 2FA
             const verified = speakeasy.totp.verify({
@@ -232,9 +232,9 @@ export const authOptions: AuthOptions = {
       if (user) {
         try {
           // Obtener información del navegador y sistema operativo
-          const req = (arguments[0] as any)?.req;
-          const userAgent = req?.headers['user-agent'] || 'Unknown';
-          const ip = req?.headers['x-forwarded-for'] || req?.socket?.remoteAddress || 'Unknown';
+          // En NextAuth.js, la información de la request no está disponible en el evento signIn
+          const userAgent = 'Unknown';
+          const ip = 'Unknown';
           
           const parser = new UAParser(userAgent);
           const browserInfo = parser.getBrowser();

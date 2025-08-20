@@ -303,7 +303,7 @@ export const calendarService = {
     // Filtrado por visibilidad
     if (userRole === "student" && userId) {
       // Eventos personales, globales, por año, por materia
-      let orFilters = [
+      const orFilters = [
         `is_personal.eq.true,created_by.eq.${userId}`,
         `is_global.eq.true`,
       ];
@@ -316,7 +316,7 @@ export const calendarService = {
       query = query.or(orFilters.join(","));
     } else if ((userRole === "teacher" || userRole === "admin") && userId) {
       // Profesores y admins ven globales, por año, por materia, personales
-      let orFilters = [
+      const orFilters = [
         `is_global.eq.true`,
         `is_personal.eq.true,created_by.eq.${userId}`,
       ];

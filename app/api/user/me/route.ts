@@ -10,11 +10,23 @@ export async function GET() {
     
     console.log('User authenticated:', currentUser.email);
 
+    // Actualizar last_seen del usuario actual
+    const { supabaseAdmin } = await import('@/app/lib/supabaseClient');
+    await supabaseAdmin
+      .from('users')
+      .update({ 
+        last_seen: new Date().toISOString(),
+        online: true 
+      })
+      .eq('id', currentUser.id);
+
     const permissions = getUserPermissions(currentUser.role);
 
-    // Devolver directamente los datos del usuario para facilitar el acceso en el frontend
+    // Devolver los datos del usuario con last_seen actualizado
     return NextResponse.json({
       ...currentUser,
+      last_seen: new Date().toISOString(),
+      online: true,
       permissions
     });
 

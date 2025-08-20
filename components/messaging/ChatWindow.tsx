@@ -13,31 +13,51 @@ const ChatWindow: React.FC<{ conversationId?: string; currentUserId?: string }> 
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
   const [recipient, setRecipient] = useState<any | null>(null);
+  const [loadingRecipient, setLoadingRecipient] = useState(true);
   const [currentUser, setCurrentUser] = useState<any | null>(null);
 
   useEffect(() => {
-    if (!conversationId) return;
+    if (!conversationId) {
+      setLoadingRecipient(false);
+      return;
+    }
+    setLoadingRecipient(true);
     // Obtener participantes de la conversación
     fetch(`/api/conversations?conversationId=${conversationId}`)
-      .then(res => res.json())
-      .then(async data => {
+      .then(res => {
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        return res.text();
+      })
+      .then(text => {
+        if (!text.trim()) {
+          throw new Error('Empty response');
+        }
+        return JSON.parse(text);
+      })
+      .then(data => {
         if (data && data.length > 0) {
           // Buscar el participante que NO es el actual
           const otherParticipant = data[0].conversation.participants?.find((p: any) => p.user_id !== currentUserId);
-          if (otherParticipant?.user_id && typeof otherParticipant.user_id === 'string' && otherParticipant.user_id.length > 0) {
-            // Obtener datos completos del usuario destinatario
-            const userRes = await fetch(`/api/users/${otherParticipant.user_id}`);
-            const userData = await userRes.json();
-            setRecipient(userData);
+          if (otherParticipant?.user) {
+            setRecipient(otherParticipant.user);
           } else {
             setRecipient(null);
           }
         }
+        setLoadingRecipient(false);
+      })
+      .catch(error => {
+        console.error('Error al obtener participantes:', error);
+        setRecipient(null);
+        setLoadingRecipient(false);
       });
     // Obtener datos del usuario actual
     fetch('/api/user/me')
       .then(res => res.json())
-      .then(data => setCurrentUser(data));
+      .then(data => setCurrentUser(data))
+      .catch(error => console.error('Error al obtener usuario actual:', error));
   }, [conversationId, currentUserId]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -47,10 +67,24 @@ const ChatWindow: React.FC<{ conversationId?: string; currentUserId?: string }> 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
     setSendError(null);
-    if ((!input.trim() && !file) || !conversationId || !currentUserId) {
-      setSendError('Faltan datos para enviar el mensaje.');
+    
+    // Validar que hay contenido para enviar
+    if (!input.trim() && !file) {
+      setSendError('Escribe un mensaje o adjunta un archivo.');
       return;
     }
+    
+    // Validar que tenemos los datos necesarios
+    if (!conversationId || conversationId.trim() === '') {
+      setSendError('No hay conversación seleccionada.');
+      return;
+    }
+    
+    if (!currentUserId || currentUserId.trim() === '') {
+      setSendError('Error de autenticación. Recarga la página.');
+      return;
+    }
+    
     setSending(true);
     const { error } = await sendMessage(input, file ?? undefined, replyTo?.id);
     if (error) {
@@ -81,11 +115,32 @@ const ChatWindow: React.FC<{ conversationId?: string; currentUserId?: string }> 
           </button>
           <div className="relative">
             <img src={recipient?.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${recipient?.name || recipient?.email || 'U'}`} alt={recipient?.name || 'Usuario'} className="w-10 h-10 rounded-full border-2 border-amber-400" />
-            <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-400 rounded-full border-2 border-white"></span>
+            {recipient?.online && (
+              <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-400 rounded-full border-2 border-white"></span>
+            )}
           </div>
           <div>
-            <h2 className="font-bold text-lg">{recipient?.name || recipient?.email || 'Chat Privado'}</h2>
-            <p className="text-xs text-amber-300">En línea</p>
+            <h2 className="font-bold text-lg">
+              {loadingRecipient ? (
+                <span className="animate-pulse">Cargando...</span>
+              ) : (
+                recipient?.name || recipient?.email || 'Usuario'
+              )}
+            </h2>
+            <p className="text-xs text-amber-300">
+              {loadingRecipient ? (
+                <span className="animate-pulse">...</span>
+              ) : (
+                recipient?.online ? 'En línea' : 
+                  recipient?.last_seen ? `Última vez: ${new Date(recipient.last_seen).toLocaleString('es-ES', {
+                    day: '2-digit',
+                    month: '2-digit', 
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })}` : 'Desconectado'
+              )}
+            </p>
           </div>
         </div>
         <div className="flex items-center space-x-4">
@@ -123,7 +178,7 @@ const ChatWindow: React.FC<{ conversationId?: string; currentUserId?: string }> 
                       </a>
                     )}
                   </div>
-                  <span className="text-xs text-gray-500 mt-1 block">{msg.created_at} {isCurrentUser && <FaCheckDouble className="inline text-blue-500 ml-1" />}</span>
+                  <span className="text-xs text-gray-500 mt-1 block">{new Date(msg.created_at).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })} {isCurrentUser && <FaCheckDouble className="inline text-blue-500 ml-1" />}</span>
                 </div>
                 {isCurrentUser && (
                   <img src={avatarUrl} alt={currentUser?.name || 'Tú'} className="w-8 h-8 rounded-full ml-3" />
@@ -161,6 +216,7 @@ const ChatWindow: React.FC<{ conversationId?: string; currentUserId?: string }> 
           <input
             type="text"
             placeholder="Escribe un mensaje..."
+
             className="flex-grow p-2 px-4 rounded-full bg-gray-100 focus:bg-white focus:ring-2 focus:ring-amber-400 mx-2"
             value={input}
             onChange={handleInputChange}

@@ -5,11 +5,11 @@ import { requireRole } from "@/app/lib/auth";
 // GET - Obtener contenidos/secciones de una unidad para el estudiante autenticado
 export async function GET(
   _request: NextRequest,
-  { params }: { params: { unitId: string } }
+  { params }: { params: Promise<{ unitId: string }> }
 ) {
   try {
     const currentUser = await requireRole(["student"]);
-    const unitId = params.unitId;
+    const { unitId } = await params;
 
     // Verifica que el estudiante esté inscripto en la materia
     const { data: relations, error } = await supabaseAdmin

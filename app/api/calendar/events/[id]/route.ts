@@ -3,9 +3,9 @@ import { calendarService } from '@/app/lib/services';
 import { requireRole } from '@/app/lib/permissions';
 
 // PATCH - actualizar evento (admins y profesores)
-export async function PATCH(request: Request, { params }: { params: { id: string } }) {
+export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { id } = params;
+    const { id } = await params;
     const updates = await request.json();
 
     const currentUser = await requireRole(['admin', 'teacher']);
@@ -30,9 +30,9 @@ export async function PATCH(request: Request, { params }: { params: { id: string
 }
 
 // DELETE - eliminar (marcar inactivo) (admins y profesores)
-export async function DELETE(request: Request, { params }: { params: { id: string } }) {
+export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { id } = params;
+    const { id } = await params;
 
     const currentUser = await requireRole(['admin', 'teacher']);
 

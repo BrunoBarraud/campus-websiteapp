@@ -2,9 +2,39 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/app/lib/supabaseClient";
 import { requireRole } from "@/app/lib/auth";
 
-// GET: Listar conversaciones del usuario
+// GET: Listar conversaciones del usuario o obtener una conversación específica
 export async function GET(request: NextRequest) {
   const user = await requireRole(["teacher", "student", "admin"]);
+  const { searchParams } = new URL(request.url);
+  const conversationId = searchParams.get("conversationId");
+
+  if (conversationId) {
+    // Obtener conversación específica con participantes
+    const { data: participants, error: participantsError } = await supabaseAdmin
+      .from("conversation_participants")
+      .select(`
+        user_id,
+        role,
+        is_active,
+        user:users(id, name, email, avatar_url, online, last_seen)
+      `)
+      .eq("conversation_id", conversationId)
+      .eq("is_active", true);
+
+    if (participantsError) {
+      return NextResponse.json({ error: "Error al obtener participantes" }, { status: 500 });
+    }
+
+    // Verificar que el usuario actual es participante
+    const isParticipant = participants?.some(p => p.user_id === user.id);
+    if (!isParticipant) {
+      return NextResponse.json({ error: "No tienes acceso a esta conversación" }, { status: 403 });
+    }
+
+    return NextResponse.json([{ conversation: { participants } }]);
+  }
+
+  // Listar todas las conversaciones del usuario
   const { data, error } = await supabaseAdmin
     .from("conversation_participants")
     .select(`conversation_id, conversation:conversations (*), last_read_at, is_active, role`)
@@ -57,6 +87,25 @@ export async function POST(request: NextRequest) {
 
   if (partError) {
     return NextResponse.json({ error: "Error al agregar participantes", details: partError }, { status: 500 });
+  }
+
+  // Crear notificaciones para los otros participantes
+  const otherParticipants = participant_ids.filter((id: string) => id !== user.id);
+  if (otherParticipants.length > 0) {
+    const notifications = otherParticipants.map((participantId: string) => ({
+      user_id: participantId,
+      type: 'new_chat',
+      title: 'Nuevo chat',
+      message: `${user.name || user.email} te ha enviado un mensaje`,
+      conversation_id: conv.id,
+      sender_id: user.id,
+      is_read: false,
+      created_at: new Date().toISOString()
+    }));
+
+    await supabaseAdmin
+      .from('notifications')
+      .insert(notifications);
   }
 
   return NextResponse.json(conv, { status: 201 });

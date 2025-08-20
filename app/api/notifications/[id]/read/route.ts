@@ -6,7 +6,7 @@ import { supabaseAdmin } from '@/app/lib/supabaseClient';
 /**
  * Endpoint para marcar una notificación como leída
  */
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     // Verificar autenticación
     const session = await getServerSession(authOptions);
@@ -19,7 +19,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     }
 
     const userId = session.user.id;
-    const notificationId = params.id;
+    const { id: notificationId } = await params;
     
     if (!notificationId) {
       return NextResponse.json(

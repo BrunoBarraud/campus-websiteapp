@@ -30,7 +30,7 @@ interface Section {
 
 const UnitAccordionTeacher: React.FC<UnitAccordionProps> = ({
   subjectId,
-  subjectName,
+  subjectName: _subjectName,
 }) => {
   const [units, setUnits] = useState<Unit[]>([]);
   const [expandedUnit, setExpandedUnit] = useState<string | null>(null);
@@ -61,7 +61,7 @@ const UnitAccordionTeacher: React.FC<UnitAccordionProps> = ({
     try {
       console.log('Iniciando fetch de unidades para SubjectId:', subjectId);
       const res = await fetch(`/api/subjects/${subjectId}/units`);
-      let rawData = await res.text();
+      const rawData = await res.text();
       console.log('Respuesta cruda de la API (unidades):', rawData);
       let data;
       try {
@@ -236,16 +236,16 @@ const UnitAccordionTeacher: React.FC<UnitAccordionProps> = ({
     }
   };
 
-  const getSectionIcon = (section: Section) => {
-    switch (section.content_type) {
-      case "document":
-        return "📄";
-      case "assignment":
-        return "📝";
-      default:
-        return "📖";
-    }
-  };
+  // const getSectionIcon = (section: Section) => {
+  //   switch (section.content_type) {
+  //     case "document":
+  //       return "📄";
+  //     case "assignment":
+  //       return "📝";
+  //     default:
+  //       return "📖";
+  //   }
+  // };
 
   const getSectionTypeLabel = (section: Section) => {
     switch (section.content_type) {
@@ -311,7 +311,7 @@ const UnitAccordionTeacher: React.FC<UnitAccordionProps> = ({
             </button>
           </div>
         )}
-        {units.map((unit, idx) => (
+        {units.map((unit, _idx) => (
           <div key={unit.id} className="bg-white rounded-xl shadow-soft overflow-hidden border border-gray-100 hover:border-yellow-200 transition-colors duration-200">
             <button
               className="unit-header w-full flex justify-between items-center px-6 py-5 focus:outline-none hover:bg-gray-50 transition-colors duration-150"

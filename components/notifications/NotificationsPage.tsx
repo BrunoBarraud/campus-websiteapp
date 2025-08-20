@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
-import Link from 'next/link';
 
 interface Notification {
   id: string;
@@ -57,7 +56,7 @@ export default function NotificationsPage() {
       const res = await fetch('/api/notifications?page=1&limit=30');
       const data = await res.json();
       setNotifications(data.notifications || []);
-    } catch (err) {
+    } catch {
       setNotifications([]);
     } finally {
       setLoading(false);

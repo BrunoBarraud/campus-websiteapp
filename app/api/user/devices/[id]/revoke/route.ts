@@ -7,7 +7,7 @@ import { createSecurityNotification, SecurityNotificationType } from '@/app/lib/
 /**
  * Endpoint para revocar una sesión de dispositivo específica
  */
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     // Verificar autenticación
     const session = await getServerSession(authOptions);
@@ -16,7 +16,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     }
 
     const userId = session.user.id;
-    const deviceId = params.id;
+    const { id: deviceId } = await params;
 
     // Verificar que el dispositivo pertenece al usuario
     const { data: deviceData, error: deviceError } = await supabaseAdmin
