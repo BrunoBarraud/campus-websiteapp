@@ -3,8 +3,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/lib/auth-options';
+import { auth } from '@/auth';
 import { supabaseAdmin } from '@/app/lib/supabaseClient';
 import { logSecurityEvent } from '@/app/lib/services/audit-log';
 
@@ -14,7 +13,7 @@ import { logSecurityEvent } from '@/app/lib/services/audit-log';
 export async function GET(req: NextRequest) {
   try {
     // Verificar autenticación y permisos
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     
     if (!session) {
       return new NextResponse(JSON.stringify({ error: 'No autorizado' }), {

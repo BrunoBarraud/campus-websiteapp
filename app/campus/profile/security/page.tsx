@@ -1,7 +1,6 @@
 import { Suspense } from 'react';
-import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
-import { authOptions } from '@/app/lib/auth-options';
+import { auth } from '@/auth';
 import ChangePasswordForm from '@/components/auth/ChangePasswordForm';
 import RecentActivityList from '@/components/auth/RecentActivityList';
 import ConnectedDevicesList from '@/components/auth/ConnectedDevicesList';
@@ -13,7 +12,7 @@ import TwoFactorAuth from '@/components/auth/TwoFactorAuth';
  */
 export default async function ProfileSecurityPage() {
   // Verificar autenticación en el servidor
-  const session = await getServerSession(authOptions);
+  const session = await auth();
   
   if (!session?.user) {
     redirect('/campus/auth/login');

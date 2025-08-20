@@ -3,11 +3,6 @@
  */
 
 import DOMPurify from 'isomorphic-dompurify';
-import { JSDOM } from 'jsdom';
-
-// Initialize DOMPurify with JSDOM window for server-side sanitization
-const window = new JSDOM('').window;
-const purify = DOMPurify.sanitize;
 
 /**
  * Sanitiza una cadena de texto para prevenir ataques XSS

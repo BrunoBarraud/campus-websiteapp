@@ -3,9 +3,8 @@
  */
 
 import { Suspense } from 'react';
-import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
-import { authOptions } from '@/app/lib/auth-options';
+import { auth } from '@/auth';
 import SecurityDashboard from '@/components/admin/SecurityDashboard';
 
 export const metadata = {
@@ -15,7 +14,7 @@ export const metadata = {
 
 export default async function SecurityAdminPage() {
   // Verificar sesión y permisos
-  const session = await getServerSession(authOptions);
+  const session = await auth();
   
   if (!session) {
     redirect('/campus/auth/login');

@@ -1,12 +1,12 @@
 // 🔐 Helper para autenticación con NextAuth
-import { getServerSession } from "next-auth";
+import { auth } from "@/auth";
 import { userService } from '@/app/lib/services';
 import { User } from '@/app/lib/types';
 
 export async function getCurrentUser(): Promise<User | null> {
   try {
     // Obtener la sesión de NextAuth
-    const session = await getServerSession();
+    const session = await auth();
     
     if (!session?.user?.email) {
       console.log('No NextAuth session found');

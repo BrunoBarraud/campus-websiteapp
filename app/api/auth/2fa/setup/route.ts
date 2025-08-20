@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/lib/auth-options';
+import { auth } from '@/auth';
 import { supabaseAdmin } from '@/app/lib/supabaseClient';
 import * as speakeasy from 'speakeasy';
 import * as QRCode from 'qrcode';
@@ -12,7 +11,7 @@ import { logSecurityEvent } from '@/app/lib/security/audit-logs';
 export async function POST(request: NextRequest) {
   try {
     // Verificar autenticación
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     if (!session?.user) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }

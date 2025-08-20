@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/lib/auth-options';
+import { auth } from '@/auth';
 import { supabaseAdmin } from '@/app/lib/supabaseClient';
 import bcrypt from 'bcryptjs';
 import { validatePassword } from '@/app/lib/security/password-policy';
@@ -14,7 +13,7 @@ import { sanitizeText } from '@/app/lib/utils/sanitize';
 export async function POST(req: NextRequest) {
   try {
     // Verificar autenticación
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     
     if (!session?.user) {
       return NextResponse.json(

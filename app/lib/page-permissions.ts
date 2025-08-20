@@ -1,9 +1,9 @@
 // Middleware simple para verificar permisos de acceso a páginas
-import { getServerSession } from "next-auth";
+import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 
 export async function checkPageAccess(requiredRole: string | string[]) {
-  const session = await getServerSession();
+  const session = await auth();
   
   if (!session?.user) {
     redirect('/campus/login');
@@ -29,7 +29,7 @@ export async function checkPageAccess(requiredRole: string | string[]) {
 }
 
 export async function redirectToUserDashboard() {
-  const session = await getServerSession();
+  const session = await auth();
   
   if (!session?.user) {
     redirect('/campus/login');

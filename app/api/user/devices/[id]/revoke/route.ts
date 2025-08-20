@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/lib/auth-options';
+import { auth } from '@/auth';
 import { supabaseAdmin } from '@/app/lib/supabaseClient';
 import { createSecurityNotification, SecurityNotificationType } from '@/app/lib/services/security-notifications';
 
@@ -10,7 +9,7 @@ import { createSecurityNotification, SecurityNotificationType } from '@/app/lib/
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     // Verificar autenticación
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     if (!session?.user) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }

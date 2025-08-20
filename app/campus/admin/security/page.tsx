@@ -1,7 +1,6 @@
 import { Suspense } from 'react';
-import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
-import { authOptions } from '@/app/lib/auth-options';
+import { auth } from '@/auth';
 import SecurityDashboard from '@/components/admin/SecurityDashboard';
 
 /**
@@ -9,7 +8,7 @@ import SecurityDashboard from '@/components/admin/SecurityDashboard';
  */
 export default async function AdminSecurityPage() {
   // Verificar autenticación y permisos
-  const session = await getServerSession(authOptions);
+  const session = await auth();
   
   if (!session?.user) {
     redirect('/campus/login');

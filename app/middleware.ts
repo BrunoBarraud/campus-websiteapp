@@ -1,38 +1,8 @@
-import { withAuth } from "next-auth/middleware";
+import { auth } from "@/auth";
 import { NextRequest, NextResponse } from "next/server";
 import type { NextFetchEvent } from "next/server";
 import { csrfMiddleware } from "./lib/middleware/csrf";
 import { loginRateLimitMiddleware, apiRateLimitMiddleware } from "./lib/middleware/rate-limit";
-
-// Middleware compuesto que combina autenticación y CSRF
-const authMiddleware = withAuth({
-  callbacks: {
-    authorized: ({ token, req }) => {
-      const { pathname } = req.nextUrl;
-      
-      // Rutas públicas del campus (auth)
-      if (pathname.startsWith('/campus/auth/')) {
-        return true;
-      }
-      
-      // Rutas protegidas del campus requieren autenticación
-      if (pathname.startsWith('/campus')) {
-        return !!token;
-      }
-      
-      // Rutas admin requieren rol específico
-      if (pathname.startsWith('/admin')) {
-        return token?.role === 'admin';
-      }
-      
-      // Otras rutas son públicas
-      return true;
-    },
-  },
-  pages: {
-    signIn: '/campus/auth/login',
-  }
-});
 
 // Middleware principal que aplica seguridad y autenticación
 export default function middleware(req: NextRequest, event: NextFetchEvent) {
@@ -68,7 +38,31 @@ export default function middleware(req: NextRequest, event: NextFetchEvent) {
   }
 
   // Aplicar middleware de autenticación
-  return authMiddleware(req as any, event);
+  return auth(req as any);
+}
+
+// Función auxiliar para verificar autorización
+async function isAuthorized(req: NextRequest) {
+  const session = await auth();
+  const { pathname } = req.nextUrl;
+  
+  // Rutas públicas del campus (auth)
+  if (pathname.startsWith('/campus/auth/')) {
+    return true;
+  }
+  
+  // Rutas protegidas del campus requieren autenticación
+  if (pathname.startsWith('/campus')) {
+    return !!session?.user;
+  }
+  
+  // Rutas admin requieren rol específico
+  if (pathname.startsWith('/admin')) {
+    return session?.user?.role === 'admin';
+  }
+  
+  // Otras rutas son públicas
+  return true;
 }
 
 export const config = {
