@@ -49,7 +49,7 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
           }
 
           // Verificar contraseña
-          const isValidPassword = await bcrypt.compare(password, user.password_hash);
+          const isValidPassword = await bcrypt.compare(password, user.password);
           if (!isValidPassword) {
             await recordLoginAttempt(email, ipAddress, false);
             throw new Error('Credenciales inválidas');
