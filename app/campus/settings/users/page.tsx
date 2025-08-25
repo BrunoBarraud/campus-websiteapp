@@ -102,7 +102,7 @@ function EditUserModal({
         alignItems: 'center',
         justifyContent: 'center',
         zIndex: 1000,
-        padding: '1rem'
+        padding: '0.5rem'
       }}
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
@@ -112,7 +112,7 @@ function EditUserModal({
         style={{
           backgroundColor: 'white',
           borderRadius: '0.75rem',
-          padding: '1.5rem',
+          padding: window.innerWidth < 640 ? '1rem' : '1.5rem',
           width: '100%',
           maxWidth: '28rem',
           maxHeight: '90vh',
@@ -120,8 +120,8 @@ function EditUserModal({
           boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
         }}
       >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-          <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#1f2937' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: window.innerWidth < 640 ? '1rem' : '1.5rem' }}>
+          <h2 style={{ fontSize: window.innerWidth < 640 ? '1.25rem' : '1.5rem', fontWeight: 'bold', color: '#1f2937' }}>
             {user ? 'Editar Usuario' : 'Crear Usuario'}
           </h2>
           <button 
@@ -153,10 +153,10 @@ function EditUserModal({
               required
               style={{
                 width: '100%',
-                padding: '0.5rem',
+                padding: window.innerWidth < 640 ? '0.75rem' : '0.5rem',
                 border: '1px solid #d1d5db',
                 borderRadius: '0.5rem',
-                fontSize: '1rem'
+                fontSize: window.innerWidth < 640 ? '1rem' : '1rem'
               }}
             />
           </div>
@@ -172,10 +172,10 @@ function EditUserModal({
               required
               style={{
                 width: '100%',
-                padding: '0.5rem',
+                padding: window.innerWidth < 640 ? '0.75rem' : '0.5rem',
                 border: '1px solid #d1d5db',
                 borderRadius: '0.5rem',
-                fontSize: '1rem'
+                fontSize: window.innerWidth < 640 ? '1rem' : '1rem'
               }}
             />
           </div>
@@ -215,10 +215,10 @@ function EditUserModal({
                 onChange={(e) => setFormData(prev => ({ ...prev, year: e.target.value ? parseInt(e.target.value) : undefined }))}
                 style={{
                   width: '100%',
-                  padding: '0.5rem',
+                  padding: window.innerWidth < 640 ? '0.75rem' : '0.5rem',
                   border: '1px solid #d1d5db',
                   borderRadius: '0.5rem',
-                  fontSize: '1rem'
+                  fontSize: window.innerWidth < 640 ? '1rem' : '1rem'
                 }}
               >
                 <option value="">Seleccionar año</option>
@@ -241,18 +241,19 @@ function EditUserModal({
             </label>
           </div>
 
-          <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+          <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', flexDirection: window.innerWidth < 640 ? 'column' : 'row' }}>
             <button
               type="button"
               onClick={onClose}
               style={{
-                padding: '0.5rem 1rem',
+                padding: window.innerWidth < 640 ? '0.75rem 1rem' : '0.5rem 1rem',
                 backgroundColor: '#f3f4f6',
                 color: '#374151',
                 border: 'none',
                 borderRadius: '0.5rem',
                 cursor: 'pointer',
-                fontWeight: '500'
+                fontWeight: '500',
+                width: window.innerWidth < 640 ? '100%' : 'auto'
               }}
             >
               Cancelar
@@ -260,13 +261,14 @@ function EditUserModal({
             <button
               type="submit"
               style={{
-                padding: '0.5rem 1rem',
+                padding: window.innerWidth < 640 ? '0.75rem 1rem' : '0.5rem 1rem',
                 background: 'linear-gradient(to right, #f59e0b, #881337)',
                 color: 'white',
                 border: 'none',
                 borderRadius: '0.5rem',
                 cursor: 'pointer',
-                fontWeight: '500'
+                fontWeight: '500',
+                width: window.innerWidth < 640 ? '100%' : 'auto'
               }}
             >
               {user ? 'Actualizar' : 'Crear'}
@@ -687,78 +689,78 @@ function UsersPageContent() {
         </div>
       )}
 
-    <div style={{ background: 'linear-gradient(135deg, #fef3c7, #ffffff, #fdf2f8)', minHeight: '100vh', padding: '2rem' }}>
+    <div style={{ background: 'linear-gradient(135deg, #fef3c7, #ffffff, #fdf2f8)', minHeight: '100vh', padding: window.innerWidth < 640 ? '1rem' : '2rem' }}>
       <div style={{ maxWidth: '80rem', margin: '0 auto' }}>
         {/* Header */}
-        <div style={{ marginBottom: '2rem' }}>
-          <h1 style={{ fontSize: '2rem', fontWeight: 'bold', color: '#1f2937', marginBottom: '0.5rem' }}>
-            <span style={{ background: '#f59e0b', color: '#881337', padding: '0.5rem 1rem', borderRadius: '0.5rem', marginRight: '0.5rem' }}>
+        <div style={{ marginBottom: window.innerWidth < 640 ? '1.5rem' : '2rem' }}>
+          <h1 style={{ fontSize: window.innerWidth < 640 ? '1.5rem' : '2rem', fontWeight: 'bold', color: '#1f2937', marginBottom: '0.5rem' }}>
+            <span style={{ background: '#f59e0b', color: '#881337', padding: window.innerWidth < 640 ? '0.375rem 0.75rem' : '0.5rem 1rem', borderRadius: '0.5rem', marginRight: '0.5rem', fontSize: window.innerWidth < 640 ? '0.875rem' : '1rem' }}>
               Gestión
             </span>
-            <span style={{ background: '#881337', color: '#f59e0b', padding: '0.5rem 1rem', borderRadius: '0.5rem' }}>
+            <span style={{ background: '#881337', color: '#f59e0b', padding: window.innerWidth < 640 ? '0.375rem 0.75rem' : '0.5rem 1rem', borderRadius: '0.5rem', fontSize: window.innerWidth < 640 ? '0.875rem' : '1rem' }}>
               Usuarios
             </span>
           </h1>
-          <p style={{ color: '#6b7280' }}>Administra profesores, estudiantes y administradores del campus</p>
+          <p style={{ color: '#6b7280', fontSize: window.innerWidth < 640 ? '0.875rem' : '1rem' }}>Administra profesores, estudiantes y administradores del campus</p>
         </div>
 
         {/* Quick Stats */}
         <div style={{ 
           display: 'grid', 
-          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
-          gap: '1rem', 
-          marginBottom: '1.5rem' 
+          gridTemplateColumns: window.innerWidth < 640 ? '1fr 1fr' : 'repeat(auto-fit, minmax(200px, 1fr))', 
+          gap: window.innerWidth < 640 ? '0.75rem' : '1rem', 
+          marginBottom: window.innerWidth < 640 ? '1rem' : '1.5rem' 
         }}>
           <div style={{ 
             background: 'rgba(255, 255, 255, 0.8)', 
             borderRadius: '0.75rem', 
-            padding: '1rem', 
+            padding: window.innerWidth < 640 ? '0.75rem' : '1rem', 
             boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
             border: '1px solid #f59e0b'
           }}>
-            <div style={{ color: '#f59e0b', fontWeight: 'bold', fontSize: '1.5rem' }}>
+            <div style={{ color: '#f59e0b', fontWeight: 'bold', fontSize: window.innerWidth < 640 ? '1.25rem' : '1.5rem' }}>
               {users.filter(u => u.role === 'admin').length}
             </div>
-            <div style={{ color: '#6b7280', fontSize: '0.875rem' }}>Administradores</div>
+            <div style={{ color: '#6b7280', fontSize: window.innerWidth < 640 ? '0.75rem' : '0.875rem' }}>Administradores</div>
           </div>
           
           <div style={{ 
             background: 'rgba(255, 255, 255, 0.8)', 
             borderRadius: '0.75rem', 
-            padding: '1rem', 
+            padding: window.innerWidth < 640 ? '0.75rem' : '1rem', 
             boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
             border: '1px solid #881337'
           }}>
-            <div style={{ color: '#881337', fontWeight: 'bold', fontSize: '1.5rem' }}>
+            <div style={{ color: '#881337', fontWeight: 'bold', fontSize: window.innerWidth < 640 ? '1.25rem' : '1.5rem' }}>
               {users.filter(u => u.role === 'teacher').length}
             </div>
-            <div style={{ color: '#6b7280', fontSize: '0.875rem' }}>Profesores</div>
+            <div style={{ color: '#6b7280', fontSize: window.innerWidth < 640 ? '0.75rem' : '0.875rem' }}>Profesores</div>
           </div>
           
           <div style={{ 
             background: 'rgba(255, 255, 255, 0.8)', 
             borderRadius: '0.75rem', 
-            padding: '1rem', 
+            padding: window.innerWidth < 640 ? '0.75rem' : '1rem', 
             boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
             border: '1px solid #10b981'
           }}>
-            <div style={{ color: '#10b981', fontWeight: 'bold', fontSize: '1.5rem' }}>
+            <div style={{ color: '#10b981', fontWeight: 'bold', fontSize: window.innerWidth < 640 ? '1.25rem' : '1.5rem' }}>
               {users.filter(u => u.role === 'student').length}
             </div>
-            <div style={{ color: '#6b7280', fontSize: '0.875rem' }}>Estudiantes</div>
+            <div style={{ color: '#6b7280', fontSize: window.innerWidth < 640 ? '0.75rem' : '0.875rem' }}>Estudiantes</div>
           </div>
           
           <div style={{ 
             background: 'rgba(255, 255, 255, 0.8)', 
             borderRadius: '0.75rem', 
-            padding: '1rem', 
+            padding: window.innerWidth < 640 ? '0.75rem' : '1rem', 
             boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
             border: '1px solid #6b7280'
           }}>
-            <div style={{ color: '#1f2937', fontWeight: 'bold', fontSize: '1.5rem' }}>
+            <div style={{ color: '#1f2937', fontWeight: 'bold', fontSize: window.innerWidth < 640 ? '1.25rem' : '1.5rem' }}>
               {users.length}
             </div>
-            <div style={{ color: '#6b7280', fontSize: '0.875rem' }}>
+            <div style={{ color: '#6b7280', fontSize: window.innerWidth < 640 ? '0.75rem' : '0.875rem' }}>
               {searchTerm || filterRole !== 'all' ? 'En esta página' : 'Total en página'}
             </div>
           </div>
@@ -768,13 +770,13 @@ function UsersPageContent() {
         <div style={{ 
           background: 'rgba(255, 255, 255, 0.8)', 
           borderRadius: '0.75rem', 
-          padding: '1.5rem', 
-          marginBottom: '1.5rem',
+          padding: window.innerWidth < 640 ? '1rem' : '1.5rem', 
+          marginBottom: window.innerWidth < 640 ? '1rem' : '1.5rem',
           boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
         }}>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flex: 1 }}>
-              <div style={{ position: 'relative', minWidth: '20rem' }}>
+          <div style={{ display: 'flex', flexDirection: window.innerWidth < 640 ? 'column' : 'row', flexWrap: 'wrap', gap: window.innerWidth < 640 ? '0.75rem' : '1rem', alignItems: window.innerWidth < 640 ? 'stretch' : 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', flexDirection: window.innerWidth < 640 ? 'column' : 'row', gap: window.innerWidth < 640 ? '0.75rem' : '1rem', alignItems: window.innerWidth < 640 ? 'stretch' : 'center', flex: 1 }}>
+              <div style={{ position: 'relative', minWidth: window.innerWidth < 640 ? 'auto' : '20rem', width: window.innerWidth < 640 ? '100%' : 'auto' }}>
                 <FiSearch style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: '#6b7280' }} />
                 <input
                   type="text"
@@ -784,9 +786,10 @@ function UsersPageContent() {
                   style={{
                     width: '100%',
                     paddingLeft: '2.5rem',
-                    padding: '0.5rem',
+                    padding: window.innerWidth < 640 ? '0.75rem' : '0.5rem',
                     border: '1px solid #d1d5db',
-                    borderRadius: '0.5rem'
+                    borderRadius: '0.5rem',
+                    fontSize: window.innerWidth < 640 ? '1rem' : '0.875rem'
                   }}
                 />
               </div>
@@ -795,7 +798,8 @@ function UsersPageContent() {
                 value={filterRole}
                 onChange={(e) => setFilterRole(e.target.value)}
                 style={{
-                  padding: '0.5rem',
+                  padding: window.innerWidth < 640 ? '0.75rem' : '0.5rem',
+                  width: window.innerWidth < 640 ? '100%' : 'auto',
                   border: '1px solid #d1d5db',
                   borderRadius: '0.5rem',
                   minWidth: '8rem'
@@ -808,7 +812,7 @@ function UsersPageContent() {
               </select>
             </div>
 
-            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', flexDirection: window.innerWidth < 640 ? 'column' : 'row', gap: window.innerWidth < 640 ? '0.5rem' : '0.5rem', alignItems: window.innerWidth < 640 ? 'stretch' : 'center', flexWrap: 'wrap' }}>
               {/* Botones de Exportación */}
               <button
                 onClick={() => handleExportUsers(false)}
@@ -816,15 +820,18 @@ function UsersPageContent() {
                 style={{
                   display: 'flex',
                   alignItems: 'center',
+                  justifyContent: window.innerWidth < 640 ? 'center' : 'flex-start',
                   gap: '0.5rem',
-                  padding: '0.5rem 1rem',
+                  padding: window.innerWidth < 640 ? '0.75rem 1rem' : '0.5rem 1rem',
                   background: 'linear-gradient(to right, #10b981, #059669)',
                   color: 'white',
                   border: 'none',
                   borderRadius: '0.5rem',
                   cursor: isExporting ? 'not-allowed' : 'pointer',
                   fontWeight: '500',
-                  opacity: isExporting ? 0.6 : 1
+                  opacity: isExporting ? 0.6 : 1,
+                  width: window.innerWidth < 640 ? '100%' : 'auto',
+                  fontSize: window.innerWidth < 640 ? '0.875rem' : '0.875rem'
                 }}
               >
                 <FiDownload size={16} />
@@ -837,15 +844,18 @@ function UsersPageContent() {
                 style={{
                   display: 'flex',
                   alignItems: 'center',
+                  justifyContent: window.innerWidth < 640 ? 'center' : 'flex-start',
                   gap: '0.5rem',
-                  padding: '0.5rem 1rem',
+                  padding: window.innerWidth < 640 ? '0.75rem 1rem' : '0.5rem 1rem',
                   background: 'linear-gradient(to right, #3b82f6, #1d4ed8)',
                   color: 'white',
                   border: 'none',
                   borderRadius: '0.5rem',
                   cursor: isExporting ? 'not-allowed' : 'pointer',
                   fontWeight: '500',
-                  opacity: isExporting ? 0.6 : 1
+                  opacity: isExporting ? 0.6 : 1,
+                  width: window.innerWidth < 640 ? '100%' : 'auto',
+                  fontSize: window.innerWidth < 640 ? '0.875rem' : '0.875rem'
                 }}
               >
                 <FiFileText size={16} />
@@ -866,14 +876,17 @@ function UsersPageContent() {
                   style={{
                     display: 'flex',
                     alignItems: 'center',
+                    justifyContent: window.innerWidth < 640 ? 'center' : 'flex-start',
                     gap: '0.5rem',
-                    padding: '0.5rem 1rem',
+                    padding: window.innerWidth < 640 ? '0.75rem 1rem' : '0.5rem 1rem',
                     background: 'linear-gradient(to right, #f59e0b, #d97706)',
                     color: 'white',
                     border: 'none',
                     borderRadius: '0.5rem',
                     cursor: 'pointer',
-                    fontWeight: '500'
+                    fontWeight: '500',
+                    width: window.innerWidth < 640 ? '100%' : 'auto',
+                    fontSize: window.innerWidth < 640 ? '0.875rem' : '0.875rem'
                   }}
                 >
                   <FiUpload size={16} />
@@ -888,15 +901,18 @@ function UsersPageContent() {
                   style={{
                     display: 'flex',
                     alignItems: 'center',
+                    justifyContent: window.innerWidth < 640 ? 'center' : 'flex-start',
                     gap: '0.5rem',
-                    padding: '0.5rem 1rem',
+                    padding: window.innerWidth < 640 ? '0.75rem 1rem' : '0.5rem 1rem',
                     background: 'linear-gradient(to right, #8b5cf6, #7c3aed)',
                     color: 'white',
                     border: 'none',
                     borderRadius: '0.5rem',
                     cursor: isImporting ? 'not-allowed' : 'pointer',
                     fontWeight: '500',
-                    opacity: isImporting ? 0.6 : 1
+                    opacity: isImporting ? 0.6 : 1,
+                    width: window.innerWidth < 640 ? '100%' : 'auto',
+                    fontSize: window.innerWidth < 640 ? '0.875rem' : '0.875rem'
                   }}
                 >
                   <FiUpload size={16} />
@@ -912,14 +928,17 @@ function UsersPageContent() {
                 style={{
                   display: 'flex',
                   alignItems: 'center',
+                  justifyContent: window.innerWidth < 640 ? 'center' : 'flex-start',
                   gap: '0.5rem',
-                  padding: '0.5rem 1rem',
+                  padding: window.innerWidth < 640 ? '0.75rem 1rem' : '0.5rem 1rem',
                   background: 'linear-gradient(to right, #f59e0b, #881337)',
                   color: 'white',
                   border: 'none',
                   borderRadius: '0.5rem',
                   cursor: 'pointer',
-                  fontWeight: '500'
+                  fontWeight: '500',
+                  width: window.innerWidth < 640 ? '100%' : 'auto',
+                  fontSize: window.innerWidth < 640 ? '0.875rem' : '0.875rem'
                 }}
               >
                 <FiPlus size={16} />
@@ -934,17 +953,18 @@ function UsersPageContent() {
           background: 'rgba(255, 255, 255, 0.8)', 
           borderRadius: '0.75rem', 
           overflow: 'hidden',
-          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+          margin: window.innerWidth < 640 ? '0 -0.5rem' : '0'
         }}>
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead style={{ background: '#f9fafb' }}>
                 <tr>
-                  <th style={{ textAlign: 'left', padding: '0.75rem', fontWeight: '600', color: '#374151' }}>Usuario</th>
-                  <th style={{ textAlign: 'left', padding: '0.75rem', fontWeight: '600', color: '#374151' }}>Rol</th>
-                  <th style={{ textAlign: 'left', padding: '0.75rem', fontWeight: '600', color: '#374151' }}>Año</th>
-                  <th style={{ textAlign: 'left', padding: '0.75rem', fontWeight: '600', color: '#374151' }}>Estado</th>
-                  <th style={{ textAlign: 'center', padding: '0.75rem', fontWeight: '600', color: '#374151' }}>Acciones</th>
+                  <th style={{ textAlign: 'left', padding: window.innerWidth < 640 ? '0.5rem 0.25rem' : '0.75rem', fontWeight: '600', color: '#374151', fontSize: window.innerWidth < 640 ? '0.75rem' : '0.875rem' }}>Usuario</th>
+                  <th style={{ textAlign: 'left', padding: window.innerWidth < 640 ? '0.5rem 0.25rem' : '0.75rem', fontWeight: '600', color: '#374151', fontSize: window.innerWidth < 640 ? '0.75rem' : '0.875rem', display: window.innerWidth < 640 ? 'none' : 'table-cell' }}>Rol</th>
+                  <th style={{ textAlign: 'left', padding: window.innerWidth < 640 ? '0.5rem 0.25rem' : '0.75rem', fontWeight: '600', color: '#374151', fontSize: window.innerWidth < 640 ? '0.75rem' : '0.875rem', display: window.innerWidth < 640 ? 'none' : 'table-cell' }}>Año</th>
+                  <th style={{ textAlign: 'left', padding: window.innerWidth < 640 ? '0.5rem 0.25rem' : '0.75rem', fontWeight: '600', color: '#374151', fontSize: window.innerWidth < 640 ? '0.75rem' : '0.875rem', display: window.innerWidth < 640 ? 'none' : 'table-cell' }}>Estado</th>
+                  <th style={{ textAlign: 'center', padding: window.innerWidth < 640 ? '0.5rem 0.25rem' : '0.75rem', fontWeight: '600', color: '#374151', fontSize: window.innerWidth < 640 ? '0.75rem' : '0.875rem' }}>Acciones</th>
                 </tr>
               </thead>
               <tbody>
@@ -952,13 +972,40 @@ function UsersPageContent() {
                   const roleBadge = getRoleBadge(user.role);
                   return (
                     <tr key={user.id} style={{ borderTop: '1px solid #e5e7eb' }}>
-                      <td style={{ padding: '0.75rem' }}>
+                      <td style={{ padding: window.innerWidth < 640 ? '0.5rem 0.25rem' : '0.75rem' }}>
                         <div>
-                          <div style={{ fontWeight: '500', color: '#1f2937' }}>{user.name}</div>
-                          <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>{user.email}</div>
+                          <div style={{ fontWeight: '500', color: '#1f2937', fontSize: window.innerWidth < 640 ? '0.875rem' : '1rem' }}>{user.name}</div>
+                          <div style={{ fontSize: window.innerWidth < 640 ? '0.75rem' : '0.875rem', color: '#6b7280' }}>{user.email}</div>
+                          {window.innerWidth < 640 && (
+                            <div style={{ marginTop: '0.25rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                              <span style={{ 
+                                ...roleBadge.style, 
+                                padding: '0.125rem 0.375rem', 
+                                borderRadius: '0.25rem', 
+                                fontSize: '0.625rem',
+                                fontWeight: '500'
+                              }}>
+                                {roleBadge.label}
+                              </span>
+                              {user.year && (
+                                <span style={{ fontSize: '0.625rem', color: '#6b7280' }}>{user.year}° Año</span>
+                              )}
+                              <span style={{ 
+                                padding: '0.125rem 0.375rem', 
+                                borderRadius: '0.25rem', 
+                                fontSize: '0.625rem',
+                                fontWeight: '500',
+                                ...(user.is_active ? 
+                                  { background: '#dcfce7', color: '#166534' } : 
+                                  { background: '#fef2f2', color: '#dc2626' })
+                              }}>
+                                {user.is_active ? 'Activo' : 'Inactivo'}
+                              </span>
+                            </div>
+                          )}
                         </div>
                       </td>
-                      <td style={{ padding: '0.75rem' }}>
+                      <td style={{ padding: window.innerWidth < 640 ? '0.5rem 0.25rem' : '0.75rem', display: window.innerWidth < 640 ? 'none' : 'table-cell' }}>
                         <span style={{ 
                           ...roleBadge.style, 
                           padding: '0.25rem 0.5rem', 
@@ -969,10 +1016,10 @@ function UsersPageContent() {
                           {roleBadge.label}
                         </span>
                       </td>
-                      <td style={{ padding: '0.75rem', color: '#6b7280' }}>
+                      <td style={{ padding: window.innerWidth < 640 ? '0.5rem 0.25rem' : '0.75rem', color: '#6b7280', display: window.innerWidth < 640 ? 'none' : 'table-cell' }}>
                         {user.year ? `${user.year}° Año` : '-'}
                       </td>
-                      <td style={{ padding: '0.75rem' }}>
+                      <td style={{ padding: window.innerWidth < 640 ? '0.5rem 0.25rem' : '0.75rem', display: window.innerWidth < 640 ? 'none' : 'table-cell' }}>
                         <span style={{ 
                           padding: '0.25rem 0.5rem', 
                           borderRadius: '0.375rem', 
@@ -985,15 +1032,15 @@ function UsersPageContent() {
                           {user.is_active ? 'Activo' : 'Inactivo'}
                         </span>
                       </td>
-                      <td style={{ padding: '0.75rem', textAlign: 'center' }}>
-                        <div style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem' }}>
+                      <td style={{ padding: window.innerWidth < 640 ? '0.5rem 0.25rem' : '0.75rem', textAlign: 'center' }}>
+                        <div style={{ display: 'flex', justifyContent: 'center', gap: window.innerWidth < 640 ? '0.25rem' : '0.5rem' }}>
                           <button
                             onClick={() => {
                               setEditingUser(user);
                               setIsModalOpen(true);
                             }}
                             style={{
-                              padding: '0.25rem',
+                              padding: window.innerWidth < 640 ? '0.375rem' : '0.25rem',
                               background: '#f59e0b',
                               color: 'white',
                               border: 'none',
@@ -1001,12 +1048,12 @@ function UsersPageContent() {
                               cursor: 'pointer'
                             }}
                           >
-                            <FiEdit2 size={14} />
+                            <FiEdit2 size={window.innerWidth < 640 ? 12 : 14} />
                           </button>
                           <button
                             onClick={() => handleDeleteUser(user.id)}
                             style={{
-                              padding: '0.25rem',
+                              padding: window.innerWidth < 640 ? '0.375rem' : '0.25rem',
                               background: '#dc2626',
                               color: 'white',
                               border: 'none',
@@ -1014,7 +1061,7 @@ function UsersPageContent() {
                               cursor: 'pointer'
                             }}
                           >
-                            <FiTrash2 size={14} />
+                            <FiTrash2 size={window.innerWidth < 640 ? 12 : 14} />
                           </button>
                         </div>
                       </td>

@@ -162,56 +162,42 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({ onSelectConversation, selecte
   };
 
   return (
-    <div className="contacts-list bg-white rounded-lg shadow-md w-full h-full flex flex-col">
-      {/* User Profile - usuario autenticado */}
-      {currentUser && (
-        <div className="bg-rose-950 text-white p-4 rounded-t-lg flex items-center space-x-3">
-          <div className="relative">
-            <img src={currentUser.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${currentUser.name || currentUser.email}`} alt={currentUser.name} className="w-12 h-12 rounded-full border-2 border-amber-400" />
-            <span className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white ${currentUser.online ? 'bg-green-400' : 'bg-gray-400'}`}></span>
-          </div>
-          <div>
-            <h2 className="font-bold">{currentUser.name}</h2>
-            <p className="text-xs text-amber-300">{currentUser.online ? 'En línea' : `Últ. vez: ${new Date(currentUser.last_seen).toLocaleTimeString()}`}</p>
-          </div>
-        </div>
-      )}
-
-      {/* Search Bar */}
-      <div className="p-3 border-b">
+    <div className="bg-white h-full flex flex-col">
+      {/* Header */}
+      <div className="p-3 md:p-4 border-b">
+        <h2 className="text-lg md:text-xl font-bold text-gray-800 mb-3 md:mb-4">Mensajes</h2>
         <div className="relative">
+          <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm" />
           <input
             type="text"
-            placeholder="Buscar usuario por nombre o email..."
+            placeholder="Buscar usuarios..."
+            className="w-full pl-9 md:pl-10 pr-3 md:pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-amber-400 focus:border-transparent text-sm md:text-base"
             value={search}
             onChange={handleSearchChange}
-            className="w-full p-2 pl-10 rounded-lg bg-gray-100 focus:ring-2 focus:ring-amber-400"
           />
-          <FaSearch className="absolute left-3 top-3 text-gray-500" />
         </div>
       </div>
 
-      {/* Lista de conversaciones o usuarios filtrados */}
-      <div className="overflow-y-auto max-h-[calc(100vh-18rem)]">
-        {loading ? (
-          <div className="p-4 text-center text-gray-400">Cargando...</div>
-        ) : search.trim().length < 2 ? (
-          // Mostrar conversaciones existentes cuando no hay búsqueda
+      {/* Lista de conversaciones/usuarios */}
+      <div className="flex-1 overflow-y-auto">
+        {search.trim() === '' ? (
           conversationsLoading ? (
             <div className="p-4 text-center text-gray-400">Cargando conversaciones...</div>
           ) : conversations.length === 0 ? (
             <div className="p-4 text-center text-gray-400">
-              <p className="text-sm">No tienes conversaciones</p>
-              <p className="text-xs mt-1 text-gray-500">Busca usuarios para iniciar una conversación</p>
+              <p className="text-sm">No tienes conversaciones aún</p>
+              <p className="text-xs mt-1 text-gray-500">Busca usuarios para comenzar a chatear</p>
             </div>
           ) : (
             conversations.map((conv: any) => (
               <div
                 key={conv.conversation_id}
-                className={`p-3 border-b hover:bg-gray-50 cursor-pointer flex items-center justify-between ${selectedConversation === conv.otherParticipant?.id ? 'bg-amber-100' : ''}`}
+                className={`p-3 border-b hover:bg-gray-50 cursor-pointer ${
+                  selectedConversation === conv.conversation_id ? 'bg-amber-100' : ''
+                }`}
                 onClick={() => {
-                  if (onSelectConversation && conv.otherParticipant) {
-                    onSelectConversation(conv.otherParticipant.id);
+                  if (onSelectConversation && conv.conversation_id) {
+                    onSelectConversation(conv.conversation_id);
                     // Marcar mensajes como leídos cuando se selecciona la conversación
                     if (unreadCounts[conv.conversation_id] > 0) {
                       markAsRead(conv.conversation_id);
@@ -220,25 +206,25 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({ onSelectConversation, selecte
                 }}
               >
                 <div className="flex items-center space-x-3">
-                  <div className="relative">
+                  <div className="relative flex-shrink-0">
                     <img 
                       src={conv.otherParticipant?.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${conv.otherParticipant?.name || conv.otherParticipant?.email}`} 
                       alt={conv.otherParticipant?.name} 
-                      className="w-10 h-10 rounded-full" 
+                      className="w-10 h-10 md:w-12 md:h-12 rounded-full" 
                     />
-                    <span className={`absolute bottom-0 right-0 w-2 h-2 rounded-full border border-white ${conv.otherParticipant?.online ? 'bg-green-400' : 'bg-gray-400'}`}></span>
+                    <span className={`absolute bottom-0 right-0 w-2 h-2 md:w-3 md:h-3 rounded-full border border-white ${conv.otherParticipant?.online ? 'bg-green-400' : 'bg-gray-400'}`}></span>
                   </div>
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between">
-                      <h3 className="font-medium">{conv.otherParticipant?.name}</h3>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between mb-1">
+                      <h3 className="font-medium text-sm md:text-base truncate">{conv.otherParticipant?.name}</h3>
                       {unreadCounts[conv.conversation_id] > 0 && (
-                        <span className="bg-red-500 text-white text-xs rounded-full px-2 py-1 min-w-[20px] text-center">
+                        <span className="bg-red-500 text-white text-xs rounded-full px-2 py-1 min-w-[20px] text-center flex-shrink-0 ml-2">
                           {unreadCounts[conv.conversation_id]}
                         </span>
                       )}
                     </div>
-                    <p className="text-xs text-gray-500 truncate w-40">{conv.otherParticipant?.email}</p>
-                    <p className="text-xs text-gray-400">
+                    <p className="text-xs text-gray-500 truncate">{conv.otherParticipant?.email}</p>
+                    <p className="text-xs text-gray-400 truncate">
                       {conv.otherParticipant?.online ? (
                         'En línea'
                       ) : (
@@ -247,7 +233,9 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({ onSelectConversation, selecte
                     </p>
                   </div>
                 </div>
-                <span className="text-xs text-gray-500">{conv.otherParticipant?.role}</span>
+                <div className="mt-1">
+                  <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">{conv.otherParticipant?.role}</span>
+                </div>
               </div>
             ))
           )
@@ -262,7 +250,9 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({ onSelectConversation, selecte
           users.map((user: PresenceUser) => (
             <div
               key={user.id}
-              className={`p-3 border-b hover:bg-gray-50 cursor-pointer flex items-center justify-between ${selectedConversation === user.id ? 'bg-amber-100' : ''}`}
+              className={`p-3 border-b hover:bg-gray-50 cursor-pointer ${
+                selectedConversation === user.id ? 'bg-amber-100' : ''
+              }`}
               onClick={() => {
                 if (onSelectConversation) {
                   onSelectConversation(user.id);
@@ -274,21 +264,21 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({ onSelectConversation, selecte
               }}
             >
               <div className="flex items-center space-x-3">
-                <div className="relative">
-                  <img src={user.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${user.name || user.email}`} alt={user.name} className="w-10 h-10 rounded-full" />
-                  <span className={`absolute bottom-0 right-0 w-2 h-2 rounded-full border border-white ${user.online ? 'bg-green-400' : 'bg-gray-400'}`}></span>
+                <div className="relative flex-shrink-0">
+                  <img src={user.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${user.name || user.email}`} alt={user.name} className="w-10 h-10 md:w-12 md:h-12 rounded-full" />
+                  <span className={`absolute bottom-0 right-0 w-2 h-2 md:w-3 md:h-3 rounded-full border border-white ${user.online ? 'bg-green-400' : 'bg-gray-400'}`}></span>
                 </div>
-                <div className="flex-1">
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-medium">{user.name}</h3>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between mb-1">
+                    <h3 className="font-medium text-sm md:text-base truncate">{user.name}</h3>
                     {unreadCounts[user.id] > 0 && (
-                      <span className="bg-red-500 text-white text-xs rounded-full px-2 py-1 min-w-[20px] text-center">
+                      <span className="bg-red-500 text-white text-xs rounded-full px-2 py-1 min-w-[20px] text-center flex-shrink-0 ml-2">
                         {unreadCounts[user.id]}
                       </span>
                     )}
                   </div>
-                  <p className="text-xs text-gray-500 truncate w-40">{user.email}</p>
-                  <p className="text-xs text-gray-400">
+                  <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                  <p className="text-xs text-gray-400 truncate">
                     {user.typing ? (
                       <span className="text-blue-500 font-medium animate-pulse">Escribiendo...</span>
                     ) : user.online ? (
@@ -299,7 +289,9 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({ onSelectConversation, selecte
                   </p>
                 </div>
               </div>
-              <span className="text-xs text-gray-500">{user.role}</span>
+              <div className="mt-1">
+                <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">{user.role}</span>
+              </div>
             </div>
           ))
         )}

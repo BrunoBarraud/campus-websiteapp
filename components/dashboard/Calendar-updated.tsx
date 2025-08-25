@@ -253,29 +253,30 @@ const Calendar: React.FC<CalendarProps> = ({
 
     <div className="bg-white rounded-xl shadow-xl overflow-hidden">
       {/* Calendar Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white p-6">
+      <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white p-3 sm:p-6">
         <div className="flex flex-col sm:flex-row justify-between items-center">
-          <div className="flex items-center space-x-4 mb-4 sm:mb-0">
+          <div className="flex items-center space-x-2 sm:space-x-4 mb-4 sm:mb-0">
             <button onClick={prevMonth} className="p-2 rounded-full hover:bg-blue-700 transition-colors">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
-            <h2 className="text-2xl font-bold" id="month-year">
+            <h2 className="text-lg sm:text-2xl font-bold" id="month-year">
               {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
             </h2>
             <button onClick={nextMonth} className="p-2 rounded-full hover:bg-blue-700 transition-colors">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
             </button>
           </div>
           {canUserEdit() && (
-            <button onClick={() => openEventModal()} className="px-4 py-2 bg-white text-blue-600 rounded-lg font-medium hover:bg-gray-100 transition-colors flex items-center">
-              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <button onClick={() => openEventModal()} className="px-3 py-2 sm:px-4 bg-white text-blue-600 rounded-lg font-medium hover:bg-gray-100 transition-colors flex items-center text-sm sm:text-base w-full sm:w-auto justify-center">
+              <svg className="w-4 h-4 sm:w-5 sm:h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
-              Nuevo Evento
+              <span className="hidden sm:inline">Nuevo Evento</span>
+              <span className="sm:hidden">+ Evento</span>
             </button>
           )}
         </div>
@@ -284,7 +285,7 @@ const Calendar: React.FC<CalendarProps> = ({
       {/* Weekday Headers */}
       <div className="grid grid-cols-7 bg-gray-100 border-b border-gray-200">
         {dayNames.map(day => (
-          <div key={day} className="p-3 text-center text-sm font-semibold text-gray-600">{day}</div>
+          <div key={day} className="p-1 sm:p-3 text-center text-xs sm:text-sm font-semibold text-gray-600">{day}</div>
         ))}
       </div>
 
@@ -292,7 +293,7 @@ const Calendar: React.FC<CalendarProps> = ({
       <div className="grid grid-cols-7 gap-px bg-gray-200">
         {/* Espacios en blanco para los días antes del primer día del mes */}
         {Array.from({ length: firstDay }, (_, i) => (
-          <div key={`empty-${i}`} className="bg-white min-h-[100px]"></div>
+          <div key={`empty-${i}`} className="bg-white min-h-[60px] sm:min-h-[100px]"></div>
         ))}
         {/* Días del mes */}
         {Array.from({ length: daysInMonth }, (_, i) => {
@@ -304,11 +305,11 @@ const Calendar: React.FC<CalendarProps> = ({
           return (
             <div
               key={day}
-              className={`calendar-day bg-white min-h-[100px] p-2 border border-gray-100 cursor-pointer transition-all ${isToday ? 'bg-blue-50 border-blue-200' : ''} ${isSelected ? 'bg-blue-100 border-blue-300' : ''}`}
+              className={`calendar-day bg-white min-h-[60px] sm:min-h-[100px] p-1 sm:p-2 border border-gray-100 cursor-pointer transition-all ${isToday ? 'bg-blue-50 border-blue-200' : ''} ${isSelected ? 'bg-blue-100 border-blue-300' : ''}`}
               onClick={() => setSelectedDate(selectedDate === dateString ? null : dateString)}
               onDoubleClick={() => canUserEdit() && openEventModal(dateString)}
             >
-              <div className={`day-number text-sm font-medium ${isToday ? 'text-blue-600' : 'text-gray-700'}`}>{day}</div>
+              <div className={`day-number text-xs sm:text-sm font-medium ${isToday ? 'text-blue-600' : 'text-gray-700'}`}>{day}</div>
               <div className="mt-1 space-y-1">
                 {dayEvents.slice(0, 2).map(event => (
                   <div
@@ -320,7 +321,8 @@ const Calendar: React.FC<CalendarProps> = ({
                       if (canUserEdit()) openEventModal(undefined, event);
                     }}
                   >
-                    {event.title}
+                    <span className="hidden sm:inline">{event.title}</span>
+                    <span className="sm:hidden">•</span>
                   </div>
                 ))}
                 {dayEvents.length > 2 && (
@@ -336,9 +338,9 @@ const Calendar: React.FC<CalendarProps> = ({
 
       {/* Eventos del día seleccionado */}
       {selectedDate && (
-        <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="font-semibold text-gray-800">
+        <div className="mt-4 sm:mt-6 p-3 sm:p-4 bg-gray-50 rounded-lg">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-3 space-y-2 sm:space-y-0">
+            <h3 className="font-semibold text-gray-800 text-sm sm:text-base">
               Eventos del {new Date(selectedDate).toLocaleDateString('es-ES', {
                 weekday: 'long',
                 year: 'numeric',
@@ -349,7 +351,7 @@ const Calendar: React.FC<CalendarProps> = ({
             {canUserEdit() && (
               <button
                 onClick={() => openEventModal(selectedDate)}
-                className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700"
+                className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 w-full sm:w-auto"
               >
                 + Agregar
               </button>
@@ -376,16 +378,16 @@ const Calendar: React.FC<CalendarProps> = ({
                     </div>
                   </div>
                   {canUserEdit() && (
-                    <div className="flex space-x-2">
+                    <div className="flex flex-col sm:flex-row space-y-1 sm:space-y-0 sm:space-x-2">
                       <button
                         onClick={() => openEventModal(undefined, event)}
-                        className="text-blue-600 hover:text-blue-800 text-sm"
+                        className="text-blue-600 hover:text-blue-800 text-xs sm:text-sm"
                       >
                         Editar
                       </button>
                       <button
                         onClick={() => handleDeleteEvent(event.id)}
-                        className="text-red-600 hover:text-red-800 text-sm"
+                        className="text-red-600 hover:text-red-800 text-xs sm:text-sm"
                       >
                         Eliminar
                       </button>
@@ -403,10 +405,10 @@ const Calendar: React.FC<CalendarProps> = ({
       {/* Modal para crear/editar eventos */}
       {showEventModal && canUserEdit() && (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[100] p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md animate-fade-in">
-            <div className="p-6">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md animate-fade-in max-h-[90vh] overflow-y-auto">
+            <div className="p-4 sm:p-6">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-xl font-bold text-gray-800">{editingEvent ? 'Editar Evento' : 'Nuevo Evento'}</h3>
+                <h3 className="text-lg sm:text-xl font-bold text-gray-800">{editingEvent ? 'Editar Evento' : 'Nuevo Evento'}</h3>
                 <button
                   className="text-gray-500 hover:text-gray-700"
                   onClick={() => {
@@ -542,45 +544,45 @@ const Calendar: React.FC<CalendarProps> = ({
                 </div>
                 {/* Título */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Título *</label>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Título *</label>
                   <input
                     type="text"
                     required
                     value={eventForm.title}
                     onChange={(e) => setEventForm({...eventForm, title: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                   />
                 </div>
                 {/* Fecha y hora */}
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Fecha *</label>
+                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Fecha *</label>
                     <input
                       type="date"
                       required
                       value={eventForm.date}
                       onChange={(e) => setEventForm({...eventForm, date: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Hora</label>
+                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Hora</label>
                     <input
                       type="time"
                       value={eventForm.time}
                       onChange={(e) => setEventForm({...eventForm, time: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                     />
                   </div>
                 </div>
                 {/* Tipo */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Tipo *</label>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Tipo *</label>
                   <select
                     required
                     value={eventForm.type}
                     onChange={(e) => setEventForm({...eventForm, type: e.target.value as EventType})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                   >
                     <option value="class">Clase</option>
                     <option value="exam">Examen</option>
@@ -592,11 +594,11 @@ const Calendar: React.FC<CalendarProps> = ({
                 {/* Materia */}
                 {userSubjects.length > 0 && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Materia</label>
+                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Materia</label>
                     <select
                       value={eventForm.subject_id}
                       onChange={(e) => setEventForm({...eventForm, subject_id: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                     >
                       <option value="">Sin materia específica</option>
                       {userSubjects.map(subject => (
@@ -609,16 +611,16 @@ const Calendar: React.FC<CalendarProps> = ({
                 )}
                 {/* Descripción */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Descripción</label>
                   <textarea
                     value={eventForm.description}
                     onChange={(e) => setEventForm({...eventForm, description: e.target.value})}
                     rows={3}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                   />
                 </div>
                 {/* Acciones */}
-                <div className="flex justify-end space-x-3 pt-4">
+                <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3 pt-4">
                   <button
                     type="button"
                     onClick={() => {
@@ -626,13 +628,13 @@ const Calendar: React.FC<CalendarProps> = ({
                       setEditingEvent(null);
                       resetEventForm();
                     }}
-                    className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                    className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm w-full sm:w-auto"
                   >
                     Cancelar
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm w-full sm:w-auto"
                   >
                     {editingEvent ? 'Actualizar' : 'Crear Evento'}
                   </button>
@@ -644,31 +646,35 @@ const Calendar: React.FC<CalendarProps> = ({
       )}
 
       {/* Leyenda */}
-      <div className="p-4 bg-gray-50 border-t border-gray-200 flex flex-wrap gap-4 text-sm mt-6">
-        <div className="flex items-center">
-          <span className="w-2 h-2 rounded-full bg-red-500 inline-block mr-2"></span>
-          <span className="text-gray-700">Exámenes</span>
-        </div>
-        <div className="flex items-center">
-          <span className="w-2 h-2 rounded-full bg-yellow-500 inline-block mr-2"></span>
-          <span className="text-gray-700">Tareas</span>
-        </div>
-        <div className="flex items-center">
-          <span className="w-2 h-2 rounded-full bg-blue-500 inline-block mr-2"></span>
-          <span className="text-gray-700">Clases</span>
-        </div>
-        <div className="flex items-center">
-          <span className="w-2 h-2 rounded-full bg-green-500 inline-block mr-2"></span>
-          <span className="text-gray-700">Feriados</span>
-        </div>
-        <div className="flex items-center">
-          <span className="w-2 h-2 rounded-full bg-purple-500 inline-block mr-2"></span>
-          <span className="text-gray-700">Reuniones</span>
+      <div className="p-3 sm:p-4 bg-gray-50 border-t border-gray-200 flex flex-col sm:flex-row sm:flex-wrap gap-2 sm:gap-4 text-xs sm:text-sm mt-4 sm:mt-6">
+        <div className="flex flex-wrap gap-2 sm:gap-4">
+          <div className="flex items-center">
+            <span className="w-2 h-2 rounded-full bg-red-500 inline-block mr-2"></span>
+            <span className="text-gray-700">Exámenes</span>
+          </div>
+          <div className="flex items-center">
+            <span className="w-2 h-2 rounded-full bg-yellow-500 inline-block mr-2"></span>
+            <span className="text-gray-700">Tareas</span>
+          </div>
+          <div className="flex items-center">
+            <span className="w-2 h-2 rounded-full bg-blue-500 inline-block mr-2"></span>
+            <span className="text-gray-700">Clases</span>
+          </div>
+          <div className="flex items-center">
+            <span className="w-2 h-2 rounded-full bg-green-500 inline-block mr-2"></span>
+            <span className="text-gray-700">Feriados</span>
+          </div>
+          <div className="flex items-center">
+            <span className="w-2 h-2 rounded-full bg-purple-500 inline-block mr-2"></span>
+            <span className="text-gray-700">Reuniones</span>
+          </div>
         </div>
         {currentUser && (
-          <div className="ml-auto flex items-center text-gray-600">
-            <span>Rol: <span className="font-medium">{currentUser.role === 'admin' ? 'Administrador' : currentUser.role === 'teacher' ? 'Profesor' : 'Estudiante'}</span></span>
-            {canUserEdit() && <span className="text-green-600 ml-2">• Puedes editar</span>}
+          <div className="sm:ml-auto flex items-center text-gray-600 mt-2 sm:mt-0">
+            <div className="flex flex-col sm:flex-row sm:items-center">
+              <span>Rol: <span className="font-medium">{currentUser.role === 'admin' ? 'Administrador' : currentUser.role === 'teacher' ? 'Profesor' : 'Estudiante'}</span></span>
+              {canUserEdit() && <span className="text-green-600 sm:ml-2">• Puedes editar</span>}
+            </div>
           </div>
         )}
       </div>

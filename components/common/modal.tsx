@@ -16,13 +16,13 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children }) => {
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md dark:bg-white"
+        className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md"
         onClick={(e) => e.stopPropagation()} // Evitar cerrar al hacer clic dentro del modal
       >
-        <button className="absolute top-2 right-2 text-gray-600 dark:text-gray-600 hover:text-gray-800 dark:hover:text-gray-800" onClick={onClose}>
+        <button className="absolute top-2 right-2 text-gray-600 hover:text-gray-800" onClick={onClose}>
           &times;
         </button>
-        <div className="text-gray-900 dark:text-gray-900">
+        <div className="text-gray-900">
           {children}
         </div>
       </div>

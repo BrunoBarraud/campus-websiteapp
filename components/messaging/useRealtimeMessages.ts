@@ -1,9 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
-import { createClient } from '@supabase/supabase-js';
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-const supabase = createClient(supabaseUrl!, supabaseAnonKey!);
+import { useEffect, useState, useRef, useCallback } from 'react';
 
 export interface Message {
   id: string;
@@ -21,148 +16,203 @@ export function useRealtimeMessages(conversationId: string, currentUserId: strin
   const [messages, setMessages] = useState<Message[]>([]);
   const [typingUsers, setTypingUsers] = useState<string[]>([]);
   const typingTimeouts = useRef<{ [userId: string]: NodeJS.Timeout }>({});
+  const pollingInterval = useRef<NodeJS.Timeout | null>(null);
+  const lastMessageId = useRef<string | null>(null);
+
+  // Limpiar mensajes cuando cambia la conversación
+  useEffect(() => {
+    console.log('🔄 Cambiando conversación:', { conversationId, currentUserId });
+    setMessages([]);
+    setTypingUsers([]);
+    lastMessageId.current = null;
+    // Limpiar timeouts de typing
+    Object.values(typingTimeouts.current).forEach(timeout => clearTimeout(timeout));
+    typingTimeouts.current = {};
+    // Limpiar polling anterior
+    if (pollingInterval.current) {
+      clearInterval(pollingInterval.current);
+      pollingInterval.current = null;
+    }
+  }, [conversationId]);
+
+  // Función para obtener mensajes desde la API
+  const fetchMessages = useCallback(async () => {
+    if (!conversationId) return;
+    
+    try {
+      const response = await fetch(`/api/messages?conversation_id=${conversationId}&limit=50&offset=0`);
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Error al obtener mensajes:', errorData.error || `HTTP ${response.status}`);
+        return;
+      }
+      
+      const data = await response.json();
+      
+      if (Array.isArray(data)) {
+        // Los mensajes vienen ordenados por created_at DESC, los revertimos para orden cronológico
+        const sortedMessages = data.reverse();
+        setMessages(sortedMessages);
+        
+        // Actualizar el último mensaje ID para polling
+        if (sortedMessages.length > 0) {
+          lastMessageId.current = sortedMessages[sortedMessages.length - 1].id;
+        }
+      } else {
+        console.error('Error al obtener mensajes: Respuesta no válida', data);
+      }
+    } catch (error) {
+      console.error('Error al obtener mensajes:', error);
+    }
+  }, [conversationId]);
+
+  // Función para verificar nuevos mensajes (polling)
+  const checkForNewMessages = useCallback(async () => {
+    if (!conversationId || !lastMessageId.current) return;
+    
+    try {
+      const response = await fetch(`/api/messages?conversation_id=${conversationId}&limit=10&offset=0`);
+      
+      if (!response.ok) return;
+      
+      const data = await response.json();
+      
+      if (Array.isArray(data)) {
+        const sortedMessages = data.reverse();
+        const newMessages = sortedMessages.filter(msg => {
+          return msg.id !== lastMessageId.current;
+        });
+        
+        if (newMessages.length > 0) {
+          console.log('📨 Nuevos mensajes encontrados:', newMessages.length);
+          setMessages(prev => {
+            // Filtrar mensajes que no existen ya
+            const filteredNewMessages = newMessages.filter(newMsg => 
+              !prev.some(existingMsg => existingMsg.id === newMsg.id)
+            );
+            
+            if (filteredNewMessages.length > 0) {
+              // Actualizar último mensaje ID
+              lastMessageId.current = filteredNewMessages[filteredNewMessages.length - 1].id;
+              return [...prev, ...filteredNewMessages];
+            }
+            return prev;
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error al verificar nuevos mensajes:', error);
+    }
+  }, [conversationId]);
 
   useEffect(() => {
     if (!conversationId) return;
-    // Escuchar mensajes nuevos y actualizaciones
-    const subscription = supabase
-      .channel('public:messages')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'messages', filter: `conversation_id=eq.${conversationId}` }, (payload) => {
-        if (payload.eventType === 'INSERT') {
-          const newMessage = payload.new as Message;
-          setMessages((prev) => {
-            // Evitar duplicados
-            if (prev.some(m => m.id === newMessage.id)) return prev;
-            // Agregar al final (más reciente)
-            return [...prev, newMessage];
-          });
-        } else if (payload.eventType === 'UPDATE') {
-          setMessages((prev) => prev.map(m => m.id === payload.new.id ? { ...m, ...payload.new } : m));
-        } else if (payload.eventType === 'DELETE') {
-          setMessages((prev) => prev.filter(m => m.id !== payload.old.id));
-        }
-      })
-      .subscribe();
-
-    // Obtener mensajes iniciales usando la API
-    const fetchMessages = async () => {
-      try {
-        const response = await fetch(`/api/messages?conversation_id=${conversationId}&limit=50&offset=0`);
-        
-        if (!response.ok) {
-          const errorData = await response.json();
-          console.error('Error al obtener mensajes:', errorData.error || `HTTP ${response.status}`);
-          return;
-        }
-        
-        const data = await response.json();
-        
-        if (Array.isArray(data)) {
-           // Los mensajes vienen ordenados por created_at DESC, los revertimos para orden cronológico
-           setMessages(data.reverse());
-         } else {
-           console.error('Error al obtener mensajes: Respuesta no válida', data);
-         }
-      } catch (error) {
-        console.error('Error al obtener mensajes:', error);
-      }
-    };
     
+    console.log('🔄 Iniciando sistema de mensajería con polling para:', conversationId);
+
+    // Obtener mensajes iniciales
     fetchMessages();
+    
+    // Configurar polling para nuevos mensajes cada 3 segundos
+    pollingInterval.current = setInterval(() => {
+      checkForNewMessages();
+    }, 3000);
 
     return () => {
-      supabase.removeChannel(subscription);
+      if (pollingInterval.current) {
+        clearInterval(pollingInterval.current);
+        pollingInterval.current = null;
+      }
     };
   }, [conversationId]);
 
-  // Escuchar typing de otros usuarios
-  useEffect(() => {
-    if (!conversationId) return;
-    const typingSub = supabase
-      .channel('public:users')
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'users' }, (payload) => {
-        const user = payload.new;
-        if (user.typing && user.id !== currentUserId) {
-          setTypingUsers((prev) => {
-            if (!prev.includes(user.id)) return [...prev, user.id];
-            return prev;
-          });
-          // Remover el estado typing después de 5 segundos
-          if (typingTimeouts.current[user.id]) clearTimeout(typingTimeouts.current[user.id]);
-          typingTimeouts.current[user.id] = setTimeout(() => {
-            setTypingUsers((prev) => prev.filter(id => id !== user.id));
-          }, 5000);
-        }
-      })
-      .subscribe();
-    return () => {
-      supabase.removeChannel(typingSub);
-    };
-  }, [conversationId, currentUserId]);
+  // Nota: Funcionalidad de typing deshabilitada temporalmente
+  // Se puede implementar con polling si es necesario en el futuro
 
   // Función para enviar mensaje usando la API
-  const sendMessage = async (content: string, file?: File, replyToId?: string) => {
+  const sendMessage = async (content: string, replyToId?: string, file?: File) => {
+    if (!conversationId || !currentUserId) {
+      throw new Error('Faltan datos requeridos para enviar mensaje');
+    }
+
     try {
-      let fileData = {};
+      let fileData = null;
       
-      // Manejar archivo adjunto si existe
+      // Si hay archivo, subirlo primero
       if (file) {
         const formData = new FormData();
         formData.append('file', file);
-        formData.append('type', 'messages');
-        formData.append('subjectId', conversationId);
+        formData.append('conversationId', conversationId);
         
         const uploadResponse = await fetch('/api/upload', {
           method: 'POST',
           body: formData,
         });
         
-        if (uploadResponse.ok) {
-          const uploadResult = await uploadResponse.json();
-          fileData = {
-            file_url: uploadResult.url,
-            file_name: file.name,
-            file_size: file.size
-          };
+        if (!uploadResponse.ok) {
+          const errorData = await uploadResponse.json();
+          throw new Error(errorData.error || 'Error al subir archivo');
         }
+        
+        fileData = await uploadResponse.json();
       }
+      
+      // Enviar mensaje
+      const messageData = {
+        conversation_id: conversationId,
+        content,
+        reply_to_id: replyToId || null,
+        file_url: fileData?.url || null,
+        file_name: fileData?.name || null,
+        file_size: fileData?.size || null,
+        file_type: fileData?.type || null,
+      };
       
       const response = await fetch('/api/messages', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          conversation_id: conversationId,
-          content,
-          reply_to_id: replyToId,
-          type: file ? 'file' : 'text',
-          ...fileData
-        }),
+        body: JSON.stringify(messageData),
       });
       
-      const result = await response.json();
-      
       if (!response.ok) {
-        return { data: null, error: result };
+        const errorData = await response.json();
+        throw new Error(errorData.error || `Error HTTP ${response.status}`);
       }
       
-      return { data: result, error: null };
-     } catch (error) {
-       console.error('Error al enviar mensaje:', error);
-       return { data: null, error: { message: 'Error de conexión' } };
-     }
-   };
-
-  // Función para marcar typing
-  const setTyping = async (isTyping: boolean) => {
-    if (currentUserId && typeof currentUserId === 'string' && currentUserId.length > 0) {
-      await supabase
-        .from('users')
-        .update({ typing: isTyping })
-        .eq('id', currentUserId);
+      const newMessage = await response.json();
+      console.log('✅ Mensaje enviado exitosamente:', newMessage);
+      
+      // Agregar inmediatamente el mensaje a la lista local para respuesta instantánea
+      setMessages(prev => {
+        // Evitar duplicados
+        if (prev.some(m => m.id === newMessage.id)) return prev;
+        return [...prev, newMessage];
+      });
+      
+      // Actualizar último mensaje ID
+      lastMessageId.current = newMessage.id;
+      
+      return newMessage;
+    } catch (error) {
+      console.error('❌ Error al enviar mensaje:', error);
+      throw error;
     }
   };
 
-  return { messages, sendMessage, typingUsers, setTyping };
+  // Función para marcar typing (simplificada sin Realtime)
+  const setTyping = async (isTyping: boolean) => {
+    // Funcionalidad de typing deshabilitada temporalmente
+    // Se puede implementar con polling si es necesario
+    console.log('Typing status:', isTyping);
+  };
+
+  return {
+    messages,
+    typingUsers,
+    sendMessage,
+    setTyping,
+  };
 }

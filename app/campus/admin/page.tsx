@@ -73,22 +73,22 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 mt-[12vh]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
             Panel de Administración
           </h1>
-          <p className="text-gray-600 mt-2">
+          <p className="text-sm sm:text-base text-gray-600 mt-2">
             Gestiona usuarios, materias y configuraciones del campus
           </p>
         </div>
 
         {/* Navigation Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
           <div
             onClick={() => router.push("/campus/settings/users")}
-            className="bg-white p-6 rounded-lg shadow hover:shadow-md transition-shadow cursor-pointer border border-gray-200 hover:border-blue-300"
+            className="bg-white p-4 sm:p-6 rounded-lg shadow hover:shadow-md transition-shadow cursor-pointer border border-gray-200 hover:border-blue-300"
           >
             <div className="flex items-center">
               <div className="flex-shrink-0">
@@ -96,11 +96,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
                   <span className="text-blue-600 text-lg">👥</span>
                 </div>
               </div>
-              <div className="ml-4">
-                <h3 className="text-lg font-medium text-gray-900">
+              <div className="ml-3 sm:ml-4">
+                <h3 className="text-base sm:text-lg font-medium text-gray-900">
                   Gestión de Usuarios
                 </h3>
-                <p className="text-sm text-gray-600">
+                <p className="text-xs sm:text-sm text-gray-600">
                   Administrar perfiles, roles y permisos
                 </p>
               </div>
@@ -109,7 +109,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
 
           <div
             onClick={() => router.push("/campus/settings/subjects")}
-            className="bg-white p-6 rounded-lg shadow hover:shadow-md transition-shadow cursor-pointer border border-gray-200 hover:border-blue-300"
+            className="bg-white p-4 sm:p-6 rounded-lg shadow hover:shadow-md transition-shadow cursor-pointer border border-gray-200 hover:border-blue-300"
           >
             <div className="flex items-center">
               <div className="flex-shrink-0">
@@ -117,11 +117,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
                   <span className="text-green-600 text-lg">📚</span>
                 </div>
               </div>
-              <div className="ml-4">
-                <h3 className="text-lg font-medium text-gray-900">
+              <div className="ml-3 sm:ml-4">
+                <h3 className="text-base sm:text-lg font-medium text-gray-900">
                   Gestión de Materias
                 </h3>
-                <p className="text-sm text-gray-600">
+                <p className="text-xs sm:text-sm text-gray-600">
                   Administrar materias y profesores
                 </p>
               </div>
@@ -130,7 +130,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
 
           <div
             onClick={() => router.push("/campus/settings")}
-            className="bg-white p-6 rounded-lg shadow hover:shadow-md transition-shadow cursor-pointer border border-gray-200 hover:border-blue-300"
+            className="bg-white p-4 sm:p-6 rounded-lg shadow hover:shadow-md transition-shadow cursor-pointer border border-gray-200 hover:border-blue-300"
           >
             <div className="flex items-center">
               <div className="flex-shrink-0">
@@ -138,11 +138,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
                   <span className="text-purple-600 text-lg">⚙️</span>
                 </div>
               </div>
-              <div className="ml-4">
-                <h3 className="text-lg font-medium text-gray-900">
+              <div className="ml-3 sm:ml-4">
+                <h3 className="text-base sm:text-lg font-medium text-gray-900">
                   Configuraciones
                 </h3>
-                <p className="text-sm text-gray-600">
+                <p className="text-xs sm:text-sm text-gray-600">
                   Ajustes generales del sistema
                 </p>
               </div>
@@ -151,114 +151,114 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
         </div>
 
         {/* Estadísticas */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-6">
+        <div className="bg-white rounded-lg shadow p-4 sm:p-6">
+          <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-4 sm:mb-6">
             📊 Estadísticas del Sistema
           </h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div className="bg-blue-50 p-4 rounded-lg">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+            <div className="bg-blue-50 p-3 sm:p-4 rounded-lg">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
                   <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
                     <span className="text-blue-600 text-sm">👥</span>
                   </div>
                 </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-blue-900">
+                <div className="ml-3 sm:ml-4">
+                  <p className="text-xs sm:text-sm font-medium text-blue-900">
                     Total Usuarios
                   </p>
-                  <p className="text-2xl font-bold text-blue-600">
+                  <p className="text-xl sm:text-2xl font-bold text-blue-600">
                     {stats.totalUsers}
                   </p>
                 </div>
               </div>
             </div>
 
-            <div className="bg-green-50 p-4 rounded-lg">
+            <div className="bg-green-50 p-3 sm:p-4 rounded-lg">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
                   <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
                     <span className="text-green-600 text-sm">🎓</span>
                   </div>
                 </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-green-900">
+                <div className="ml-3 sm:ml-4">
+                  <p className="text-xs sm:text-sm font-medium text-green-900">
                     Estudiantes
                   </p>
-                  <p className="text-2xl font-bold text-green-600">
+                  <p className="text-xl sm:text-2xl font-bold text-green-600">
                     {stats.totalStudents}
                   </p>
                 </div>
               </div>
             </div>
 
-            <div className="bg-purple-50 p-4 rounded-lg">
+            <div className="bg-purple-50 p-3 sm:p-4 rounded-lg">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
                   <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
                     <span className="text-purple-600 text-sm">👨‍🏫</span>
                   </div>
                 </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-purple-900">
+                <div className="ml-3 sm:ml-4">
+                  <p className="text-xs sm:text-sm font-medium text-purple-900">
                     Profesores
                   </p>
-                  <p className="text-2xl font-bold text-purple-600">
+                  <p className="text-xl sm:text-2xl font-bold text-purple-600">
                     {stats.totalTeachers}
                   </p>
                 </div>
               </div>
             </div>
 
-            <div className="bg-orange-50 p-4 rounded-lg">
+            <div className="bg-orange-50 p-3 sm:p-4 rounded-lg">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
                   <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
                     <span className="text-orange-600 text-sm">📚</span>
                   </div>
                 </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-orange-900">
+                <div className="ml-3 sm:ml-4">
+                  <p className="text-xs sm:text-sm font-medium text-orange-900">
                     Materias
                   </p>
-                  <p className="text-2xl font-bold text-orange-600">
+                  <p className="text-xl sm:text-2xl font-bold text-orange-600">
                     {stats.totalSubjects}
                   </p>
                 </div>
               </div>
             </div>
 
-            <div className="bg-red-50 p-4 rounded-lg">
+            <div className="bg-red-50 p-3 sm:p-4 rounded-lg">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
                   <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center">
                     <span className="text-red-600 text-sm">👑</span>
                   </div>
                 </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-red-900">
+                <div className="ml-3 sm:ml-4">
+                  <p className="text-xs sm:text-sm font-medium text-red-900">
                     Administradores
                   </p>
-                  <p className="text-2xl font-bold text-red-600">
+                  <p className="text-xl sm:text-2xl font-bold text-red-600">
                     {stats.totalAdmins}
                   </p>
                 </div>
               </div>
             </div>
 
-            <div className="bg-teal-50 p-4 rounded-lg">
+            <div className="bg-teal-50 p-3 sm:p-4 rounded-lg">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
                   <div className="w-8 h-8 bg-teal-100 rounded-lg flex items-center justify-center">
                     <span className="text-teal-600 text-sm">✅</span>
                   </div>
                 </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-teal-900">
+                <div className="ml-3 sm:ml-4">
+                  <p className="text-xs sm:text-sm font-medium text-teal-900">
                     Usuarios Activos
                   </p>
-                  <p className="text-2xl font-bold text-teal-600">
+                  <p className="text-xl sm:text-2xl font-bold text-teal-600">
                     {stats.activeUsers}
                   </p>
                 </div>

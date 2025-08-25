@@ -14,6 +14,11 @@ interface Subject {
   semester: number;
   credits: number;
   image_url: string | null;
+  teacher: {
+    id: string;
+    name: string;
+    email: string;
+  } | null;
   stats: {
     units_count: number;
     contents_count: number;

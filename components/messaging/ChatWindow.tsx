@@ -16,6 +16,15 @@ const ChatWindow: React.FC<{ conversationId?: string; currentUserId?: string }> 
   const [loadingRecipient, setLoadingRecipient] = useState(true);
   const [currentUser, setCurrentUser] = useState<any | null>(null);
 
+  // Limpiar estado cuando cambia la conversación
+  useEffect(() => {
+    setRecipient(null);
+    setSendError(null);
+    setReplyTo(null);
+    setFile(null);
+    setInput('');
+  }, [conversationId]);
+
   useEffect(() => {
     if (!conversationId) {
       setLoadingRecipient(false);
@@ -108,26 +117,23 @@ const ChatWindow: React.FC<{ conversationId?: string; currentUserId?: string }> 
   return (
     <div className="flex flex-col h-full">
       {/* Chat Header */}
-      <div className="bg-rose-950 text-white p-3 rounded-t-lg flex items-center justify-between">
-        <div className="flex items-center space-x-3">
-          <button className="md:hidden p-1">
-            <FaArrowLeft />
-          </button>
-          <div className="relative">
-            <img src={recipient?.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${recipient?.name || recipient?.email || 'U'}`} alt={recipient?.name || 'Usuario'} className="w-10 h-10 rounded-full border-2 border-amber-400" />
+      <div className="bg-rose-950 text-white p-2 md:p-4 rounded-t-lg flex items-center justify-between">
+        <div className="flex items-center space-x-2 md:space-x-3 flex-1 min-w-0">
+          <div className="relative flex-shrink-0">
+            <img src={recipient?.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${recipient?.name || recipient?.email || 'U'}`} alt={recipient?.name || 'Usuario'} className="w-7 h-7 md:w-10 md:h-10 rounded-full border-2 border-amber-400" />
             {recipient?.online && (
-              <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-400 rounded-full border-2 border-white"></span>
+              <span className="absolute bottom-0 right-0 w-2 h-2 md:w-3 md:h-3 bg-green-400 rounded-full border-2 border-white"></span>
             )}
           </div>
-          <div>
-            <h2 className="font-bold text-lg">
+          <div className="min-w-0 flex-1">
+            <h2 className="font-semibold text-sm md:text-lg truncate">
               {loadingRecipient ? (
                 <span className="animate-pulse">Cargando...</span>
               ) : (
                 recipient?.name || recipient?.email || 'Usuario'
               )}
             </h2>
-            <p className="text-xs text-amber-300">
+            <p className="text-xs md:text-sm text-amber-300 truncate">
               {loadingRecipient ? (
                 <span className="animate-pulse">...</span>
               ) : (
@@ -143,14 +149,14 @@ const ChatWindow: React.FC<{ conversationId?: string; currentUserId?: string }> 
             </p>
           </div>
         </div>
-        <div className="flex items-center space-x-4">
-          <button className="p-1 rounded-full hover:bg-rose-900"><FaPhone /></button>
-          <button className="p-1 rounded-full hover:bg-rose-900"><FaVideo /></button>
+        <div className="flex items-center space-x-1 md:space-x-4 flex-shrink-0">
+          <button className="p-1.5 md:p-2 rounded-full hover:bg-rose-900 text-xs md:text-base"><FaPhone /></button>
+          <button className="p-1.5 md:p-2 rounded-full hover:bg-rose-900 text-xs md:text-base"><FaVideo /></button>
         </div>
       </div>
 
       {/* Mensajes en tiempo real */}
-      <div className="overflow-y-auto p-4 flex-grow bg-gray-50 space-y-4">
+      <div className="overflow-y-auto p-2 md:p-4 flex-grow bg-gray-50 space-y-2 md:space-y-4">
         {messages.length === 0 ? (
           <div className="p-4 text-center text-gray-400 animate-pulse">No hay mensajes</div>
         ) : (
@@ -162,11 +168,11 @@ const ChatWindow: React.FC<{ conversationId?: string; currentUserId?: string }> 
             return (
               <div key={msg.id || idx} className={`flex ${isCurrentUser ? 'justify-end' : ''}`}>
                 {!isCurrentUser && (
-                  <img src={avatarUrl} alt={recipient?.name || 'Usuario'} className="w-8 h-8 rounded-full mr-3" />
+                  <img src={avatarUrl} alt={recipient?.name || 'Usuario'} className="w-5 h-5 md:w-8 md:h-8 rounded-full mr-2 md:mr-3 flex-shrink-0" />
                 )}
-                <div>
-                  <div className={`p-3 rounded-lg shadow-sm max-w-xs md:max-w-md ${isCurrentUser ? 'bg-amber-400 text-white' : 'bg-white'}`}>
-                    <p>{msg.content}</p>
+                <div className="min-w-0 flex-1">
+                  <div className={`p-2 md:p-3 rounded-lg shadow-sm max-w-[80%] md:max-w-xs lg:max-w-md break-words ${isCurrentUser ? 'bg-amber-400 text-white ml-auto' : 'bg-white'}`}>
+                    <p className="text-xs md:text-base leading-relaxed">{msg.content}</p>
                     {msg.file_url && (
                       <a
                         href={msg.file_url}
@@ -178,10 +184,10 @@ const ChatWindow: React.FC<{ conversationId?: string; currentUserId?: string }> 
                       </a>
                     )}
                   </div>
-                  <span className="text-xs text-gray-500 mt-1 block">{new Date(msg.created_at).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })} {isCurrentUser && <FaCheckDouble className="inline text-blue-500 ml-1" />}</span>
+                  <span className="text-xs text-gray-500 mt-0.5 block">{new Date(msg.created_at).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })} {isCurrentUser && <FaCheckDouble className="inline text-blue-500 ml-1 text-xs" />}</span>
                 </div>
                 {isCurrentUser && (
-                  <img src={avatarUrl} alt={currentUser?.name || 'Tú'} className="w-8 h-8 rounded-full ml-3" />
+                  <img src={avatarUrl} alt={currentUser?.name || 'Tú'} className="w-5 h-5 md:w-8 md:h-8 rounded-full ml-2 md:ml-3 flex-shrink-0" />
                 )}
               </div>
             );
@@ -194,34 +200,32 @@ const ChatWindow: React.FC<{ conversationId?: string; currentUserId?: string }> 
       </div>
 
       {/* Message Input */}
-      <div className="p-3 border-t bg-white rounded-b-lg">
+      <div className="p-2 md:p-3 border-t bg-white rounded-b-lg">
         {replyTo && (
           <div className="mb-2 p-2 rounded bg-gray-100 text-xs text-gray-600 border-l-4 border-amber-400 flex justify-between">
-            <span>
+            <span className="truncate">
               <span className="font-semibold">Respondiendo a:</span>{' '}
               {replyTo.content}
             </span>
-            <button className="ml-2 text-gray-400 hover:text-red-500" type="button" onClick={() => setReplyTo(null)}>
+            <button className="ml-2 text-gray-400 hover:text-red-500 flex-shrink-0" type="button" onClick={() => setReplyTo(null)}>
               <FaEllipsisV />
             </button>
           </div>
         )}
-        <form className="flex items-center" onSubmit={handleSend}>
+        <form className="flex items-center gap-1 md:gap-2" onSubmit={handleSend}>
           {sendError && (
-            <div className="text-xs text-red-500 mb-2">{sendError}</div>
+            <div className="text-xs text-red-500 mb-2 absolute bottom-full left-0">{sendError}</div>
           )}
-          <button type="button" className="p-2 text-gray-500 hover:text-amber-400" onClick={() => fileInputRef.current?.click()} disabled={sending}>
-            <FaPaperclip />
+          <button type="button" className="p-1.5 md:p-2 text-gray-500 hover:text-amber-400 flex-shrink-0" onClick={() => fileInputRef.current?.click()} disabled={sending}>
+            <FaPaperclip className="text-xs md:text-base" />
           </button>
           <input
             type="text"
             placeholder="Escribe un mensaje..."
-
-            className="flex-grow p-2 px-4 rounded-full bg-gray-100 focus:bg-white focus:ring-2 focus:ring-amber-400 mx-2"
+            className="flex-grow p-2 px-2 md:px-4 rounded-full bg-gray-100 focus:bg-white focus:ring-2 focus:ring-amber-400 text-xs md:text-base min-w-0"
             value={input}
             onChange={handleInputChange}
             disabled={sending}
-            // El envío solo por submit, no por onKeyDown
           />
           <input
             type="file"
@@ -229,9 +233,9 @@ const ChatWindow: React.FC<{ conversationId?: string; currentUserId?: string }> 
             ref={fileInputRef}
             onChange={handleFileChange}
           />
-          <button type="button" className="p-2 text-gray-500 hover:text-amber-400"><FaMicrophone /></button>
-          <button onClick={handleSend} type="submit" className="p-2 bg-amber-400 text-white rounded-full w-10 h-10 flex items-center justify-center hover:bg-amber-500 ml-2" disabled={sending}>
-            <FaPaperPlane />
+          <button type="button" className="hidden md:block p-2 text-gray-500 hover:text-amber-400 flex-shrink-0"><FaMicrophone /></button>
+          <button onClick={handleSend} type="submit" className="p-1.5 md:p-2 bg-amber-400 text-white rounded-full w-7 h-7 md:w-10 md:h-10 flex items-center justify-center hover:bg-amber-500 flex-shrink-0" disabled={sending}>
+            <FaPaperPlane className="text-xs md:text-sm" />
           </button>
         </form>
       </div>

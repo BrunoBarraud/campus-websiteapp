@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import "./globals.css";
-import { NextAuthProvider } from "../app/components/auth/AuthProvider";
-import { ThemeProvider } from "@/app/lib/contexts/ThemeContext";
+import { NextAuthProvider } from "@/app/components/auth/AuthProvider";
+
 import ConditionalNav from "@/app/ConditionalNav";
 import { ToastProvider } from "@/components/ui/toast-provider";
 
@@ -41,17 +41,15 @@ export default function RootLayout({
         <meta name="theme-color" content="#ffffff" />
       </head>
       <body
-        className={`${font.className} antialiased bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100 transition-colors duration-300`}
+        className={`${font.className} antialiased bg-white text-gray-900 transition-colors duration-300`}
       >
-        <ThemeProvider>
-          <NextAuthProvider>
-            <div id="app-content">
-              <ConditionalNav />
-              {children}
-              <ToastProvider />
-            </div>
-          </NextAuthProvider>
-        </ThemeProvider>
+        <NextAuthProvider>
+          <div id="app-content">
+            <ConditionalNav />
+            {children}
+            <ToastProvider />
+          </div>
+        </NextAuthProvider>
       </body>
     </html>
   );

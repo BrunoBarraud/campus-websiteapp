@@ -21,10 +21,17 @@ export async function GET(_request: NextRequest) {
 
     const subjectIds = relations.map((r: any) => r.subject_id);
 
-    // Ahora busca los datos de las materias
+    // Ahora busca los datos de las materias con información del profesor
     const { data: subjects, error: subjectsError } = await supabaseAdmin
       .from("subjects")
-      .select("*")
+      .select(`
+        *,
+        teacher:users!teacher_id (
+          id,
+          name,
+          email
+        )
+      `)
       .in("id", subjectIds)
       .eq("is_active", true);
 

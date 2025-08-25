@@ -1,0 +1,10 @@
+{
+  "teachers": [
+    "director@ipdvs.ar",
+    "vicedirector@ipdvs.ar",
+    "secretario@ipdvs.ar",
+    "coordinador@ipdvs.ar"
+  ],
+  "description": "Lista de emails de profesores autorizados. Los usuarios con estos emails tendrán rol de 'teacher' automáticamente.",
+  "lastUpdated": "2024-01-20"
+}

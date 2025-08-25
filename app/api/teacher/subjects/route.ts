@@ -24,7 +24,12 @@ export async function GET(request: Request) {
         image_url,
         is_active,
         created_at,
-        updated_at
+        updated_at,
+        teacher:users!teacher_id (
+          id,
+          name,
+          email
+        )
       `
       )
       .eq("teacher_id", currentUser.id)

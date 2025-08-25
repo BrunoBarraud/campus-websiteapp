@@ -1,5 +1,6 @@
 import NextAuth from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
+// import GoogleProvider from "next-auth/providers/google"
 import type { JWT } from "next-auth/jwt"
 import { supabaseAdmin } from "@/app/lib/supabaseClient"
 import bcrypt from "bcryptjs"
@@ -9,6 +10,7 @@ import { notifySuspiciousLogin, notifyAccountLocked } from "./app/lib/services/s
 import { UAParser } from './app/lib/utils/user-agent-parser'
 import { logAuditEvent, AuditAction } from './app/lib/services/audit-service'
 import speakeasy from 'speakeasy'
+import { determineRole } from './app/lib/utils/teacher-roles'
 
 export const { auth, handlers, signIn, signOut } = NextAuth({
   providers: [
@@ -139,6 +141,17 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
         }
       },
     }),
+    // GoogleProvider temporalmente deshabilitado para desarrollo/testing
+    // GoogleProvider({
+    //   clientId: process.env.GOOGLE_CLIENT_ID!,
+    //   clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    //   authorization: {
+    //     params: {
+    //       hd: "ipdvs.ar", // Restringir a dominio específico
+    //       prompt: "select_account",
+    //     },
+    //   },
+    // }),
   ],
   pages: {
     signIn: '/campus/auth/login',
@@ -149,12 +162,82 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
     maxAge: 24 * 60 * 60, // 24 horas
   },
   callbacks: {
-    async jwt({ token, user }) {
+    async signIn({ user, account, profile }) {
+      if (account?.provider === "google") {
+        try {
+          // Verificar que el email pertenezca al dominio autorizado
+          if (!user.email?.endsWith("@ipdvs.ar")) {
+            return false;
+          }
+
+          // Buscar si el usuario ya existe
+          const { data: existingUser } = await supabaseAdmin
+            .from('users')
+            .select('*')
+            .eq('email', user.email)
+            .single();
+
+          if (!existingUser) {
+            // Determinar rol automáticamente basado en la lista de profesores
+            const userRole = determineRole(user.email);
+            
+            // Crear nuevo usuario con rol determinado automáticamente
+            const { error } = await supabaseAdmin
+              .from('users')
+              .insert({
+                email: user.email,
+                name: user.name || '',
+                role: userRole, // Rol determinado automáticamente
+                google_id: profile?.sub,
+                email_verified: true,
+                created_at: new Date().toISOString(),
+              });
+
+            if (error) {
+              console.error('Error creating Google user:', error);
+              return false;
+            }
+          } else {
+            // Actualizar google_id si no existe
+            if (!existingUser.google_id) {
+              await supabaseAdmin
+                .from('users')
+                .update({ google_id: profile?.sub })
+                .eq('id', existingUser.id);
+            }
+          }
+
+          return true;
+        } catch (error) {
+          console.error('Error in Google sign in:', error);
+          return false;
+        }
+      }
+      return true;
+    },
+    async jwt({ token, user, account }) {
       if (user) {
-        token.role = user.role;
-        token.id = user.id;
-        token.division = user.division;
-        token.year = user.year;
+        // Para usuarios de Google, obtener información desde la base de datos
+        if (account?.provider === "google") {
+          const { data: dbUser } = await supabaseAdmin
+            .from('users')
+            .select('*')
+            .eq('email', user.email)
+            .single();
+
+          if (dbUser) {
+            token.role = dbUser.role;
+            token.id = dbUser.id;
+            token.division = dbUser.division;
+            token.year = dbUser.year;
+          }
+        } else {
+          // Para usuarios con credenciales
+          token.role = user.role;
+          token.id = user.id;
+          token.division = user.division;
+          token.year = user.year;
+        }
       }
       return token;
     },

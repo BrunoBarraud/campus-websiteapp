@@ -6,8 +6,7 @@ const config: Config = {
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
   ],
-  // Deshabilitar el dark mode automático basado en el sistema
-  darkMode: 'class', // Cambiar de 'media' (que responde al sistema) a 'class' (manual)
+
   theme: {
     extend: {
       colors: {

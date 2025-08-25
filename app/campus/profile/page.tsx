@@ -6,6 +6,7 @@ export const dynamic = 'force-dynamic';
 import React, { useState, useEffect } from "react";
 import { useSession } from 'next-auth/react';
 import { toast } from 'sonner';
+import RoleBasedProfile from '../../../components/common/RoleBasedProfile';
 
 const ProfilePage = () => {
   const { data: session } = useSession();
@@ -23,7 +24,17 @@ const ProfilePage = () => {
     student_id: '',
     bio: '',
     interests: [] as string[],
-    title: ''
+    title: '',
+    role: 'student' as 'admin' | 'teacher' | 'student',
+    // Campos específicos de admin
+    admin_level: '',
+    department: '',
+    permissions: [] as string[],
+    // Campos específicos de teacher
+    subjects_taught: [] as string[],
+    specialization: '',
+    experience_years: undefined as number | undefined,
+    office_hours: '',
   });
 
   useEffect(() => {
@@ -49,7 +60,17 @@ const ProfilePage = () => {
           student_id: userData.student_id || '',
           bio: userData.bio || 'Estudiante del Instituto Privado Dalmacio Vélez Sarsfield',
           interests: userData.interests || [],
-          title: userData.title || 'Estudiante de Secundaria'
+          title: userData.title || 'Estudiante de Secundaria',
+          role: userData.role || session?.user?.role || 'student',
+          // Campos específicos de admin
+          admin_level: userData.admin_level || '',
+          department: userData.department || '',
+          permissions: userData.permissions || [],
+          // Campos específicos de teacher
+          subjects_taught: userData.subjects_taught || [],
+          specialization: userData.specialization || '',
+          experience_years: userData.experience_years,
+          office_hours: userData.office_hours || '',
         });
         setProfileImage(userData.profile_image);
       } else {
@@ -58,7 +79,8 @@ const ProfilePage = () => {
           setFormData(prev => ({
             ...prev,
             name: session.user?.name || '',
-            email: session.user?.email || ''
+            email: session.user?.email || '',
+            role: (session.user?.role as 'admin' | 'teacher' | 'student') || 'student'
           }));
         }
       }
@@ -69,7 +91,8 @@ const ProfilePage = () => {
         setFormData(prev => ({
           ...prev,
           name: session.user?.name || '',
-          email: session.user?.email || ''
+          email: session.user?.email || '',
+          role: (session.user?.role as 'admin' | 'teacher' | 'student') || 'student'
         }));
       }
     }
@@ -79,7 +102,7 @@ const ProfilePage = () => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: name === 'experience_years' ? (value ? parseInt(value) : undefined) : value
     }));
   };
 
@@ -92,14 +115,56 @@ const ProfilePage = () => {
     }));
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
+    if (!file) return;
+  
+    // Validar tipo de archivo
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error('Solo se permiten archivos JPG, PNG o GIF');
+      return;
+    }
+  
+    // Validar tamaño (máximo 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('El archivo no puede ser mayor a 5MB');
+      return;
+    }
+  
+    try {
+      // Mostrar previsualización inmediata
       const reader = new FileReader();
       reader.onload = (event) => {
         setProfileImage(event.target?.result as string);
       };
       reader.readAsDataURL(file);
+  
+      // Subir archivo al servidor
+      const formDataUpload = new FormData();
+      formDataUpload.append('file', file);
+      formDataUpload.append('type', 'profile_image');
+      formDataUpload.append('subjectId', 'user_profiles');
+  
+      const uploadResponse = await fetch('/api/upload', {
+        method: 'POST',
+        body: formDataUpload,
+      });
+  
+      if (uploadResponse.ok) {
+        const uploadResult = await uploadResponse.json();
+        // Actualizar formData con la URL del archivo subido
+        setFormData(prev => ({
+          ...prev,
+          profile_image: uploadResult.url
+        }));
+        toast.success('Imagen subida exitosamente');
+      } else {
+        toast.error('Error al subir la imagen');
+      }
+    } catch (error) {
+      console.error('Error al subir imagen:', error);
+      toast.error('Error al subir la imagen');
     }
   };
 
@@ -113,10 +178,11 @@ const ProfilePage = () => {
         },
         body: JSON.stringify({
           ...formData,
+          // Usar la URL del archivo subido en lugar de base64
           profile_image: profileImage
         }),
       });
-
+  
       if (response.ok) {
         toast.success('Perfil actualizado exitosamente');
         setIsEditing(false);
@@ -148,194 +214,96 @@ const ProfilePage = () => {
           <div className="px-6 py-6">
             <div className="flex items-start gap-6">
               {/* Profile Image */}
-              <div className="flex-shrink-0">
-                <div className="h-24 w-24 rounded-full border-4 border-white bg-white shadow-md overflow-hidden -mt-12">
-                  {profileImage ? (
-                    <img src={profileImage} alt="Profile" className="h-full w-full object-cover" />
-                  ) : (
-                    <div className="h-full w-full bg-gradient-to-r from-yellow-400 to-pink-400 flex items-center justify-center">
-                      <span className="text-2xl font-bold text-white">
-                        {getInitials(formData.name || session?.user?.name || 'U')}
-                      </span>
-                    </div>
-                  )}
-                </div>
+              <div className="relative">
+                {profileImage ? (
+                  <img
+                    src={profileImage}
+                    alt="Profile"
+                    className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-lg"
+                  />
+                ) : (
+                  <div className="w-24 h-24 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white text-xl font-bold border-4 border-white shadow-lg">
+                    {getInitials(formData.name || 'Usuario')}
+                  </div>
+                )}
               </div>
               
               {/* Profile Info */}
-              <div className="flex-1 min-w-0">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h2 className="text-2xl font-bold text-gray-800">{formData.name || session?.user?.name}</h2>
-                    <p className="text-gray-600 mt-1">{formData.title}</p>
-                  </div>
-                  <button 
-                    onClick={() => setIsEditing(true)}
-                    className="px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 transition flex items-center gap-2"
-                  >
-                    <i className="fas fa-edit"></i>
-                    Editar perfil
-                  </button>
-                </div>
-                
-                <div className="mt-4 space-y-2">
-                  <div className="flex items-center text-gray-600">
-                    <i className="fas fa-school mr-2 text-yellow-600"></i>
-                    <span>Instituto Privado Dalmacio Vélez Sarsfield</span>
-                  </div>
-                  {formData.location && (
-                    <div className="flex items-center text-gray-600">
-                      <i className="fas fa-map-marker-alt mr-2 text-yellow-600"></i>
-                      <span>{formData.location}</span>
-                    </div>
-                  )}
-                  <div className="flex items-center text-gray-600">
-                    <i className="fas fa-calendar-alt mr-2 text-yellow-600"></i>
-                    <span>Última conexión: Hoy</span>
-                  </div>
-                </div>
+              <div className="flex-1">
+                <h1 className="text-2xl font-bold text-gray-900">{formData.name || 'Usuario'}</h1>
+                <p className="text-gray-600">{formData.title || (formData.role === 'admin' ? 'Administrador' : formData.role === 'teacher' ? 'Profesor' : 'Estudiante')}</p>
+                <p className="text-gray-500">{formData.email}</p>
+                {formData.location && (
+                  <p className="text-gray-500 flex items-center gap-1 mt-1">
+                    <span>📍</span> {formData.location}
+                  </p>
+                )}
               </div>
+              
+              {/* Edit Button */}
+              <button
+                onClick={() => setIsEditing(true)}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Editar Perfil
+              </button>
             </div>
           </div>
         </div>
 
-        {/* Profile Tabs */}
-        <div className="mt-6 bg-white shadow rounded-lg overflow-hidden">
-          <div className="border-b border-gray-200">
-            <nav className="flex -mb-px">
-              <button 
-                onClick={() => setActiveTab('informacion')}
-                className={`py-4 px-6 text-center border-b-2 font-medium text-sm flex items-center gap-2 ${
-                  activeTab === 'informacion' 
-                    ? 'border-yellow-500 text-yellow-600' 
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                <i className="fas fa-user"></i>
-                Información
-              </button>
-              <button 
-                onClick={() => setActiveTab('materias')}
-                className={`py-4 px-6 text-center border-b-2 font-medium text-sm flex items-center gap-2 ${
-                  activeTab === 'materias' 
-                    ? 'border-yellow-500 text-yellow-600' 
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                <i className="fas fa-book"></i>
-                Materias
-              </button>
-              <button 
-                onClick={() => setActiveTab('logros')}
-                className={`py-4 px-6 text-center border-b-2 font-medium text-sm flex items-center gap-2 ${
-                  activeTab === 'logros' 
-                    ? 'border-yellow-500 text-yellow-600' 
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                <i className="fas fa-trophy"></i>
-                Logros
-              </button>
-              <button 
-                onClick={() => setActiveTab('estadisticas')}
-                className={`py-4 px-6 text-center border-b-2 font-medium text-sm flex items-center gap-2 ${
-                  activeTab === 'estadisticas' 
-                    ? 'border-yellow-500 text-yellow-600' 
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                <i className="fas fa-chart-line"></i>
-                Estadísticas
-              </button>
-            </nav>
-          </div>
-          
-          <div className="p-6">
+        {/* Tabs */}
+        <div className="mt-6">
+          <div className="bg-white shadow rounded-lg overflow-hidden">
+            <div className="border-b border-gray-200">
+              <nav className="flex space-x-8 px-6">
+                {[
+                  { id: 'informacion', label: 'Información' },
+                  { id: 'materias', label: 'Materias' },
+                  { id: 'logros', label: 'Logros' },
+                  { id: 'estadisticas', label: 'Estadísticas' }
+                ].map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                      activeTab === tab.id
+                        ? 'border-blue-500 text-blue-600'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </nav>
+            </div>
+
+            {/* Tab Content */}
             {activeTab === 'informacion' && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">Información personal</h3>
-                  <div className="space-y-4">
-                    <div>
-                      <p className="text-sm text-gray-500">Nombre completo</p>
-                      <p className="text-gray-800">{formData.name}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Correo electrónico</p>
-                      <p className="text-gray-800">{formData.email}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Teléfono</p>
-                      <p className="text-gray-800">{formData.phone || 'No especificado'}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Fecha de nacimiento</p>
-                      <p className="text-gray-800">{formData.birthdate || 'No especificado'}</p>
-                    </div>
-                  </div>
-                </div>
-                <div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">Información académica</h3>
-                  <div className="space-y-4">
-                    <div>
-                      <p className="text-sm text-gray-500">Curso actual</p>
-                      <p className="text-gray-800">{formData.course}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Año lectivo</p>
-                      <p className="text-gray-800">{formData.year}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">ID de estudiante</p>
-                      <p className="text-gray-800">{formData.student_id || 'No asignado'}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Estado académico</p>
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                        Activo
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                {formData.bio && (
-                  <div className="md:col-span-2 mt-8">
-                    <h3 className="text-lg font-medium text-gray-900 mb-4">Biografía</h3>
-                    <p className="text-gray-700">{formData.bio}</p>
-                  </div>
-                )}
-                {formData.interests.length > 0 && (
-                  <div className="md:col-span-2 mt-6">
-                    <h3 className="text-lg font-medium text-gray-900 mb-4">Intereses académicos</h3>
-                    <div className="flex flex-wrap gap-2">
-                      {formData.interests.map((interest, index) => (
-                        <span key={index} className="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm">
-                          {interest}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
+              <div className="p-6">
+                <RoleBasedProfile
+                  user={formData}
+                  isEditing={false}
+                  onInputChange={handleInputChange}
+                  onInterestChange={handleInterestChange}
+                />
               </div>
             )}
 
             {activeTab === 'materias' && (
-              <div className="text-center py-8">
-                <i className="fas fa-book text-4xl text-gray-400 mb-4"></i>
-                <p className="text-gray-500">Información de materias próximamente</p>
+              <div className="p-6">
+                <p className="text-gray-500">Próximamente...</p>
               </div>
             )}
 
             {activeTab === 'logros' && (
-              <div className="text-center py-8">
-                <i className="fas fa-trophy text-4xl text-gray-400 mb-4"></i>
-                <p className="text-gray-500">Sistema de logros próximamente</p>
+              <div className="p-6">
+                <p className="text-gray-500">Próximamente...</p>
               </div>
             )}
 
             {activeTab === 'estadisticas' && (
-              <div className="text-center py-8">
-                <i className="fas fa-chart-line text-4xl text-gray-400 mb-4"></i>
-                <p className="text-gray-500">Estadísticas académicas próximamente</p>
+              <div className="p-6">
+                <p className="text-gray-500">Próximamente...</p>
               </div>
             )}
           </div>
@@ -344,206 +312,68 @@ const ProfilePage = () => {
     );
   }
 
-  // Edit Profile View
+  // Edit Mode
   return (
     <div className="bg-gray-50 min-h-screen">
-      <div className="bg-white shadow rounded-lg overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-xl font-bold text-gray-800">Editar perfil</h2>
-        </div>
-        <form onSubmit={handleSave} className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Información básica</h3>
-              
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Foto de perfil</label>
-                <div className="flex items-center">
-                  <div className="mr-4">
-                    <div className="h-20 w-20 rounded-full overflow-hidden border-2 border-gray-300">
-                      {profileImage ? (
-                        <img src={profileImage} alt="Profile" className="h-full w-full object-cover" />
-                      ) : (
-                        <div className="h-full w-full bg-gradient-to-r from-yellow-400 to-pink-400 flex items-center justify-center">
-                          <span className="text-xl font-bold text-white">
-                            {getInitials(formData.name || session?.user?.name || 'U')}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  <div className="relative">
-                    <button 
-                      type="button" 
-                      className="px-3 py-1 bg-gray-100 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-200"
-                      onClick={() => document.getElementById('profilePic')?.click()}
-                    >
-                      Cambiar foto
-                    </button>
-                    <input 
-                      type="file" 
-                      id="profilePic" 
-                      accept="image/*" 
-                      className="hidden"
-                      onChange={handleImageChange}
-                    />
-                  </div>
-                </div>
-              </div>
-              
-              <div className="mb-4">
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">Nombre completo</label>
-                <input 
-                  type="text" 
-                  id="name" 
-                  name="name"
-                  value={formData.name} 
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-yellow-500 focus:border-yellow-500"
-                />
-              </div>
-              
-              <div className="mb-4">
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">Correo electrónico</label>
-                <input 
-                  type="email" 
-                  id="email" 
-                  name="email"
-                  value={formData.email} 
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-yellow-500 focus:border-yellow-500"
-                />
-              </div>
-              
-              <div className="mb-4">
-                <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">Teléfono</label>
-                <input 
-                  type="tel" 
-                  id="phone" 
-                  name="phone"
-                  value={formData.phone} 
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-yellow-500 focus:border-yellow-500"
-                />
-              </div>
-              
-              <div className="mb-4">
-                <label htmlFor="birthdate" className="block text-sm font-medium text-gray-700 mb-1">Fecha de nacimiento</label>
-                <input 
-                  type="date" 
-                  id="birthdate" 
-                  name="birthdate"
-                  value={formData.birthdate} 
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-yellow-500 focus:border-yellow-500"
-                />
-              </div>
-              
-              <div className="mb-4">
-                <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-1">Ubicación</label>
-                <input 
-                  type="text" 
-                  id="location" 
-                  name="location"
-                  value={formData.location} 
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-yellow-500 focus:border-yellow-500"
-                />
-              </div>
-            </div>
-            
-            <div>
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Información académica</h3>
-              
-              <div className="mb-4">
-                <label htmlFor="course" className="block text-sm font-medium text-gray-700 mb-1">Curso actual</label>
-                <select 
-                  id="course" 
-                  name="course"
-                  value={formData.course}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-yellow-500 focus:border-yellow-500"
-                >
-                  <option value="1er Año">1er Año</option>
-                  <option value="2do Año">2do Año</option>
-                  <option value="3er Año">3er Año</option>
-                  <option value="4to Año">4to Año</option>
-                  <option value="5to Año">5to Año</option>
-                  <option value="6to Año">6to Año</option>
-                </select>
-              </div>
-              
-              <div className="mb-4">
-                <label htmlFor="year" className="block text-sm font-medium text-gray-700 mb-1">Año lectivo</label>
-                <select 
-                  id="year" 
-                  name="year"
-                  value={formData.year}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-yellow-500 focus:border-yellow-500"
-                >
-                  <option value="2024">2024</option>
-                  <option value="2025">2025</option>
-                  <option value="2026">2026</option>
-                </select>
-              </div>
-              
-              <div className="mb-4">
-                <label htmlFor="student_id" className="block text-sm font-medium text-gray-700 mb-1">ID de estudiante</label>
-                <input 
-                  type="text" 
-                  id="student_id" 
-                  name="student_id"
-                  value={formData.student_id} 
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-yellow-500 focus:border-yellow-500"
-                />
-              </div>
-              
-              <div className="mb-4">
-                <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">Título/Descripción</label>
-                <input 
-                  type="text" 
-                  id="title" 
-                  name="title"
-                  placeholder="Ej: Estudiante de 6to Año" 
-                  value={formData.title} 
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-yellow-500 focus:border-yellow-500"
-                />
-              </div>
-              
-              <div className="mb-4">
-                <label htmlFor="bio" className="block text-sm font-medium text-gray-700 mb-1">Biografía</label>
-                <textarea 
-                  id="bio" 
-                  name="bio"
-                  rows={5} 
-                  value={formData.bio}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-yellow-500 focus:border-yellow-500"
-                  placeholder="Cuéntanos un poco sobre ti..."
-                />
-              </div>
-            </div>
+      <div className="max-w-4xl mx-auto py-8 px-4">
+        <div className="bg-white shadow rounded-lg overflow-hidden">
+          <div className="px-6 py-4 border-b border-gray-200">
+            <h1 className="text-xl font-semibold text-gray-900">Editar Perfil</h1>
           </div>
           
-          <div className="mt-6 flex justify-end space-x-3">
-            <button 
-              type="button" 
-              onClick={handleCancel}
-              className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500"
-            >
-              Cancelar
-            </button>
-            <button 
-              type="submit" 
-              className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-yellow-600 hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500"
-            >
-              Guardar cambios
-            </button>
-          </div>
-        </form>
+          <form onSubmit={handleSave} className="p-6">
+            {/* Profile Image Upload */}
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Foto de Perfil
+              </label>
+              <div className="flex items-center gap-4">
+                {profileImage ? (
+                  <img
+                    src={profileImage}
+                    alt="Profile Preview"
+                    className="w-20 h-20 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="w-20 h-20 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white text-lg font-bold">
+                    {getInitials(formData.name || 'Usuario')}
+                  </div>
+                )}
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                />
+              </div>
+            </div>
+
+            {/* Role-based Profile Component */}
+            <RoleBasedProfile
+              user={formData}
+              isEditing={true}
+              onInputChange={handleInputChange}
+              onInterestChange={handleInterestChange}
+            />
+
+            {/* Action Buttons */}
+            <div className="flex justify-end gap-3 mt-8 pt-6 border-t border-gray-200">
+              <button
+                type="button"
+                onClick={handleCancel}
+                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+              >
+                Guardar Cambios
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   );
