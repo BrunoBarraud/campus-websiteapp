@@ -192,7 +192,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({ onSelectConversation, selecte
       </div>
 
       {/* Lista de conversaciones o usuarios filtrados */}
-      <div className="overflow-y-auto max-h-[calc(100vh-18rem)]">
+      <div className="overflow-y-auto max-h-[calc(100dvh-16rem)] sm:max-h-[calc(100dvh-18rem)] pb-2 overscroll-contain">
         {loading ? (
           <div className="p-4 text-center text-gray-400">Cargando...</div>
         ) : search.trim().length < 2 ? (

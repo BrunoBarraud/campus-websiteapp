@@ -39,8 +39,11 @@ export default function SettingsPage() {
 
   if (status === "loading") {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen bg-muted flex items-center justify-center px-4">
+        <div className="bg-surface border border-border shadow-soft rounded-xl p-4 flex items-center gap-3">
+          <div className="animate-spin rounded-full h-5 w-5 border-2 border-border border-t-primary"></div>
+          <span className="text-gray-700 dark:text-gray-200 text-sm">Cargando configuración…</span>
+        </div>
       </div>
     );
   }
@@ -118,19 +121,19 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-muted p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-4">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <Settings className="h-6 w-6 text-blue-600" />
+            <div className="p-2 bg-yellow-100 rounded-lg border border-yellow-200">
+              <Settings className="h-6 w-6 text-yellow-700" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
                 Configuración del Sistema
               </h1>
-              <p className="text-gray-600">
+              <p className="text-gray-600 dark:text-gray-400">
                 Gestiona las funcionalidades y configuraciones del campus
               </p>
             </div>
@@ -138,7 +141,7 @@ export default function SettingsPage() {
         </div>
 
         {/* User Info */}
-        <Card className="mb-8">
+        <Card className="mb-8 bg-surface border border-border shadow-soft">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <User className="h-5 w-5" />
@@ -148,15 +151,15 @@ export default function SettingsPage() {
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <p className="text-sm text-gray-600">Nombre</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Nombre</p>
                 <p className="font-medium">{session.user?.name}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-600">Email</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Email</p>
                 <p className="font-medium">{session.user?.email}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-600">Rol</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Rol</p>
                 <Badge
                   variant={
                     session.user?.role === "admin" ? "default" : "secondary"
@@ -178,12 +181,12 @@ export default function SettingsPage() {
           {features.map((feature, index) => {
             const Icon = feature.icon;
             return (
-              <Card key={index} className="hover:shadow-lg transition-shadow">
+              <Card key={index} className="bg-surface border border-border hover:shadow-elevated shadow-soft transition-shadow">
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="p-2 bg-blue-100 rounded-lg">
-                        <Icon className="h-5 w-5 text-blue-600" />
+                      <div className="p-2 bg-yellow-100 rounded-lg border border-yellow-200">
+                        <Icon className="h-5 w-5 text-yellow-700" />
                       </div>
                       <CardTitle className="text-lg">{feature.title}</CardTitle>
                     </div>
@@ -223,7 +226,7 @@ export default function SettingsPage() {
 
         {/* Admin Panel Access */}
         {session.user?.role === "admin" && (
-          <Card className="mt-8">
+          <Card className="mt-8 bg-surface border border-border shadow-soft">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Shield className="h-5 w-5" />

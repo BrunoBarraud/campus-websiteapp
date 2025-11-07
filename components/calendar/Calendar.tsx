@@ -17,7 +17,7 @@ interface CalendarProps {
   onEventDelete?: (id: string) => void;
 }
 
-const Calendar: React.FC<CalendarProps> = ({ events = [], canEdit = false, userYear, onEventCreate, onEventEdit, onEventDelete }) => {
+const Calendar: React.FC<CalendarProps> = ({ events = [], canEdit: _canEdit = false, userYear, onEventCreate, onEventEdit, onEventDelete }) => {
   const canUserEdit = () => {
     if (!currentUser) return false;
     return currentUser.role === 'admin' || currentUser.role === 'teacher';
@@ -169,9 +169,7 @@ const Calendar: React.FC<CalendarProps> = ({ events = [], canEdit = false, userY
     setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1));
   };
 
-  const getDaysInMonth = (date: Date) => new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
-  const getFirstDayOfMonth = (date: Date) => new Date(date.getFullYear(), date.getMonth(), 1).getDay();
-  const formatDate = (year: number, month: number, day: number) => `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+  
   const getEventsForDate = (dateString: string) => calendarEvents.filter(event => event.date === dateString);
   const getEventTypeColor = (type: EventType) => {
     switch (type) {
@@ -240,19 +238,23 @@ const Calendar: React.FC<CalendarProps> = ({ events = [], canEdit = false, userY
       {showEventModal && (
         <div className="absolute inset-0 bg-rose-950/70 z-[99] pointer-events-none transition-opacity duration-300" />
       )}
-      <CalendarGrid
-        currentDate={currentDate}
-        selectedDate={selectedDate}
-        setSelectedDate={setSelectedDate}
-        getEventsForDate={getEventsForDate}
-        getEventTypeColor={getEventTypeColor}
-        canUserEdit={canUserEdit}
-        openEventModal={openEventModal}
-        monthNames={monthNames}
-        dayNames={dayNames}
-        nextMonth={nextMonth}
-        prevMonth={prevMonth}
-      />
+      <div className="overflow-x-auto -mx-4 sm:mx-0">
+        <div className="min-w-[720px] sm:min-w-0 px-4 sm:px-0">
+          <CalendarGrid
+            currentDate={currentDate}
+            selectedDate={selectedDate}
+            setSelectedDate={setSelectedDate}
+            getEventsForDate={getEventsForDate}
+            getEventTypeColor={getEventTypeColor}
+            canUserEdit={canUserEdit}
+            openEventModal={openEventModal}
+            monthNames={monthNames}
+            dayNames={dayNames}
+            nextMonth={nextMonth}
+            prevMonth={prevMonth}
+          />
+        </div>
+      </div>
       {/* Eventos del día seleccionado */}
       {selectedDate && (
         <EventList

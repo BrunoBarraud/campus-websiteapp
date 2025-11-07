@@ -13,7 +13,18 @@ const config: Config = {
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",
+        primary: "var(--primary)",
+        surface: "var(--surface)",
+        muted: "var(--muted)",
+        border: "var(--border)",
       },
+      boxShadow: {
+        'soft': '0 10px 25px -8px rgba(0,0,0,0.08)',
+        'elevated': '0 20px 40px -12px rgba(0,0,0,0.12)'
+      },
+      borderRadius: {
+        'xl': '14px'
+      }
     },
   },
   plugins: [],

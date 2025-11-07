@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { signIn } from 'next-auth/react';
@@ -16,7 +16,7 @@ export default function AuthForm({ mode }: { mode: 'login' | 'register' }) {
   const [isLoading, setIsLoading] = useState(false);
   const [twoFactorCode, setTwoFactorCode] = useState('');
   const [requiresTwoFactor, setRequiresTwoFactor] = useState(false);
-  const [userId, setUserId] = useState<string | null>(null);
+  
   const router = useRouter();
 
   // Limpiar división cuando se selecciona 5° o 6° año
@@ -124,11 +124,6 @@ export default function AuthForm({ mode }: { mode: 'login' | 'register' }) {
         if (result?.error) {
           // Verificar si el error es porque se requiere 2FA
           if (result.error.includes('two_factor_required')) {
-            // Extraer el ID de usuario si está presente en el mensaje de error
-            const userIdMatch = result.error.match(/user_id:([^,]+)/);
-            if (userIdMatch && userIdMatch[1]) {
-              setUserId(userIdMatch[1].trim());
-            }
             setRequiresTwoFactor(true);
             setError('');
             return;
@@ -316,7 +311,7 @@ export default function AuthForm({ mode }: { mode: 'login' | 'register' }) {
                       } else {
                         router.push('/campus/dashboard');
                       }
-                    } catch (err) {
+                    } catch {
                       setError('Error al verificar el código. Inténtalo de nuevo.');
                     } finally {
                       setIsLoading(false);
@@ -325,7 +320,6 @@ export default function AuthForm({ mode }: { mode: 'login' | 'register' }) {
                   onCancel={() => {
                     setRequiresTwoFactor(false);
                     setTwoFactorCode('');
-                    setUserId(null);
                   }}
                   isLoading={isLoading}
                   error={error}
@@ -353,6 +347,27 @@ export default function AuthForm({ mode }: { mode: 'login' | 'register' }) {
                 : 'Crear cuenta'}
             </button>
           </form>
+
+          {mode === 'login' && (
+            <div className="mt-4 sm:mt-6">
+              <button
+                type="button"
+                onClick={() => signIn('google', { callbackUrl: '/campus/dashboard' })}
+                className="w-full py-2 sm:py-3 md:py-4 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-semibold rounded-md shadow-sm transition-transform transform hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-yellow-300 text-sm sm:text-base md:text-lg flex items-center justify-center gap-2"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="20" height="20">
+                  <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 6.3 29.6 4 24 4 12.9 4 9.6 8.1 6.3 14.7z"/>
+                  <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.8 18.9 12 24 12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 6.3 29.6 4 24 4 16.3 4 9.6 8.1 6.3 14.7z"/>
+                  <path fill="#4CAF50" d="M24 44c5.2 0 10-2 13.6-5.2l-6.3-5.2C29.3 36 27 36.8 24 36c-5.3 0-9.7-3.3-11.3-8H6.3C8.7 38 15.7 44 24 44z"/>
+                  <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-1.1 3.2-3.4 5.9-6.4 7.6l6.3 5.2C37.8 38.7 40 33.8 40 28c0-1.3-.1-2.7-.4-3.5z"/>
+                </svg>
+                Profesores: continuar con Google
+              </button>
+              <p className="mt-2 text-center text-xs text-gray-500">
+                Alumnos: iniciá sesión con email y contraseña, o registrate.
+              </p>
+            </div>
+          )}
 
           {/* Cambiar modo */}
           <div className="text-center text-xs sm:text-sm text-gray-500 mt-4 sm:mt-6">

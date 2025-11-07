@@ -34,7 +34,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
   return (
     <>
       {/* Calendar Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white p-6">
+      <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-rose-950 p-6">
         <div className="flex flex-col sm:flex-row justify-between items-center">
           <div className="flex items-center space-x-4 mb-4 sm:mb-0">
             <button onClick={prevMonth} className="p-2 rounded-full hover:bg-blue-700 transition-colors">

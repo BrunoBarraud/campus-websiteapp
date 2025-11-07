@@ -49,7 +49,7 @@ const MensajeriaPage: React.FC = () => {
       const createRes = await fetch(`/api/conversations`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ participant_ids: [userId], type: 'direct', title: null, description: null })
+        body: JSON.stringify({ participant_ids: [userId], type: 'direct', title: null, description: null })
       });
       const createData = await createRes.json();
       if (!createRes.ok) {
@@ -67,13 +67,13 @@ const MensajeriaPage: React.FC = () => {
   return (
     <div className="bg-gray-100 min-h-screen flex flex-col">
       {/* Main Content */}
-      <main className="container mx-auto py-8 px-2 flex flex-row gap-8 flex-grow">
+      <main className="container mx-auto py-6 px-4 flex flex-col lg:flex-row gap-4 lg:gap-8 flex-grow">
         {/* Sidebar */}
-        <div className="min-w-[320px] max-w-[350px] w-full">
+        <div className="w-full lg:w-[320px] lg:min-w-[280px] lg:max-w-[360px]">
           <ChatSidebar onSelectConversation={handleSelectUser} selectedConversation={selectedUser} />
         </div>
         {/* Chat window */}
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 min-w-0 flex flex-col">
           {loadingChat ? (
             <div className="flex flex-1 items-center justify-center text-amber-400 text-2xl animate-pulse">
               Cargando chat...

@@ -5,7 +5,6 @@ import { useSession } from "next-auth/react";
 import { useRouter, useParams } from "next/navigation";
 import UnitAccordionTeacher from "../../../../../components/teacher/UnitAccordionTeacher";
 import SubjectImageEditor from "../../../../../components/dashboard/SubjectImageEditor";
-import LoadingSpinner from "../../../../../components/ui/LoadingSpinner";
 interface Subject {
   id: string;
   name: string;
@@ -77,8 +76,11 @@ export default function TeacherSubjectPage() {
   // Loading state
   if (status === "loading" || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <LoadingSpinner text="Cargando materia..." />
+      <div className="min-h-screen bg-muted flex items-center justify-center px-4">
+        <div className="bg-surface border border-border shadow-soft rounded-xl p-4 flex items-center gap-3">
+          <div className="animate-spin rounded-full h-5 w-5 border-2 border-border border-t-primary" />
+          <span className="text-gray-700 dark:text-gray-200 text-sm">Cargando materia…</span>
+        </div>
       </div>
     );
   }
@@ -86,8 +88,8 @@ export default function TeacherSubjectPage() {
   // Error state
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="bg-white/90 backdrop-blur-sm rounded-xl p-8 shadow-lg border-2 border-red-100 text-center max-w-md">
+      <div className="min-h-screen bg-muted flex items-center justify-center px-4">
+        <div className="bg-surface rounded-xl p-8 shadow-soft border border-border text-center max-w-md">
           <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <i className="fas fa-exclamation-triangle text-red-500 text-2xl"></i>
           </div>
@@ -96,13 +98,13 @@ export default function TeacherSubjectPage() {
           <div className="flex gap-3">
             <button
               onClick={() => router.back()}
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              className="flex-1 px-4 py-2 border border-border rounded-lg hover:bg-muted transition-colors"
             >
               Volver
             </button>
             <button
               onClick={fetchSubject}
-              className="flex-1 px-4 py-2 bg-gradient-to-r from-yellow-500 to-rose-500 text-white rounded-lg hover:shadow-lg transition-all"
+              className="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:brightness-110 shadow-soft transition-all"
             >
               Reintentar
             </button>
@@ -115,8 +117,8 @@ export default function TeacherSubjectPage() {
   // No subject found
   if (!subject) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="bg-white/90 backdrop-blur-sm rounded-xl p-8 shadow-lg border-2 border-yellow-100 text-center max-w-md">
+      <div className="min-h-screen bg-muted flex items-center justify-center px-4">
+        <div className="bg-surface rounded-xl p-8 shadow-soft border border-border text-center max-w-md">
           <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <i className="fas fa-book text-yellow-600 text-xl"></i>
           </div>
@@ -128,7 +130,7 @@ export default function TeacherSubjectPage() {
           </p>
           <button
             onClick={() => router.push("/campus/dashboard")}
-            className="px-4 py-2 bg-gradient-to-r from-yellow-500 to-rose-500 text-white rounded-lg hover:shadow-lg transition-all"
+            className="px-4 py-2 bg-primary text-white rounded-lg hover:brightness-110 shadow-soft transition-all"
           >
             Ir al Dashboard
           </button>
@@ -138,7 +140,7 @@ export default function TeacherSubjectPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-yellow-50 via-rose-50 to-yellow-100 p-4 sm:p-6">
+    <div className="min-h-screen bg-muted p-4 sm:p-6">
       <div className="max-w-6xl mx-auto">
         {/* Breadcrumb */}
         <nav className="mb-6">
@@ -162,17 +164,17 @@ export default function TeacherSubjectPage() {
         </nav>
 
         {/* Subject Info Card */}
-        <div className="bg-white/90 backdrop-blur-sm rounded-xl p-6 shadow-lg border-2 border-yellow-100 mb-6">
+        <div className="bg-surface rounded-xl p-6 shadow-soft border border-border mb-6">
             <div className="flex items-start justify-between">
             <div className="flex items-center gap-4">
               {subject.image_url ? (
                 <img
                   src={subject.image_url}
                   alt={subject.name}
-                  className="w-16 h-16 rounded-lg object-cover border-2 border-yellow-200"
+                  className="w-16 h-16 rounded-lg object-cover border border-border"
                 />
               ) : (
-                <div className="w-16 h-16 bg-gradient-to-r from-yellow-100 to-rose-100 rounded-lg flex items-center justify-center">
+                <div className="w-16 h-16 bg-yellow-100 rounded-lg flex items-center justify-center">
                   <i className="fas fa-book text-yellow-600 text-xl"></i>
                 </div>
               )}
@@ -181,7 +183,7 @@ export default function TeacherSubjectPage() {
                   <h1 className="text-2xl font-bold text-gray-800">
                     {subject.name}
                   </h1>
-                  <span className="bg-gradient-to-r from-yellow-100 to-rose-100 text-yellow-800 px-3 py-1 rounded-full text-sm font-medium">
+                  <span className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm font-medium border border-yellow-200">
                     {subject.code}
                   </span>
                 </div>

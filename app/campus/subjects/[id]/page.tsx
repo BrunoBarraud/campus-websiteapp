@@ -355,10 +355,10 @@ export default function SubjectDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 mt-[12vh] flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Cargando materia...</p>
+      <div className="min-h-screen bg-muted flex items-center justify-center px-4">
+        <div className="bg-surface border border-border shadow-soft rounded-xl p-4 flex items-center gap-3">
+          <div className="animate-spin rounded-full h-5 w-5 border-2 border-border border-t-primary"></div>
+          <span className="text-gray-700 dark:text-gray-200 text-sm">Cargando materia…</span>
         </div>
       </div>
     );
@@ -366,17 +366,17 @@ export default function SubjectDetailPage() {
 
   if (!subject) {
     return (
-      <div className="min-h-screen bg-gray-50 mt-[12vh] flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-xl font-semibold text-gray-900">
+      <div className="min-h-screen bg-muted flex items-center justify-center px-4">
+        <div className="bg-surface border border-border shadow-soft rounded-xl p-6 text-center">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
             Materia no encontrada
           </h2>
-          <p className="text-gray-600 mt-2">
+          <p className="text-gray-600 dark:text-gray-400 mt-2">
             La materia que buscas no existe o no tienes permisos para verla.
           </p>
           <button
             onClick={() => router.back()}
-            className="mt-4 text-blue-600 hover:text-blue-800"
+            className="mt-4 px-4 py-2 bg-primary text-white rounded-lg hover:brightness-110 shadow-soft"
           >
             Volver
           </button>
@@ -387,9 +387,9 @@ export default function SubjectDetailPage() {
 
   return (
     <>
-      <div className="min-h-screen bg-gray-50 mt-[12vh]">
+      <div className="min-h-screen bg-muted">
         {/* Header */}
-        <div className="bg-white shadow-sm border-b">
+        <div className="bg-surface border-b border-border shadow-soft">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="py-6">
               <div className="flex items-center justify-between">
@@ -402,10 +402,10 @@ export default function SubjectDetailPage() {
                     Volver
                   </button>
                   <div>
-                    <h1 className="text-3xl font-bold text-gray-900">
+                    <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
                       {subject.name}
                     </h1>
-                    <p className="text-sm text-gray-600 mt-1">
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                       {subject.code} • {subject.year}° Año
                     </p>
                     {subject.teacher && (
@@ -421,7 +421,7 @@ export default function SubjectDetailPage() {
                   <button
                     onClick={() => refreshData()}
                     disabled={loading}
-                    className="flex items-center px-4 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                    className="flex items-center px-4 py-2 text-gray-600 hover:text-gray-900 hover:bg-muted rounded-lg transition-colors"
                     title="Refrescar datos"
                   >
                     <FiFolder className="w-4 h-4 mr-2" />
@@ -432,21 +432,21 @@ export default function SubjectDetailPage() {
                     <>
                       <button
                         onClick={handleCreateUnit}
-                        className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 flex items-center"
+                        className="bg-primary text-white px-4 py-2 rounded-md text-sm font-medium hover:brightness-110 flex items-center"
                       >
                         <FiPlus className="w-4 h-4 mr-2" />
                         Nueva Unidad
                       </button>
                       <button
                         onClick={handleCreateContent}
-                        className="bg-green-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-green-700 flex items-center"
+                        className="bg-primary text-white px-4 py-2 rounded-md text-sm font-medium hover:brightness-110 flex items-center"
                       >
                         <FiPlus className="w-4 h-4 mr-2" />
                         Nuevo Contenido
                       </button>
                       <button
                         onClick={handleCreateAssignment}
-                        className="bg-purple-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-purple-700 flex items-center"
+                        className="bg-primary text-white px-4 py-2 rounded-md text-sm font-medium hover:brightness-110 flex items-center"
                       >
                         <FiPlus className="w-4 h-4 mr-2" />
                         Nueva Tarea
@@ -460,7 +460,7 @@ export default function SubjectDetailPage() {
         </div>
 
         {/* Tabs */}
-        <div className="bg-white border-b">
+        <div className="bg-surface border-b border-border">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <nav className="-mb-px flex space-x-8">
               {[
@@ -482,8 +482,8 @@ export default function SubjectDetailPage() {
                   }
                   className={`flex items-center py-4 px-1 border-b-2 font-medium text-sm ${
                     activeTab === tab.id
-                      ? "border-blue-500 text-blue-600"
-                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                      ? "border-yellow-500 text-yellow-700"
+                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-border"
                   }`}
                 >
                   <tab.icon className="w-4 h-4 mr-2" />
@@ -499,7 +499,7 @@ export default function SubjectDetailPage() {
           {activeTab === "overview" && (
             <div className="space-y-6">
               {/* Descripción */}
-              <div className="bg-white rounded-lg shadow p-6">
+              <div className="bg-surface rounded-xl shadow-soft border border-border p-6">
                 <h3 className="text-lg font-medium text-gray-900 mb-4">
                   Descripción
                 </h3>
@@ -510,7 +510,7 @@ export default function SubjectDetailPage() {
               </div>
 
               {/* Información del curso */}
-              <div className="bg-white rounded-lg shadow p-6">
+              <div className="bg-surface rounded-xl shadow-soft border border-border p-6">
                 <h3 className="text-lg font-medium text-gray-900 mb-4">
                   Información del Curso
                 </h3>
@@ -556,9 +556,9 @@ export default function SubjectDetailPage() {
           {activeTab === "units" && (
             <div className="space-y-6">
               {units.map((unit) => (
-                <div key={unit.id} className="bg-white rounded-lg shadow">
+                <div key={unit.id} className="bg-surface rounded-xl shadow-soft border border-border">
                   {/* Header de la unidad */}
-                  <div className="px-6 py-4 border-b border-gray-200">
+                  <div className="px-6 py-4 border-b border-border">
                     <div className="flex items-center justify-between">
                       <div>
                         <h3 className="text-lg font-medium text-gray-900">
@@ -574,7 +574,7 @@ export default function SubjectDetailPage() {
                         <div className="flex space-x-2">
                           <button
                             onClick={() => handleUploadDocument(unit.id)}
-                            className="text-blue-600 hover:text-blue-800 text-sm flex items-center"
+                            className="text-yellow-700 hover:text-yellow-800 text-sm flex items-center"
                           >
                             <FiUpload className="w-4 h-4 mr-1" />
                             Subir Archivo
@@ -601,7 +601,7 @@ export default function SubjectDetailPage() {
                           {unit.documents.map((doc) => (
                             <div
                               key={doc.id}
-                              className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+                              className="border border-border rounded-lg p-4 hover:shadow-soft transition-shadow bg-surface"
                             >
                               <div className="flex items-start justify-between">
                                 <div className="flex-1">
@@ -627,7 +627,7 @@ export default function SubjectDetailPage() {
                                 </div>
                               </div>
                               <div className="mt-3">
-                                <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                                <button className="text-yellow-700 hover:text-yellow-800 text-sm font-medium">
                                   Descargar
                                 </button>
                               </div>
@@ -642,7 +642,7 @@ export default function SubjectDetailPage() {
                         {canEdit && (
                           <button
                             onClick={() => handleUploadDocument(unit.id)}
-                            className="mt-2 text-blue-600 hover:text-blue-800 text-sm font-medium"
+                            className="mt-2 text-yellow-700 hover:text-yellow-800 text-sm font-medium"
                           >
                             Subir primer documento
                           </button>
@@ -654,7 +654,7 @@ export default function SubjectDetailPage() {
               ))}
 
               {units.length === 0 && (
-                <div className="text-center py-12 bg-white rounded-lg shadow">
+                <div className="text-center py-12 bg-surface rounded-xl shadow-soft border border-border">
                   <FiFolder className="w-12 h-12 mx-auto text-gray-400 mb-4" />
                   <h3 className="text-lg font-medium text-gray-900 mb-2">
                     No hay unidades
@@ -665,7 +665,7 @@ export default function SubjectDetailPage() {
                   {canEdit && (
                     <button
                       onClick={handleCreateUnit}
-                      className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700"
+                      className="bg-primary text-white px-4 py-2 rounded-md text-sm font-medium hover:brightness-110"
                     >
                       Crear Primera Unidad
                     </button>
@@ -678,7 +678,7 @@ export default function SubjectDetailPage() {
           {activeTab === "content" && (
             <div className="space-y-4">
               {content.map((item) => (
-                <div key={item.id} className="bg-white rounded-lg shadow p-6">
+                <div key={item.id} className="bg-surface rounded-xl shadow-soft border border-border p-6">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center">
@@ -730,7 +730,7 @@ export default function SubjectDetailPage() {
               ))}
 
               {content.length === 0 && (
-                <div className="text-center py-12 bg-white rounded-lg shadow">
+                <div className="text-center py-12 bg-surface rounded-xl shadow-soft border border-border">
                   <FiFile className="w-12 h-12 mx-auto text-gray-400 mb-4" />
                   <h3 className="text-lg font-medium text-gray-900 mb-2">
                     No hay contenido
@@ -741,7 +741,7 @@ export default function SubjectDetailPage() {
                   {canEdit && (
                     <button
                       onClick={handleCreateContent}
-                      className="bg-green-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-green-700"
+                      className="bg-primary text-white px-4 py-2 rounded-md text-sm font-medium hover:brightness-110"
                     >
                       Crear Primer Contenido
                     </button>
@@ -756,12 +756,12 @@ export default function SubjectDetailPage() {
               {assignments.map((assignment) => (
                 <div
                   key={assignment.id}
-                  className="bg-white rounded-lg shadow p-6"
+                  className="bg-surface rounded-xl shadow-soft border border-border p-6"
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center">
-                        <FiClipboard className="w-5 h-5 mr-2 text-purple-600" />
+                        <FiClipboard className="w-5 h-5 mr-2 text-yellow-700" />
                         <h3 className="text-lg font-medium text-gray-900">
                           {assignment.title}
                         </h3>
@@ -770,11 +770,11 @@ export default function SubjectDetailPage() {
                         {assignment.description}
                       </p>
                       {assignment.instructions && (
-                        <div className="mt-3 p-3 bg-blue-50 rounded-md">
-                          <h4 className="text-sm font-medium text-blue-900 mb-1">
+                        <div className="mt-3 p-3 bg-yellow-50 rounded-md border border-yellow-100">
+                          <h4 className="text-sm font-medium text-yellow-900 mb-1">
                             Instrucciones:
                           </h4>
-                          <p className="text-sm text-blue-800">
+                          <p className="text-sm text-yellow-800">
                             {assignment.instructions}
                           </p>
                         </div>
@@ -812,7 +812,7 @@ export default function SubjectDetailPage() {
               ))}
 
               {assignments.length === 0 && (
-                <div className="text-center py-12 bg-white rounded-lg shadow">
+                <div className="text-center py-12 bg-surface rounded-xl shadow-soft border border-border">
                   <FiClipboard className="w-12 h-12 mx-auto text-gray-400 mb-4" />
                   <h3 className="text-lg font-medium text-gray-900 mb-2">
                     No hay tareas
@@ -823,7 +823,7 @@ export default function SubjectDetailPage() {
                   {canEdit && (
                     <button
                       onClick={handleCreateAssignment}
-                      className="bg-purple-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-purple-700"
+                      className="bg-primary text-white px-4 py-2 rounded-md text-sm font-medium hover:brightness-110"
                     >
                       Crear Primera Tarea
                     </button>

@@ -83,14 +83,7 @@ const ProfilePage = () => {
     }));
   };
 
-  const handleInterestChange = (interest: string) => {
-    setFormData(prev => ({
-      ...prev,
-      interests: prev.interests.includes(interest) 
-        ? prev.interests.filter(i => i !== interest)
-        : [...prev.interests, interest]
-    }));
-  };
+  
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -146,7 +139,7 @@ const ProfilePage = () => {
         <div className="bg-white shadow rounded-lg overflow-hidden">
           <div className="bg-gradient-to-r from-yellow-500 to-pink-500 h-32 w-full"></div>
           <div className="px-6 py-6">
-            <div className="flex items-start gap-6">
+            <div className="flex items-start gap-6 flex-wrap">
               {/* Profile Image */}
               <div className="flex-shrink-0">
                 <div className="h-24 w-24 rounded-full border-4 border-white bg-white shadow-md overflow-hidden -mt-12">
@@ -201,8 +194,8 @@ const ProfilePage = () => {
 
         {/* Profile Tabs */}
         <div className="mt-6 bg-white shadow rounded-lg overflow-hidden">
-          <div className="border-b border-gray-200">
-            <nav className="flex -mb-px">
+          <div className="border-b border-gray-200 overflow-x-auto">
+            <nav className="flex -mb-px whitespace-nowrap">
               <button 
                 onClick={() => setActiveTab('informacion')}
                 className={`py-4 px-6 text-center border-b-2 font-medium text-sm flex items-center gap-2 ${

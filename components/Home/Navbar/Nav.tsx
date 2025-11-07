@@ -40,7 +40,7 @@ const Nav = ({ onMenuClick }: { onMenuClick?: () => void }) => {
   }
 
   return (
-    <nav className="sticky top-0 bg-rose-950 transition-all duration-200 h-[12vh] z-[60] shadow-lg">
+    <nav className="sticky top-0 bg-rose-950 transition-all duration-200 h-14 sm:h-16 md:h-20 z-[60] shadow-lg">
       <div className="flex items-center h-full justify-between w-[95%] sm:w-[90%] xl:w-[80%] mx-auto px-2 sm:px-0">
         {/* Logo and Title */}
         <div className="flex items-center space-x-1 sm:space-x-2">

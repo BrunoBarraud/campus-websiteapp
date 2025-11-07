@@ -41,7 +41,7 @@ export default function RootLayout({
         <meta name="theme-color" content="#ffffff" />
       </head>
       <body
-        className={`${font.className} antialiased bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100 transition-colors duration-300`}
+        className={`${font.className} antialiased transition-colors duration-300`}
       >
         <ThemeProvider>
           <NextAuthProvider>

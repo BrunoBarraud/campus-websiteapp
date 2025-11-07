@@ -68,11 +68,16 @@ export default function TeacherSubjectsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-6">
+      <div className="min-h-screen bg-muted p-6">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Cargando materias...</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="bg-surface border border-border rounded-xl shadow-soft p-4">
+                <div className="h-40 w-full skeleton mb-4"></div>
+                <div className="h-5 w-40 skeleton mb-2"></div>
+                <div className="h-4 w-2/3 skeleton"></div>
+              </div>
+            ))}
           </div>
         </div>
       </div>
@@ -80,25 +85,25 @@ export default function TeacherSubjectsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-muted p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
             Mis Materias
           </h1>
-          <p className="text-gray-600">
+          <p className="text-gray-600 dark:text-gray-400">
             Gestiona tus materias, unidades y contenidos
           </p>
         </div>
 
         {/* Filtros */}
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+        <div className="bg-surface border border-border rounded-xl shadow-soft p-6 mb-6">
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex-1">
               <label
                 htmlFor="year"
-                className="block text-sm font-medium text-gray-700 mb-2"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
               >
                 Filtrar por año:
               </label>
@@ -106,7 +111,7 @@ export default function TeacherSubjectsPage() {
                 id="year"
                 value={selectedYear}
                 onChange={(e) => setSelectedYear(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-md bg-surface text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-yellow-400"
               >
                 <option value="">Todos los años</option>
                 <option value="1">1er Año</option>
@@ -122,14 +127,14 @@ export default function TeacherSubjectsPage() {
 
         {/* Error Message */}
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-            <p className="text-red-800">{error}</p>
+          <div className="notification-error border rounded-xl p-4 mb-6">
+            <p>{error}</p>
           </div>
         )}
 
         {/* Materias Grid */}
         {subjects.length === 0 ? (
-          <div className="bg-white rounded-lg shadow-sm p-12 text-center">
+          <div className="bg-surface border border-border rounded-xl shadow-soft p-12 text-center">
             <div className="text-gray-400 mb-4">
               <svg
                 className="w-16 h-16 mx-auto"
@@ -145,10 +150,10 @@ export default function TeacherSubjectsPage() {
                 />
               </svg>
             </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
+            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
               No tienes materias asignadas
             </h3>
-            <p className="text-gray-600">
+            <p className="text-gray-600 dark:text-gray-400">
               Contacta al administrador para que te asigne materias.
             </p>
           </div>
@@ -158,10 +163,10 @@ export default function TeacherSubjectsPage() {
               <div
                 key={subject.id}
                 onClick={() => handleSubjectClick(subject.id)}
-                className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow cursor-pointer border border-gray-200"
+                className="bg-surface rounded-xl shadow-soft hover:shadow-elevated transition cursor-pointer border border-border"
               >
                 {/* Subject Image */}
-                <div className="h-48 bg-gradient-to-br from-blue-500 to-purple-600 rounded-t-lg relative overflow-hidden">
+                <div className="h-48 bg-gradient-to-br from-yellow-400 to-rose-400 rounded-t-xl relative overflow-hidden">
                   {subject.image_url ? (
                     <img
                       src={subject.image_url}
@@ -174,7 +179,7 @@ export default function TeacherSubjectsPage() {
                         <h3 className="text-2xl font-bold mb-2">
                           {subject.code}
                         </h3>
-                        <p className="text-blue-100">{subject.year}° Año</p>
+                        <p className="text-yellow-50">{subject.year}° Año</p>
                       </div>
                     </div>
                   )}
@@ -183,28 +188,28 @@ export default function TeacherSubjectsPage() {
                 {/* Subject Info */}
                 <div className="p-6">
                   <div className="mb-4">
-                    <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                    <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
                       {subject.name}
                     </h3>
-                    <p className="text-gray-600 text-sm line-clamp-2">
+                    <p className="text-gray-600 dark:text-gray-400 text-sm line-clamp-2">
                       {subject.description || "Sin descripción disponible"}
                     </p>
                   </div>
 
                   {/* Subject Details */}
-                  <div className="flex justify-between text-sm text-gray-500 mb-4">
+                  <div className="flex justify-between text-sm text-gray-500 dark:text-gray-400 mb-4">
                     <span>
                       {subject.year}° Año • {subject.semester}° Sem
                     </span>
-                    <div className="bg-blue-50 rounded-lg p-3">
-                      <div className="text-2xl font-bold text-blue-600">
+                    <div className="bg-yellow-50 rounded-lg p-3 border border-yellow-100">
+                      <div className="text-2xl font-bold text-yellow-700">
                         {subject.stats.units_count}
                       </div>
-                      <div className="text-xs text-blue-600 font-medium">
+                      <div className="text-xs text-yellow-700 font-medium">
                         Unidades
                       </div>
                     </div>
-                    <div className="bg-green-50 rounded-lg p-3">
+                    <div className="bg-green-50 rounded-lg p-3 border border-green-100">
                       <div className="text-2xl font-bold text-green-600">
                         {subject.stats.contents_count}
                       </div>
@@ -212,11 +217,11 @@ export default function TeacherSubjectsPage() {
                         Contenidos
                       </div>
                     </div>
-                    <div className="bg-purple-50 rounded-lg p-3">
-                      <div className="text-2xl font-bold text-purple-600">
+                    <div className="bg-rose-50 rounded-lg p-3 border border-rose-100">
+                      <div className="text-2xl font-bold text-rose-600">
                         {subject.stats.documents_count}
                       </div>
-                      <div className="text-xs text-purple-600 font-medium">
+                      <div className="text-xs text-rose-600 font-medium">
                         Documentos
                       </div>
                     </div>

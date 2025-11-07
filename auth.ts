@@ -1,5 +1,6 @@
 import NextAuth from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
+import GoogleProvider from "next-auth/providers/google"
 import type { JWT } from "next-auth/jwt"
 import { supabaseAdmin } from "@/app/lib/supabaseClient"
 import bcrypt from "bcryptjs"
@@ -139,6 +140,17 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
         }
       },
     }),
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID as string,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
+      authorization: {
+        params: {
+          scope: 'openid email profile',
+          hd: process.env.GOOGLE_HD,
+          prompt: 'consent'
+        }
+      }
+    }),
   ],
   pages: {
     signIn: '/campus/auth/login',
@@ -149,12 +161,86 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
     maxAge: 24 * 60 * 60, // 24 horas
   },
   callbacks: {
+    async signIn({ user, account, profile, email, credentials }) {
+      if (account?.provider === 'google') {
+        const allowed = (process.env.ALLOWED_GOOGLE_DOMAINS || '')
+          .split(',')
+          .map(d => d.trim().toLowerCase())
+          .filter(Boolean)
+        const adminEmails = (process.env.ADMIN_EMAILS || '')
+          .split(',')
+          .map(e => e.trim().toLowerCase())
+          .filter(Boolean)
+        const emailAddr = (user?.email || '').toLowerCase()
+        const domain = emailAddr.split('@')[1]
+        const isAdminEmail = adminEmails.includes(emailAddr)
+        if (!isAdminEmail) {
+          if (!domain || (allowed.length > 0 && !allowed.includes(domain))) {
+            return false
+          }
+        }
+
+        try {
+          // Ensure user exists in DB and is active
+          const { data: existing, error: findErr } = await supabaseAdmin
+            .from('users')
+            .select('*')
+            .eq('email', emailAddr)
+            .single()
+          if (findErr || !existing) {
+            const { data: created, error: createErr } = await supabaseAdmin
+              .from('users')
+              .insert({
+                email: emailAddr,
+                name: user?.name || emailAddr.split('@')[0],
+                role: isAdminEmail ? 'admin' : 'teacher',
+                is_active: true,
+                last_login: new Date().toISOString()
+              })
+              .select('*')
+              .single()
+            if (createErr) {
+              return false
+            }
+          } else {
+            // Update last login timestamp
+            const updates: any = { last_login: new Date().toISOString() }
+            if (isAdminEmail && existing.role !== 'admin') {
+              updates.role = 'admin'
+            }
+            await supabaseAdmin
+              .from('users')
+              .update(updates)
+              .eq('id', existing.id)
+          }
+        } catch (e) {
+          return false
+        }
+      }
+      return true
+    },
     async jwt({ token, user }) {
       if (user) {
-        token.role = user.role;
-        token.id = user.id;
-        token.division = user.division;
-        token.year = user.year;
+        token.role = (user as any).role;
+        token.id = (user as any).id;
+        token.division = (user as any).division;
+        token.year = (user as any).year;
+      }
+      // If token lacks our custom fields, enrich from DB using email
+      if ((!token.id || !token.role) && token.email) {
+        try {
+          const { data: dbUser } = await supabaseAdmin
+            .from('users')
+            .select('id, role, division, year')
+            .eq('email', token.email)
+            .single()
+          if (dbUser) {
+            token.id = dbUser.id
+            token.role = dbUser.role
+            token.division = dbUser.division
+            token.year = dbUser.year
+          }
+        } catch {}
       }
       return token;
     },

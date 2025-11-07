@@ -61,7 +61,9 @@ export default function SubjectImageEditor({ subjectId, currentImage, canEdit, o
       const result = await putRes.json();
       if (!putRes.ok) throw new Error(result?.error || 'Error actualizando imagen');
 
-      onUpdated && onUpdated(newUrl);
+      if (onUpdated) {
+        onUpdated(newUrl);
+      }
       close();
     } catch (err: any) {
       setError(err?.message || String(err));
@@ -116,7 +118,7 @@ export default function SubjectImageEditor({ subjectId, currentImage, canEdit, o
           e.preventDefault();
           setOpen(true);
         }}
-        className="p-1 rounded-full bg-white/80 hover:bg-white shadow-sm border"
+        className="p-1 rounded-full bg-surface/80 hover:bg-[var(--muted)] shadow-sm border border-border"
       >
         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4z" />
@@ -127,15 +129,15 @@ export default function SubjectImageEditor({ subjectId, currentImage, canEdit, o
       {open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/40" onClick={close} />
-          <div className="relative bg-white rounded-lg shadow-lg max-w-md w-full p-4">
+          <div className="relative bg-surface border border-border rounded-lg shadow-lg max-w-md w-full p-4">
             <h3 className="font-semibold mb-2">Editar imagen de la materia</h3>
             <p className="text-sm text-gray-600 mb-3">Puedes pegar una URL o subir una imagen desde tu equipo (JPG/PNG/GIF, máximo 10MB).</p>
 
             <div className="mb-3">
               <label className="block text-xs text-gray-600 mb-1">Pegar URL</label>
-              <input className="w-full border px-2 py-1 rounded" value={url} onChange={e => setUrl(e.target.value)} placeholder={currentImage || '/images/ipdvs-logo.png'} />
+              <input className="w-full border border-border bg-surface text-[var(--foreground)] px-2 py-1 rounded focus:outline-none focus:ring-2 focus:ring-[var(--primary)]" value={url} onChange={e => setUrl(e.target.value)} placeholder={currentImage || '/images/ipdvs-logo.png'} />
               <div className="flex justify-end mt-2">
-                <button disabled={loading} onClick={() => updateImage(url)} className="bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600 disabled:opacity-60">Guardar URL</button>
+                <button disabled={loading} onClick={() => updateImage(url)} className="px-3 py-1 rounded disabled:opacity-60 bg-[var(--primary)] text-[var(--primary-foreground)] hover:opacity-90">Guardar URL</button>
               </div>
             </div>
 
@@ -143,15 +145,15 @@ export default function SubjectImageEditor({ subjectId, currentImage, canEdit, o
               <label className="block text-xs text-gray-600 mb-1">O subir archivo</label>
               <input type="file" accept="image/*" onChange={e => setFile(e.target.files ? e.target.files[0] : null)} />
               <div className="flex justify-end mt-2">
-                <button disabled={loading} onClick={handleUpload} className="bg-rose-500 text-white px-3 py-1 rounded hover:bg-rose-600 disabled:opacity-60">Subir y usar</button>
+                <button disabled={loading} onClick={handleUpload} className="px-3 py-1 rounded disabled:opacity-60 bg-[var(--accent)] text-[var(--accent-foreground)] hover:opacity-90">Subir y usar</button>
               </div>
             </div>
 
-            {error && <p className="text-sm text-red-600 mb-2">{error}</p>}
+            {error && <p className="text-sm text-[var(--accent)] mb-2">{error}</p>}
 
             <div className="flex justify-between">
-              <button onClick={close} className="px-3 py-1 border rounded">Cancelar</button>
-              <button onClick={close} className="px-3 py-1 border rounded">Cerrar</button>
+              <button onClick={close} className="px-3 py-1 border border-border rounded hover:bg-[var(--muted)]">Cancelar</button>
+              <button onClick={close} className="px-3 py-1 border border-border rounded hover:bg-[var(--muted)]">Cerrar</button>
             </div>
           </div>
         </div>
