@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
+import { supabase } from '@/app/lib/supabaseClient';
 
 interface Notification {
   id: string;
@@ -47,6 +48,30 @@ export default function NotificationsPage() {
     if (session?.user) {
       fetchNotifications();
       fetchUnreadCount();
+
+      const userId = (session.user as any).id as string | undefined;
+      const channel = userId
+        ? supabase
+            .channel(`notifications:list:${userId}`)
+            .on(
+              'postgres_changes',
+              {
+                event: '*',
+                schema: 'public',
+                table: 'notifications',
+                filter: `user_id=eq.${userId}`,
+              },
+              () => {
+                fetchNotifications();
+                fetchUnreadCount();
+              }
+            )
+            .subscribe()
+        : null;
+
+      return () => {
+        if (channel) supabase.removeChannel(channel);
+      };
     }
   }, [session]);
 
