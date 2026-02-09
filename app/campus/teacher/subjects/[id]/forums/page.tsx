@@ -48,7 +48,7 @@ function formatRelativeTime(dateString: string) {
 export default function TeacherForumsPage() {
   const params = useParams();
   const router = useRouter();
-  const subjectId = params.id as string;
+  const { id: subjectId } = params as { id: string };
 
   const [subject, setSubject] = useState<Subject | null>(null);
   const [forums, setForums] = useState<Forum[]>([]);

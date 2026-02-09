@@ -37,7 +37,11 @@ interface Question {
 export default function StudentQuestionDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const { id: subjectId, forumId, questionId } = params;
+  const { id: subjectId, forumId, questionId } = params as {
+    id: string;
+    forumId: string;
+    questionId: string;
+  };
 
   const [question, setQuestion] = useState<Question | null>(null);
   const [loading, setLoading] = useState(true);

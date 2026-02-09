@@ -34,7 +34,7 @@ interface Forum {
 export default function StudentForumDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const { id: subjectId, forumId } = params;
+  const { id: subjectId, forumId } = params as { id: string; forumId: string };
 
   const [forum, setForum] = useState<Forum | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);

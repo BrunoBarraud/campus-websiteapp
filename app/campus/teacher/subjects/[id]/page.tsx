@@ -21,7 +21,7 @@ export default function TeacherSubjectPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const params = useParams();
-  const subjectId = params.id as string;
+  const { id: subjectId } = params as { id: string };
 
   const [subject, setSubject] = useState<Subject | null>(null);
   const [loading, setLoading] = useState(true);

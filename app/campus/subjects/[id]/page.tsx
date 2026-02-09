@@ -42,7 +42,7 @@ interface Modal {
 export default function SubjectDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const subjectId = params.id as string;
+  const { id: subjectId } = params as { id: string };
 
   const [subject, setSubject] = useState<Subject | null>(null);
   const [units, setUnits] = useState<SubjectUnit[]>([]);
