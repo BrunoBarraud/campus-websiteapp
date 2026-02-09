@@ -61,14 +61,21 @@ export async function POST(request: Request) {
     const eventData: CreateEventForm = await request.json();
 
     // Get authenticated user using role-based authentication
-    const currentUser = await requireRole(['admin', 'teacher']);
+    const currentUser = await requireRole(['admin', 'teacher', 'student']);
 
     // Verificar permisos
     if (currentUser.role === 'student') {
-      return NextResponse.json(
-        { success: false, error: 'Los estudiantes no pueden crear eventos' },
-        { status: 403 }
-      );
+      const isPersonal = eventData.is_personal === true;
+      const isGlobal = eventData.is_global === true;
+      const hasYear = typeof eventData.year === 'number' && !Number.isNaN(eventData.year);
+      const hasSubject = !!eventData.subject_id;
+
+      if (!isPersonal || isGlobal || hasYear || hasSubject) {
+        return NextResponse.json(
+          { success: false, error: 'Los estudiantes solo pueden crear eventos personales' },
+          { status: 403 }
+        );
+      }
     }
 
     // Validar datos requeridos

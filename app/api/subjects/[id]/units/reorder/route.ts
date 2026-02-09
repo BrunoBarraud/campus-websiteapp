@@ -4,11 +4,11 @@ import { requireRole } from '@/app/lib/auth';
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const currentUser = await requireRole(['admin', 'teacher']);
-    const { id: subjectId } = params;
+    const { id: subjectId } = await params;
 
     // Verificar que la materia existe y el profesor tiene acceso
     const { data: subject, error: subjectError } = await supabaseAdmin

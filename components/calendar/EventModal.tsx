@@ -13,6 +13,7 @@ interface EventModalProps {
   resetEventForm: () => void;
   userSubjects: Subject[];
   currentUser: User | null;
+  personalOnly?: boolean;
 }
 
 const EventModal: React.FC<EventModalProps> = ({
@@ -26,7 +27,8 @@ const EventModal: React.FC<EventModalProps> = ({
   handleEditEvent,
   resetEventForm,
   userSubjects,
-  currentUser
+  currentUser,
+  personalOnly = false
 }) => {
   if (!showEventModal) return null;
   return (
@@ -65,107 +67,114 @@ const EventModal: React.FC<EventModalProps> = ({
                   <input
                     type="radio"
                     name="visibility"
-                    checked={!!eventForm.is_personal}
-                    onChange={() => setEventForm({
-                      ...eventForm,
-                      is_personal: true,
-                      is_global: false,
-                      year: undefined,
-                      subject_id: ''
-                    })}
+                    checked={personalOnly ? true : !!eventForm.is_personal}
+                    onChange={() => {
+                      setEventForm({
+                        ...eventForm,
+                        is_personal: true,
+                        is_global: false,
+                        year: undefined,
+                        subject_id: ''
+                      });
+                    }}
                     className="text-blue-600 focus:ring-blue-500"
                   />
                   <span className="text-rose-950">Personal (solo tú lo ves)</span>
                 </label>
-                <label className="flex items-center space-x-2">
-                  <input
-                    type="radio"
-                    name="visibility"
-                    checked={!!eventForm.is_global}
-                    onChange={() => setEventForm({
-                      ...eventForm,
-                      is_personal: false,
-                      is_global: true,
-                      year: undefined,
-                      subject_id: ''
-                    })}
-                    className="text-blue-600 focus:ring-blue-500"
-                  />
-                  <span className="text-rose-950">Global (todos lo ven)</span>
-                </label>
-                <div className="flex items-center space-x-2">
-                  <label className="flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      name="visibility"
-                      checked={!eventForm.is_personal && !eventForm.is_global && !!eventForm.year}
-                      onChange={() => setEventForm({
-                        ...eventForm,
-                        is_personal: false,
-                        is_global: false,
-                        year: currentUser?.year || 1,
-                        subject_id: ''
-                      })}
-                      className="text-blue-600 focus:ring-blue-500"
-                    />
-                    <span className="text-rose-950">Por año</span>
-                  </label>
-                  <input
-                    type="number"
-                    min={1}
-                    max={6}
-                    value={eventForm.year || ''}
-                    onChange={e => setEventForm({
-                      ...eventForm,
-                      year: Number(e.target.value),
-                      is_personal: false,
-                      is_global: false,
-                      subject_id: ''
-                    })}
-                    className="w-16 px-2 py-1 border border-gray-300 rounded text-sm"
-                    disabled={!eventForm.year}
-                  />
-                </div>
-                <div className="flex flex-col sm:flex-row items-center gap-2">
-                  {userSubjects.length > 0 && (
-                    <>
+
+                {!personalOnly && (
+                  <>
+                    <label className="flex items-center space-x-2">
+                      <input
+                        type="radio"
+                        name="visibility"
+                        checked={!!eventForm.is_global}
+                        onChange={() => setEventForm({
+                          ...eventForm,
+                          is_personal: false,
+                          is_global: true,
+                          year: undefined,
+                          subject_id: ''
+                        })}
+                        className="text-blue-600 focus:ring-blue-500"
+                      />
+                      <span className="text-rose-950">Global (todos lo ven)</span>
+                    </label>
+                    <div className="flex items-center space-x-2">
                       <label className="flex items-center space-x-2">
                         <input
                           type="radio"
                           name="visibility"
-                          checked={!eventForm.is_personal && !eventForm.is_global && !!eventForm.subject_id}
+                          checked={!eventForm.is_personal && !eventForm.is_global && !!eventForm.year}
                           onChange={() => setEventForm({
                             ...eventForm,
                             is_personal: false,
                             is_global: false,
-                            year: undefined,
-                            subject_id: userSubjects[0].id
+                            year: currentUser?.year || 1,
+                            subject_id: ''
                           })}
                           className="text-blue-600 focus:ring-blue-500"
                         />
-                        <span className="text-rose-950">Por materia</span>
+                        <span className="text-rose-950">Por año</span>
                       </label>
-                      <select
-                        value={eventForm.subject_id}
+                      <input
+                        type="number"
+                        min={1}
+                        max={6}
+                        value={eventForm.year || ''}
                         onChange={e => setEventForm({
                           ...eventForm,
-                          subject_id: e.target.value,
+                          year: Number(e.target.value),
                           is_personal: false,
                           is_global: false,
-                          year: undefined
+                          subject_id: ''
                         })}
-                        className="w-32 sm:w-40 px-2 py-1 border border-gray-300 rounded text-sm"
-                        disabled={!eventForm.subject_id}
-                      >
-                        {userSubjects.map(subject => (
-                          <option key={subject.id} value={subject.id}>
-                            {subject.name} ({subject.year}° año)
-                          </option>
-                        ))}
-                      </select>
-                    </>
-                  )}
-                </div>
+                        className="w-16 px-2 py-1 border border-gray-300 rounded text-sm"
+                        disabled={!eventForm.year}
+                      />
+                    </div>
+                    <div className="flex flex-col sm:flex-row items-center gap-2">
+                      {userSubjects.length > 0 && (
+                        <>
+                          <label className="flex items-center space-x-2">
+                            <input
+                              type="radio"
+                              name="visibility"
+                              checked={!eventForm.is_personal && !eventForm.is_global && !!eventForm.subject_id}
+                              onChange={() => setEventForm({
+                                ...eventForm,
+                                is_personal: false,
+                                is_global: false,
+                                year: undefined,
+                                subject_id: userSubjects[0].id
+                              })}
+                              className="text-blue-600 focus:ring-blue-500"
+                            />
+                            <span className="text-rose-950">Por materia</span>
+                          </label>
+                          <select
+                            value={eventForm.subject_id}
+                            onChange={e => setEventForm({
+                              ...eventForm,
+                              subject_id: e.target.value,
+                              is_personal: false,
+                              is_global: false,
+                              year: undefined
+                            })}
+                            className="w-32 sm:w-40 px-2 py-1 border border-gray-300 rounded text-sm"
+                            disabled={!eventForm.subject_id}
+                          >
+                            {userSubjects.map(subject => (
+                              <option key={subject.id} value={subject.id}>
+                                {subject.name} ({subject.year}° año)
+                              </option>
+                            ))}
+                          </select>
+                        </>
+                      )}
+                    </div>
+                  </>
+                )}
               </div>
             </div>
             {/* Título */}
