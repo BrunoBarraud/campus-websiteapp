@@ -43,6 +43,7 @@ export interface SubjectUnit {
   documents?: Document[]; // Archivos de la unidad
   content?: SubjectContent[]; // Contenido adicional
   is_active: boolean;
+  is_visible?: boolean;
   created_at: string;
   updated_at: string;
 }

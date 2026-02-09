@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
@@ -21,7 +20,11 @@ import {
   FileIcon,
   UserIcon,
   DownloadIcon,
-  StarIcon,
+  ChevronLeft,
+  Search,
+  Filter,
+  Trophy,
+  FileText,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -68,6 +71,7 @@ export default function AssignmentSubmissionsPage({
   const [gradeData, setGradeData] = useState({ score: "", feedback: "" });
   const [subjectId, setSubjectId] = useState<string>("");
   const [assignmentId, setAssignmentId] = useState<string>("");
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     const loadParams = async () => {
@@ -198,184 +202,198 @@ export default function AssignmentSubmissionsPage({
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-lg">Cargando entregas...</div>
+      <div className="min-h-screen bg-slate-100 flex items-center justify-center">
+        <div className="bg-white border border-slate-200 shadow-sm rounded-2xl p-4 flex items-center gap-3">
+          <div className="animate-spin rounded-full h-5 w-5 border-2 border-border border-t-primary" />
+          <span className="text-slate-700 text-sm">Cargando entregas…</span>
+        </div>
       </div>
     );
   }
 
   if (!assignment) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-lg">Tarea no encontrada</div>
+      <div className="min-h-screen bg-slate-100 flex items-center justify-center">
+        <div className="bg-white border border-slate-200 shadow-sm rounded-2xl p-6 text-center">
+          <div className="text-lg font-semibold text-slate-800">Tarea no encontrada</div>
+          <button
+            onClick={() => router.back()}
+            className="mt-4 text-sm text-slate-500 hover:text-indigo-600 inline-flex items-center gap-1"
+            type="button"
+          >
+            <ChevronLeft className="w-4 h-4" /> Volver
+          </button>
+        </div>
       </div>
     );
   }
 
-  return (
-    <div className="bg-gray-50 min-h-screen">
-      <div className="container mx-auto p-6 max-w-6xl">
-        <div className="mb-6">
-          <Button
-            variant="outline"
-            onClick={() => router.back()}
-            className="mb-4"
-          >
-            ← Volver
-          </Button>
+  const pendingCorrections = submissions.filter(
+    (s) => s.score === null || s.score === undefined
+  ).length;
 
-          {/* Header de la tarea */}
-          <div className="bg-white rounded-xl shadow-soft p-6 mb-8 border border-gray-100">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-              <div>
-                <h1 className="text-3xl font-bold bg-gradient-to-r from-yellow-600 to-pink-500 bg-clip-text text-transparent">
-                  {assignment.title}
-                </h1>
-                <p className="text-gray-600 mt-2">{assignment.description}</p>
+  const filteredSubmissions = submissions.filter((s) => {
+    const q = search.trim().toLowerCase();
+    if (!q) return true;
+    return (
+      s.student.name.toLowerCase().includes(q) ||
+      s.student.email.toLowerCase().includes(q)
+    );
+  });
+
+  return (
+    <div className="min-h-screen bg-slate-100 p-4 md:p-8">
+      <div className="max-w-5xl mx-auto space-y-6">
+        <button
+          className="text-sm text-slate-500 hover:text-indigo-600 flex items-center gap-1"
+          type="button"
+          onClick={() => router.back()}
+        >
+          <ChevronLeft className="w-4 h-4" /> Volver a Tareas
+        </button>
+
+        <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-orange-100 rounded-full -mr-10 -mt-10 opacity-50 blur-2xl" />
+          <div className="relative z-10">
+            <div className="flex justify-between items-start mb-4">
+              <div className="min-w-0">
+                <h1 className="text-3xl font-bold text-slate-900 mb-2 truncate">{assignment.title}</h1>
+                <p className="text-slate-500 max-w-2xl">{assignment.description}</p>
               </div>
             </div>
-            
-            <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                <CalendarIcon className="h-5 w-5 text-yellow-600" />
-                <div>
-                  <p className="text-sm text-gray-500">Fecha límite</p>
-                  <p className="font-medium">{formatDate(assignment.due_date)}</p>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+              <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                <p className="text-xs text-slate-500 uppercase font-bold mb-1">Fecha Límite</p>
+                <div className="flex items-center gap-2 text-slate-800 font-semibold">
+                  <CalendarIcon className="w-4 h-4 text-indigo-500" /> {formatDate(assignment.due_date)}
                 </div>
               </div>
-              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                <StarIcon className="h-5 w-5 text-yellow-600" />
-                <div>
-                  <p className="text-sm text-gray-500">Puntuación máxima</p>
-                  <p className="font-medium">{assignment.max_score} puntos</p>
+              <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                <p className="text-xs text-slate-500 uppercase font-bold mb-1">Puntuación</p>
+                <div className="flex items-center gap-2 text-slate-800 font-semibold">
+                  <Trophy className="w-4 h-4 text-amber-500" /> {assignment.max_score} Puntos
                 </div>
               </div>
-              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                <FileIcon className="h-5 w-5 text-yellow-600" />
-                <div>
-                  <p className="text-sm text-gray-500">Total entregas</p>
-                  <p className="font-medium">{submissions.length}</p>
+              <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                <p className="text-xs text-slate-500 uppercase font-bold mb-1">Total Entregas</p>
+                <div className="flex items-center gap-2 text-slate-800 font-semibold">
+                  <FileIcon className="w-4 h-4 text-emerald-500" /> {submissions.length}
+                </div>
+              </div>
+              <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                <p className="text-xs text-slate-500 uppercase font-bold mb-1">Por corregir</p>
+                <div className="flex items-center gap-2 text-slate-800 font-semibold">
+                  <UserIcon className="w-4 h-4 text-slate-500" /> {pendingCorrections}
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="space-y-6">
-          <h2 className="text-xl font-semibold text-gray-800">Entregas de Estudiantes</h2>
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          <div className="p-5 border-b border-slate-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-3 bg-slate-50/50">
+            <h3 className="font-bold text-slate-800 flex items-center gap-2">
+              Entregas de Estudiantes
+              <span className="text-slate-400 text-sm font-normal">({pendingCorrections} pendientes de corrección)</span>
+            </h3>
+            <div className="flex gap-2 w-full md:w-auto">
+              <div className="relative flex-1 md:flex-none">
+                <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Buscar alumno..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full md:w-64 pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                />
+              </div>
+              <button
+                className="p-2 border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-600"
+                type="button"
+                title="Filtros"
+              >
+                <Filter className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
 
-          {submissions.length === 0 ? (
-            <div className="bg-white rounded-xl shadow-soft p-8 text-center border border-gray-100">
-              <FileIcon className="h-16 w-16 mx-auto mb-4 text-gray-300" />
-              <h3 className="text-lg font-medium text-gray-600 mb-2">No hay entregas aún</h3>
-              <p className="text-gray-500">Los estudiantes aún no han enviado sus entregas para esta tarea.</p>
+          {filteredSubmissions.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mb-4 shadow-inner">
+                <FileText className="w-10 h-10 text-slate-300" />
+              </div>
+              <h3 className="text-lg font-bold text-slate-700">
+                {submissions.length === 0 ? "Aún no hay entregas" : "No se encontraron resultados"}
+              </h3>
+              <p className="text-slate-500 max-w-sm mt-1">
+                {submissions.length === 0
+                  ? "Los estudiantes todavía no han subido sus archivos. Cuando lo hagan, aparecerán listados aquí."
+                  : "Probá con otro término de búsqueda."}
+              </p>
             </div>
           ) : (
-            <div className="grid gap-6">
-              {submissions.map((submission) => (
-                <div key={submission.id} className="bg-white rounded-xl shadow-soft border border-gray-100 overflow-hidden">
-                  <div className="p-6">
-                    <div className="flex items-start gap-4">
-                      {/* Avatar del estudiante */}
+            <div className="divide-y divide-slate-100">
+              {filteredSubmissions.map((submission) => (
+                <div key={submission.id} className="p-5">
+                  <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                    <div className="flex items-start gap-4 min-w-0">
                       <div className="flex-shrink-0">
-                        <div className="h-12 w-12 rounded-full overflow-hidden border-2 border-gray-200">
+                        <div className="h-12 w-12 rounded-full overflow-hidden border border-slate-200">
                           {submission.student.avatar_url ? (
-                            <img 
-                              src={submission.student.avatar_url} 
+                            <img
+                              src={submission.student.avatar_url}
                               alt={submission.student.name}
-                              className="h-full w-full object-cover" 
+                              className="h-full w-full object-cover"
                             />
                           ) : (
-                            <div className="h-full w-full bg-gradient-to-r from-yellow-400 to-pink-400 flex items-center justify-center">
-                              <span className="text-sm font-bold text-white">
+                            <div className="h-full w-full bg-slate-200 flex items-center justify-center">
+                              <span className="text-sm font-bold text-slate-600">
                                 {getInitials(submission.student.name)}
                               </span>
                             </div>
                           )}
                         </div>
                       </div>
-                      
-                      {/* Información del estudiante */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-                              {submission.student.name}
-                              {getStatusBadge(submission)}
-                            </h3>
-                            <p className="text-sm text-gray-500">{submission.student.email}</p>
-                            <p className="text-sm text-gray-500 mt-1">
-                              Entregado: {formatDate(submission.submitted_at)}
-                            </p>
-                          </div>
-                          
-                          <div className="text-right">
-                            {submission.score !== null && submission.score !== undefined && (
-                              <div className="text-right">
-                                <div className="text-2xl font-bold text-yellow-600">
-                                  {submission.score}<span className="text-lg text-gray-400">/{assignment.max_score}</span>
-                                </div>
-                                <p className="text-sm text-gray-500">puntos</p>
-                              </div>
-                            )}
-                          </div>
+
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h4 className="text-base font-bold text-slate-900 truncate">{submission.student.name}</h4>
+                          {getStatusBadge(submission)}
                         </div>
+                        <p className="text-sm text-slate-500 truncate">{submission.student.email}</p>
+                        <p className="text-sm text-slate-500 mt-1">
+                          Entregado: {formatDate(submission.submitted_at)}
+                        </p>
                       </div>
                     </div>
 
-                    {/* Contenido de la entrega */}
-                    <div className="mt-6 space-y-4">
-                      {submission.content && (
-                        <div>
-                          <h4 className="font-medium text-gray-800 mb-2">Texto de la entrega:</h4>
-                          <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                            <p className="text-gray-700 whitespace-pre-wrap">{submission.content}</p>
+                    <div className="flex items-center justify-between md:justify-end gap-4">
+                      {submission.score !== null && submission.score !== undefined ? (
+                        <div className="text-right">
+                          <div className="text-2xl font-bold text-indigo-700">
+                            {submission.score}
+                            <span className="text-lg text-slate-400">/{assignment.max_score}</span>
                           </div>
+                          <p className="text-sm text-slate-500">puntos</p>
+                        </div>
+                      ) : (
+                        <div className="text-sm font-semibold text-amber-700 bg-amber-100 px-3 py-1 rounded-full border border-amber-200">
+                          Pendiente
                         </div>
                       )}
 
-                      {submission.file_url && (
-                        <div>
-                          <h4 className="font-medium text-gray-800 mb-2">Archivo adjunto:</h4>
-                          <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                            <FileIcon className="h-5 w-5 text-blue-600" />
-                            <span className="text-sm font-medium text-blue-800 flex-1">{submission.file_name}</span>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => window.open(submission.file_url, "_blank")}
-                              className="border-blue-300 text-blue-700 hover:bg-blue-100"
-                            >
-                              <DownloadIcon className="h-4 w-4 mr-1" />
-                              Descargar
-                            </Button>
-                          </div>
-                        </div>
-                      )}
-
-                      {submission.feedback && (
-                        <div>
-                          <h4 className="font-medium text-gray-800 mb-2">Retroalimentación:</h4>
-                          <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
-                            <p className="text-yellow-800">{submission.feedback}</p>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Botón de calificación */}
-                    <div className="mt-6 flex justify-end">
                       <Dialog>
                         <DialogTrigger asChild>
-                          <Button
+                          <button
                             onClick={() => openGradingDialog(submission)}
-                            className="bg-yellow-600 hover:bg-yellow-700 text-white"
+                            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-bold shadow-lg shadow-indigo-200 transition-all active:scale-95"
+                            type="button"
                           >
-                            <StarIcon className="h-4 w-4 mr-2" />
                             {submission.score !== null && submission.score !== undefined
-                              ? "Editar Calificación"
+                              ? "Editar"
                               : "Calificar"}
-                          </Button>
+                          </button>
                         </DialogTrigger>
                         <DialogContent className="max-w-md">
                           <DialogHeader>
@@ -426,14 +444,45 @@ export default function AssignmentSubmissionsPage({
                                   Cancelar
                                 </Button>
                               </DialogTrigger>
-                              <Button type="submit" className="bg-yellow-600 hover:bg-yellow-700">
-                                Guardar Calificación
+                              <Button type="submit" className="bg-indigo-600 hover:bg-indigo-700">
+                                Guardar
                               </Button>
                             </div>
                           </form>
                         </DialogContent>
                       </Dialog>
                     </div>
+                  </div>
+
+                  <div className="mt-4 space-y-3">
+                    {submission.content ? (
+                      <div className="bg-slate-50 border border-slate-200 rounded-xl p-4">
+                        <p className="text-slate-700 whitespace-pre-wrap">{submission.content}</p>
+                      </div>
+                    ) : null}
+
+                    {submission.file_url ? (
+                      <div className="flex items-center gap-3 p-3 border border-indigo-100 bg-indigo-50/50 rounded-xl">
+                        <FileIcon className="h-5 w-5 text-indigo-600" />
+                        <span className="text-sm font-semibold text-indigo-900 flex-1 truncate">
+                          {submission.file_name || "Archivo"}
+                        </span>
+                        <a
+                          className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-indigo-200 bg-white text-indigo-700 text-sm font-semibold hover:bg-indigo-50"
+                          href={`/api/files/download?url=${encodeURIComponent(submission.file_url)}${submission.file_name ? `&name=${encodeURIComponent(submission.file_name)}` : ""}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          <DownloadIcon className="h-4 w-4" /> Descargar
+                        </a>
+                      </div>
+                    ) : null}
+
+                    {submission.feedback ? (
+                      <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+                        <p className="text-amber-900 whitespace-pre-wrap">{submission.feedback}</p>
+                      </div>
+                    ) : null}
                   </div>
                 </div>
               ))}

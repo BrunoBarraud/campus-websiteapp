@@ -8,6 +8,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import CourseCard from "../../../components/dashboard/CourseCard";
 import { User, Subject, CalendarEvent } from "@/app/lib/types";
+import { Grid3X3, List, Search } from "lucide-react";
 
 const DashboardPage = () => {
   const { data: session, status } = useSession();
@@ -88,7 +89,6 @@ const DashboardPage = () => {
     };
   }, [user, subjects]);
 
-  // Fetch user data and subjects
   useEffect(() => {
     if (status === "loading") return;
 
@@ -206,20 +206,6 @@ const DashboardPage = () => {
     );
   }
 
-  const getWelcomeMessage = () => {
-    if (!user) return "Bienvenido al Campus Virtual";
-    
-    if (user.role === 'admin') {
-      return `Bienvenido Administrador ${user.name}`;
-    } else if (user.role === 'teacher') {
-      return `Bienvenido Profesor ${user.name}`;
-    } else if (user.role === 'student') {
-      return `Bienvenido ${user.name} - ${user.year}° Año`;
-    }
-    
-    return `Bienvenido ${user.name}`;
-  };
-
   const getSubjectCountMessage = () => {
     if (!user) return "Materias disponibles";
     
@@ -275,7 +261,7 @@ const DashboardPage = () => {
       <div className="max-w-7xl mx-auto px-4 md:px-6 py-6">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {[...Array(6)].map((_, i) => (
-            <div key={i} className="bg-surface border border-border rounded-xl shadow-soft p-4">
+            <div key={i} className="bg-white border border-slate-200 rounded-2xl shadow-sm p-4">
               <div className="h-5 w-32 skeleton mb-3"></div>
               <div className="h-4 w-full skeleton mb-2"></div>
               <div className="h-4 w-2/3 skeleton"></div>
@@ -287,182 +273,274 @@ const DashboardPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-muted">
-      <div className="max-w-7xl mx-auto px-4 md:px-6 py-6 sm:py-8">
+    <div className="min-h-screen bg-slate-50">
+      <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <header className="mb-8 sm:mb-12 text-center fade-in">
-          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-4 text-gray-900">
-            {user?.role === 'student'
-              ? `Bienvenido/a ${user?.name || ''}`.trim()
-              : getWelcomeMessage()}
-          </h1>
-          {user?.role !== 'student' && (
-            <p className="mb-4 sm:mb-6 text-sm sm:text-base text-gray-700">
-              <span className="font-medium text-gray-800">
-                {subjects.length}
-              </span>
-              <span className="text-gray-600"> materias disponibles · {getSubjectCountMessage()}</span>
-            </p>
-          )}
+        <header className="glass-effect sticky top-0 z-30 border-b border-slate-200 px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-2xl font-bold text-slate-800">Dashboard</h2>
+              <p className="text-sm text-slate-500">
+                {user?.role === 'student'
+                  ? `¡Bienvenido/a! Acá tenés tus cursos, tareas y eventos.`
+                  : getSubjectCountMessage()}
+              </p>
+            </div>
+
+            <div className="flex items-center gap-4">
+              {/* Search */}
+              <div className="hidden sm:flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-4 py-2.5 focus-within:ring-2 focus-within:ring-yellow-300 focus-within:border-transparent">
+                <Search className="w-5 h-5 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Buscar materias..."
+                  className="bg-transparent outline-none text-sm w-48 lg:w-64 text-slate-800 placeholder-slate-400"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+            </div>
+          </div>
         </header>
 
-        {/* Search (themed for dark/light) */}
-        <div className="mb-6 flex justify-center">
-          <div className="relative w-full sm:w-3/4 md:w-2/3 lg:w-1/2 xl:w-2/5">
-            <input
-              type="text"
-              placeholder="Buscar materias..."
-              className="w-full pl-10 pr-4 py-2 rounded-full bg-surface border border-border text-foreground placeholder-gray-500 dark:placeholder-gray-400 shadow-soft focus:outline-none focus:ring-2 focus:ring-yellow-400"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-            <svg className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500 dark:text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <circle cx="11" cy="11" r="8"></circle>
-              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-            </svg>
+        {/* Dashboard Content */}
+        <div className="p-6 space-y-6">
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-slate-500 text-sm font-medium">
+                    {user?.role === 'student' ? 'Mis materias' : 'Materias'}
+                  </p>
+                  <p className="text-3xl font-extrabold text-slate-900 mt-1">{subjects.length}</p>
+                </div>
+                <div className="w-12 h-12 rounded-xl bg-yellow-50 border border-yellow-100 flex items-center justify-center">
+                  <i className="fas fa-book text-yellow-800"></i>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-slate-500 text-sm font-medium">Entregas próximas</p>
+                  <p className="text-3xl font-extrabold text-slate-900 mt-1">{upcomingAssignmentsCount}</p>
+                </div>
+                <div className="w-12 h-12 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center">
+                  <i className="fas fa-clipboard-list text-amber-600"></i>
+                </div>
+              </div>
+              <div className="mt-3 text-sm text-slate-500">Próximos 7 días</div>
+            </div>
+
+            <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-slate-500 text-sm font-medium">Eventos próximos</p>
+                  <p className="text-3xl font-extrabold text-slate-900 mt-1">{nextEvents.length}</p>
+                </div>
+                <div className="w-12 h-12 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center">
+                  <i className="fas fa-calendar text-slate-700"></i>
+                </div>
+              </div>
+              <div className="mt-3 text-sm text-slate-500">Calendario</div>
+            </div>
+
+            <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-slate-500 text-sm font-medium">Tu perfil</p>
+                  <p className="text-lg font-bold text-slate-900 mt-2 truncate max-w-[160px]">{user?.name || 'Usuario'}</p>
+                </div>
+                <div className="w-12 h-12 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center">
+                  <i className="fas fa-user text-slate-700"></i>
+                </div>
+              </div>
+              <div className="mt-2">
+                <a href="/campus/profile" className="text-sm font-medium text-yellow-700 hover:text-yellow-800">Ver perfil</a>
+              </div>
+            </div>
+          </div>
+
+          {/* Main Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Courses */}
+          <div className="lg:col-span-2 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-slate-800">{user?.role === 'student' ? 'Mis cursos' : 'Cursos'}</h3>
+              <div className="flex items-center gap-2">
+                <a
+                  href="/campus/dashboard"
+                  className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-yellow-700 transition-colors"
+                >
+                  Ver todo
+                </a>
+                <button type="button" className="p-2 rounded-lg hover:bg-slate-100 text-slate-400" aria-label="Vista grilla">
+                  <Grid3X3 className="w-5 h-5" />
+                </button>
+                <button type="button" className="p-2 rounded-lg hover:bg-slate-100 text-slate-600" aria-label="Vista lista">
+                  <List className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Subjects Grid or Empty State */}
+            {filteredSubjects.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-64 px-4 bg-white rounded-2xl border border-slate-200 shadow-sm">
+                <div className="p-5 bg-yellow-50 border border-yellow-100 rounded-full mb-4">
+                  <i className="fas fa-book text-3xl text-yellow-800"></i>
+                </div>
+                <h3 className="text-lg font-semibold text-slate-900 mb-1 text-center">
+                  {subjects.length === 0 ? getEmptyStateMessage() : 'No se encontraron materias'}
+                </h3>
+                <p className="text-slate-500 text-center max-w-md mb-4 text-sm">
+                  {subjects.length === 0
+                    ? (user?.role === 'admin'
+                        ? 'Comienza creando materias para el campus virtual'
+                        : user?.role === 'teacher'
+                        ? 'Contacta con el administrador para que te asigne materias'
+                        : 'Las materias se mostrarán aquí cuando estén disponibles')
+                    : 'Probá con otro texto en el buscador.'}
+                </p>
+                {getEmptyStateAction() && (
+                  <a
+                    href={getEmptyStateAction()!.href}
+                    className="px-4 py-2.5 bg-yellow-600 text-white rounded-xl hover:bg-yellow-700 transition shadow-sm text-sm font-semibold"
+                  >
+                    <i className="fas fa-plus mr-2"></i>
+                    {getEmptyStateAction()!.text}
+                  </a>
+                )}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {filteredSubjects.map((subject, index) => (
+                  <CourseCard
+                    key={subject.id}
+                    course={{
+                      id: subject.id,
+                      title: subject.name,
+                      teacher: subject.teacher?.name || 'Sin profesor',
+                      image: subject.image_url || 'https://via.placeholder.com/800x400/f3f4f6/9ca3af?text=Sin+Imagen',
+                      code: subject.code,
+                      year: subject.year,
+                      division: subject.division,
+                    }}
+                    delay={index + 1}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Right Sidebar */}
+          <div className="space-y-6">
+            {/* Today's Schedule */}
+            <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-semibold text-slate-900">Agenda</h3>
+                <a href="/campus/calendar" className="text-sm text-yellow-700 font-semibold hover:text-yellow-800">Ver calendario</a>
+              </div>
+              <div className="space-y-3">
+                {nextEvents.length ? (
+                  nextEvents.map((e, idx) => (
+                    <div
+                      key={e.id}
+                      className={`flex gap-3 p-3 rounded-xl ${idx === 0 ? "bg-yellow-50 border border-yellow-100" : "bg-slate-50 border border-slate-100"}`}
+                    >
+                      <div className="text-center min-w-[60px]">
+                        <p className={`text-xs font-medium ${idx === 0 ? "text-yellow-700" : "text-slate-600"}`}>{formatShortDate(e.date)}</p>
+                        <p className={`text-xs ${idx === 0 ? "text-yellow-500" : "text-slate-400"}`}>Próximo</p>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-slate-900 text-sm truncate">{e.title}</p>
+                        <p className="text-xs text-slate-500 truncate">{e.type}</p>
+                      </div>
+                      <span className={`w-2 h-2 rounded-full ${idx === 0 ? "bg-yellow-600" : "bg-slate-300"} mt-1.5`}></span>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-slate-500">No tenés eventos próximos.</p>
+                )}
+              </div>
+            </div>
+
+            {/* Upcoming Deadlines */}
+            <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-semibold text-slate-900">Próximas entregas</h3>
+                <span className="text-sm text-slate-400 font-medium">{upcomingAssignmentsCount} en 7 días</span>
+              </div>
+              <div className="space-y-3">
+                {nextAssignment ? (
+                  <a
+                    href={`/campus/student/subjects/${nextAssignment.subjectId}/assignments`}
+                    className="flex items-start gap-3 p-3 rounded-xl hover:bg-slate-50 transition-colors"
+                  >
+                    <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center flex-shrink-0">
+                      <i className="fas fa-file-alt text-amber-600"></i>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-slate-900 text-sm truncate">{nextAssignment.title}</p>
+                      <p className="text-xs text-slate-500 truncate">{nextAssignment.subjectName} • Vence {formatShortDate(nextAssignment.dueDate)}</p>
+                    </div>
+                  </a>
+                ) : (
+                  <p className="text-sm text-slate-500">No tenés entregas en los próximos 7 días.</p>
+                )}
+              </div>
+            </div>
+
+            {/* Learning Streak (sin inventar datos) */}
+            <div className="bg-gradient-to-br from-yellow-600 to-amber-700 rounded-2xl p-5 text-white shadow-sm">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="font-semibold">Racha</h3>
+                  <p className="text-yellow-100 text-sm">Seguí entrando al campus</p>
+                </div>
+                <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                  <i className="fas fa-fire text-white"></i>
+                </div>
+              </div>
+              <p className="text-sm text-yellow-100">
+                Aún no tenemos datos suficientes para mostrar tu racha.
+              </p>
+              <div className="mt-4 pt-4 border-t border-white/20 flex items-center justify-between">
+                <div>
+                  <p className="text-2xl font-bold">—</p>
+                  <p className="text-yellow-100 text-sm">Días consecutivos</p>
+                </div>
+                <a
+                  href="/campus/calendar"
+                  className="px-4 py-2 bg-white text-amber-700 text-sm font-semibold rounded-xl hover:bg-amber-50 transition-colors"
+                >
+                  Ver agenda
+                </a>
+              </div>
+            </div>
           </div>
         </div>
 
-        {user?.role === 'student' && (
-          <div className="mb-2 sm:mb-4">
-            <h2 className="text-lg sm:text-xl font-bold text-gray-900">Mis cursos</h2>
-            <p className="text-sm text-gray-600">
-              {filteredSubjects.length} {filteredSubjects.length === 1 ? 'materia' : 'materias'}
-            </p>
-          </div>
-        )}
-
-        {user?.role === 'student' && (
-          <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <a
-              href="/campus/calendar"
-              className="bg-surface border border-border rounded-xl p-4 shadow-soft hover:shadow-elevated hover:bg-muted transition"
-            >
-              <div className="text-sm font-semibold text-foreground">Próximos eventos</div>
-              {nextEvents.length ? (
-                <div className="mt-2 space-y-1">
-                  {nextEvents.map((e) => (
-                    <div key={e.id} className="text-xs sm:text-sm text-gray-600 truncate">
-                      <span className="font-medium text-gray-800">{formatShortDate(e.date)}</span>
-                      <span className="text-gray-600"> · {e.title}</span>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="mt-2 text-xs sm:text-sm text-gray-600">No tenés eventos próximos.</div>
-              )}
-            </a>
-
-            <a
-              href={nextAssignment ? `/campus/student/subjects/${nextAssignment.subjectId}/assignments` : '/campus/dashboard'}
-              className="bg-surface border border-border rounded-xl p-4 shadow-soft hover:shadow-elevated hover:bg-muted transition"
-            >
-              <div className="text-sm font-semibold text-foreground">Tareas próximas</div>
-              <div className="mt-2 text-xs sm:text-sm text-gray-600">
-                {upcomingAssignmentsCount > 0
-                  ? `Tenés ${upcomingAssignmentsCount} ${upcomingAssignmentsCount === 1 ? 'entrega' : 'entregas'} en los próximos 7 días.`
-                  : 'No tenés entregas en los próximos 7 días.'}
-              </div>
-              {nextAssignment && (
-                <div className="mt-1 text-xs sm:text-sm text-gray-600 truncate">
-                  <span className="font-medium text-gray-800">{formatShortDate(nextAssignment.dueDate)}</span>
-                  <span className="text-gray-600"> · {nextAssignment.subjectName}: {nextAssignment.title}</span>
-                </div>
-              )}
-            </a>
-          </div>
-        )}
-
-        {user?.role !== 'student' && (
-          <>
-            {/* Quick Actions */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6">
-              <a href="/campus/calendar" className="bg-surface border border-border rounded-xl p-3 shadow-soft hover:shadow-elevated hover:bg-muted transition">
-                <div className="text-sm font-semibold text-foreground">Calendario</div>
-                <div className="text-xs text-gray-500 dark:text-gray-400">Ver eventos</div>
-              </a>
-              {/* <a href="/campus/mensajeria" className="bg-surface border border-border rounded-xl p-3 shadow-soft hover:shadow-elevated hover:bg-muted transition">
-                <div className="text-sm font-semibold text-foreground">Mensajería</div>
-                <div className="text-xs text-gray-500 dark:text-gray-400">Contactar</div>
-              </a> */}
-              <a href="/campus/notifications" className="bg-surface border border-border rounded-xl p-3 shadow-soft hover:shadow-elevated hover:bg-muted transition">
-                <div className="text-sm font-semibold text-foreground">Notificaciones</div>
-                <div className="text-xs text-gray-500 dark:text-gray-400">Novedades</div>
-              </a>
-              <a href="/campus/profile" className="bg-surface border border-border rounded-xl p-3 shadow-soft hover:shadow-elevated hover:bg-muted transition">
-                <div className="text-sm font-semibold text-foreground">Perfil</div>
-                <div className="text-xs text-gray-500 dark:text-gray-400">Ajustes</div>
-              </a>
+        {/* Recent Activity & Announcements */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold text-slate-900">Actividad reciente</h3>
+              <span className="text-sm text-slate-400">Ver todo</span>
             </div>
-
-            {/* Stats Section */}
-            <div className="mt-8 sm:mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-              <div className="bg-surface p-4 sm:p-6 rounded-xl shadow-soft border border-border hover:shadow-elevated transition-all duration-300 fade-in delay-2">
-                <div className="flex items-center">
-                  <div className="p-2 sm:p-3 rounded-full bg-yellow-100 text-yellow-700 mr-3 sm:mr-4">
-                    <i className="fas fa-book text-lg sm:text-xl"></i>
-                  </div>
-                  <div>
-                    <p className="text-gray-600 text-xs sm:text-sm font-medium">
-                      {user?.role === 'teacher' ? 'Mis Materias' : 'Total Materias'}
-                    </p>
-                    <h3 className="text-2xl sm:text-3xl font-extrabold text-gray-900">
-                      {subjects.length}
-                    </h3>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </>
-        )}
-
-        {/* Subjects Grid or Empty State */}
-        {filteredSubjects.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-64 mt-8 sm:mt-16 px-4">
-            <div className="p-6 bg-yellow-100 rounded-full mb-6">
-              <i className="fas fa-book text-4xl sm:text-6xl text-yellow-700 mb-4"></i>
-            </div>
-            <h3 className="text-lg sm:text-xl font-medium text-gray-900 mb-2 text-center">
-              {subjects.length === 0 ? getEmptyStateMessage() : 'No se encontraron materias'}
-            </h3>
-            <p className="text-gray-500 text-center max-w-md mb-4 text-sm sm:text-base">
-              {subjects.length === 0
-                ? (user?.role === 'admin' 
-                    ? 'Comienza creando materias para el campus virtual'
-                    : user?.role === 'teacher'
-                    ? 'Contacta con el administrador para que te asigne materias'
-                    : 'Las materias se mostrarán aquí cuando estén disponibles')
-                : 'Probá con otro texto en el buscador.'}
-            </p>
-            {getEmptyStateAction() && (
-              <a
-                href={getEmptyStateAction()!.href}
-                className="px-4 sm:px-6 py-2 sm:py-3 bg-primary text-white rounded-lg hover:brightness-110 transition-all shadow-soft hover:shadow-elevated transform hover:scale-105 text-sm sm:text-base"
-              >
-                <i className="fas fa-plus mr-2"></i>
-                {getEmptyStateAction()!.text}
-              </a>
-            )}
+            <p className="text-sm text-slate-500">No hay actividad reciente para mostrar.</p>
           </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4 sm:gap-6 mt-8 sm:mt-12">
-            {filteredSubjects.map((subject, index) => (
-              <CourseCard 
-                key={subject.id} 
-                course={{
-                  id: subject.id,
-                  title: subject.name,
-                  teacher: subject.teacher?.name || 'Sin profesor',
-                  image: subject.image_url || 'https://via.placeholder.com/800x400/f3f4f6/9ca3af?text=Sin+Imagen',
-                  code: subject.code,
-                  year: subject.year,
-                  division: subject.division
-                }} 
-                delay={index + 1} 
-              />
-            ))}
+
+          <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold text-slate-900">Anuncios</h3>
+              <span className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded-full font-medium">0</span>
+            </div>
+            <p className="text-sm text-slate-500">No hay anuncios nuevos.</p>
           </div>
-        )}
+        </div>
+        </div>
       </div>
     </div>
   );

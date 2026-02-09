@@ -19,7 +19,13 @@ export default function ConditionalNav() {
   // En rutas del campus, solo mostrar la navbar básica con logo
   // sin elementos de navegación adicionales
   if (pathname?.startsWith("/campus")) {
-    return <Nav />;
+    return (
+      <Nav
+        onMenuClick={() => {
+          window.dispatchEvent(new Event("campus-open-sidebar"));
+        }}
+      />
+    );
   }
 
   return <ResponsiveNav />;

@@ -112,8 +112,8 @@ input:focus, select:focus, textarea:focus {
 
 /* Campus Virtual Themed Hover Effects */
 .campus-hover:hover {
-  transform: translateY(-5px) scale(1.02);
-  box-shadow: 0 20px 25px -5px rgba(245, 158, 11, 0.1), 0 10px 10px -5px rgba(239, 68, 68, 0.04);
+  transform: translateY(-3px);
+  box-shadow: 0 20px 25px -5px rgba(245, 158, 11, 0.12), 0 10px 10px -5px rgba(15, 23, 42, 0.06);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -131,7 +131,7 @@ input:focus, select:focus, textarea:focus {
   left: 0;
   width: 0;
   height: 2px;
-  background: linear-gradient(90deg, #f59e0b, #ef4444);
+  background: #f59e0b;
   transition: width 0.3s ease-in-out;
 }
 
@@ -144,7 +144,7 @@ input:focus, select:focus, textarea:focus {
     90deg,
     transparent,
     rgba(245, 158, 11, 0.1),
-    rgba(239, 68, 68, 0.1),
+    rgba(245, 158, 11, 0.06),
     transparent
   );
   background-size: 200% 100%;
@@ -154,7 +154,7 @@ input:focus, select:focus, textarea:focus {
 /* Dark mode removed */
 
 .campus-gradient-text {
-  background: linear-gradient(90deg, #f59e0b, #ef4444);
+  background: linear-gradient(90deg, #f59e0b, #fbbf24);
   background-size: 200% 100%;
   -webkit-background-clip: text;
   background-clip: text;
@@ -164,8 +164,8 @@ input:focus, select:focus, textarea:focus {
 
 /* Enhanced Card Hover Effects */
 .card-hover:hover {
-  transform: translateY(-8px) scale(1.03);
-  box-shadow: 0 25px 50px -12px rgba(245, 158, 11, 0.15), 0 12px 25px -8px rgba(239, 68, 68, 0.1);
+  transform: translateY(-4px);
+  box-shadow: 0 25px 50px -12px rgba(245, 158, 11, 0.14), 0 12px 25px -8px rgba(15, 23, 42, 0.10);
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -192,15 +192,15 @@ input:focus, select:focus, textarea:focus {
 }
 
 .card-hover:hover .teacher-chip {
-  background: linear-gradient(90deg, #f59e0b, #ef4444);
+  background: linear-gradient(90deg, #f59e0b, #fbbf24);
   color: white;
   transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(245, 158, 11, 0.3);
+  box-shadow: 0 4px 8px rgba(245, 158, 11, 0.25);
 }
 
 /* Button Hover Effects */
 .btn-campus {
-  background: linear-gradient(135deg, #f59e0b, #ef4444);
+  background: linear-gradient(135deg, #f59e0b, #fbbf24);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;

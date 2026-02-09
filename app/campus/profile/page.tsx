@@ -159,10 +159,10 @@ const ProfilePage = () => {
 
   if (!isEditing) {
     return (
-      <div className="bg-gray-50 min-h-screen">
+      <div className="bg-slate-50 min-h-screen">
         {/* Profile Header */}
-        <div className="bg-white shadow rounded-lg overflow-hidden">
-          <div className="bg-gradient-to-r from-yellow-500 to-pink-500 h-32 w-full"></div>
+        <div className="bg-white border border-slate-200 shadow-sm rounded-2xl overflow-hidden">
+          <div className="bg-yellow-50 border-b border-yellow-100 h-24 w-full"></div>
           <div className="px-6 py-6">
             <div className="flex items-start gap-6 flex-wrap">
               {/* Profile Image */}
@@ -171,7 +171,7 @@ const ProfilePage = () => {
                   {profileImage ? (
                     <img src={profileImage} alt="Profile" className="h-full w-full object-cover" />
                   ) : (
-                    <div className="h-full w-full bg-gradient-to-r from-yellow-400 to-pink-400 flex items-center justify-center">
+                    <div className="h-full w-full bg-gradient-to-r from-yellow-400 to-amber-400 flex items-center justify-center">
                       <span className="text-2xl font-bold text-white">
                         {getInitials(formData.name || session?.user?.name || 'U')}
                       </span>
@@ -184,12 +184,12 @@ const ProfilePage = () => {
               <div className="flex-1 min-w-0">
                 <div className="flex justify-between items-start">
                   <div>
-                    <h2 className="text-2xl font-bold text-gray-800">{formData.name || session?.user?.name}</h2>
-                    <p className="text-gray-600 mt-1">{session?.user?.role === 'teacher' ? 'Profesor' : session?.user?.role === 'admin' ? 'Administrador' : 'Estudiante'}</p>
+                    <h2 className="text-2xl font-bold text-slate-900">{formData.name || session?.user?.name}</h2>
+                    <p className="text-slate-600 mt-1">{session?.user?.role === 'teacher' ? 'Profesor' : session?.user?.role === 'admin' ? 'Administrador' : 'Estudiante'}</p>
                   </div>
                   <button 
                     onClick={() => setIsEditing(true)}
-                    className="px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 transition flex items-center gap-2"
+                    className="px-4 py-2 bg-yellow-600 text-white rounded-xl hover:bg-yellow-700 transition flex items-center gap-2"
                   >
                     <i className="fas fa-edit"></i>
                     Editar perfil
@@ -197,20 +197,20 @@ const ProfilePage = () => {
                 </div>
                 
                 <div className="mt-4 space-y-2">
-                  <div className="flex items-center text-gray-600">
-                    <i className="fas fa-school mr-2 text-yellow-600"></i>
+                  <div className="flex items-center text-slate-600">
+                    <i className="fas fa-school mr-2 text-yellow-700"></i>
                     <span>Instituto Privado Dalmacio Vélez Sarsfield</span>
                   </div>
                   {session?.user?.role === 'student' && formData.year && (
-                    <div className="flex items-center text-gray-600">
-                      <i className="fas fa-graduation-cap mr-2 text-yellow-600"></i>
+                    <div className="flex items-center text-slate-600">
+                      <i className="fas fa-graduation-cap mr-2 text-yellow-700"></i>
                       <span>
                         {formData.year}° Año{formData.division ? ` ${formData.division}` : ''}
                       </span>
                     </div>
                   )}
-                  <div className="flex items-center text-gray-600">
-                    <i className="fas fa-calendar-alt mr-2 text-yellow-600"></i>
+                  <div className="flex items-center text-slate-600">
+                    <i className="fas fa-calendar-alt mr-2 text-yellow-700"></i>
                     <span>Última conexión: Hoy</span>
                   </div>
                 </div>
@@ -220,15 +220,15 @@ const ProfilePage = () => {
         </div>
 
         {/* Profile Tabs */}
-        <div className="mt-6 bg-white shadow rounded-lg overflow-hidden">
-          <div className="border-b border-gray-200 overflow-x-auto">
+        <div className="mt-6 bg-white border border-slate-200 shadow-sm rounded-2xl overflow-hidden">
+          <div className="border-b border-slate-200 overflow-x-auto">
             <nav className="flex -mb-px whitespace-nowrap">
               <button 
                 onClick={() => setActiveTab('informacion')}
                 className={`py-4 px-6 text-center border-b-2 font-medium text-sm flex items-center gap-2 ${
                   activeTab === 'informacion' 
                     ? 'border-yellow-500 text-yellow-600' 
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
                 }`}
               >
                 <i className="fas fa-user"></i>
@@ -239,7 +239,7 @@ const ProfilePage = () => {
                 className={`py-4 px-6 text-center border-b-2 font-medium text-sm flex items-center gap-2 ${
                   activeTab === 'materias' 
                     ? 'border-yellow-500 text-yellow-600' 
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
                 }`}
               >
                 <i className="fas fa-book"></i>
@@ -250,7 +250,7 @@ const ProfilePage = () => {
                 className={`py-4 px-6 text-center border-b-2 font-medium text-sm flex items-center gap-2 ${
                   activeTab === 'logros' 
                     ? 'border-yellow-500 text-yellow-600' 
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
                 }`}
               >
                 <i className="fas fa-trophy"></i>
@@ -261,7 +261,7 @@ const ProfilePage = () => {
                 className={`py-4 px-6 text-center border-b-2 font-medium text-sm flex items-center gap-2 ${
                   activeTab === 'estadisticas' 
                     ? 'border-yellow-500 text-yellow-600' 
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
                 }`}
               >
                 <i className="fas fa-chart-line"></i>
@@ -350,25 +350,25 @@ const ProfilePage = () => {
 
   // Edit Profile View
   return (
-    <div className="bg-gray-50 min-h-screen">
-      <div className="bg-white shadow rounded-lg overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-xl font-bold text-gray-800">Editar perfil</h2>
+    <div className="bg-slate-50 min-h-screen">
+      <div className="bg-white border border-slate-200 shadow-sm rounded-2xl overflow-hidden">
+        <div className="px-6 py-4 border-b border-slate-200">
+          <h2 className="text-xl font-bold text-slate-900">Editar perfil</h2>
         </div>
         <form onSubmit={handleSave} className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Información básica</h3>
+              <h3 className="text-lg font-medium text-slate-900 mb-4">Información básica</h3>
               
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Foto de perfil</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Foto de perfil</label>
                 <div className="flex items-center">
                   <div className="mr-4">
-                    <div className="h-20 w-20 rounded-full overflow-hidden border-2 border-gray-300">
+                    <div className="h-20 w-20 rounded-full overflow-hidden border-2 border-slate-200 bg-white">
                       {profileImage ? (
                         <img src={profileImage} alt="Profile" className="h-full w-full object-cover" />
                       ) : (
-                        <div className="h-full w-full bg-gradient-to-r from-yellow-400 to-pink-400 flex items-center justify-center">
+                        <div className="h-full w-full bg-gradient-to-r from-yellow-400 to-amber-400 flex items-center justify-center">
                           <span className="text-xl font-bold text-white">
                             {getInitials(formData.name || session?.user?.name || 'U')}
                           </span>
@@ -379,7 +379,7 @@ const ProfilePage = () => {
                   <div className="relative">
                     <button 
                       type="button" 
-                      className="px-3 py-1 bg-gray-100 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-200"
+                      className="px-3 py-1 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-700 hover:bg-slate-100"
                       onClick={() => document.getElementById('profilePic')?.click()}
                     >
                       Cambiar foto
@@ -396,38 +396,38 @@ const ProfilePage = () => {
               </div>
               
               <div className="mb-4">
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">Nombre completo</label>
+                <label htmlFor="name" className="block text-sm font-medium text-slate-700 mb-1">Nombre completo</label>
                 <input 
                   type="text" 
                   id="name" 
                   name="name"
                   value={formData.name} 
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-yellow-500 focus:border-yellow-500"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-xl shadow-sm focus:outline-none focus:ring-yellow-300 focus:border-yellow-300"
                 />
               </div>
               
               <div className="mb-4">
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">Correo electrónico</label>
+                <label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-1">Correo electrónico</label>
                 <input 
                   type="email" 
                   id="email" 
                   name="email"
                   value={formData.email} 
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-yellow-500 focus:border-yellow-500"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-xl shadow-sm focus:outline-none focus:ring-yellow-300 focus:border-yellow-300"
                 />
               </div>
               
               <div className="mb-4">
-                <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">Teléfono</label>
+                <label htmlFor="phone" className="block text-sm font-medium text-slate-700 mb-1">Teléfono</label>
                 <input 
                   type="tel" 
                   id="phone" 
                   name="phone"
                   value={formData.phone} 
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-yellow-500 focus:border-yellow-500"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-xl shadow-sm focus:outline-none focus:ring-yellow-300 focus:border-yellow-300"
                 />
               </div>
               
@@ -436,18 +436,18 @@ const ProfilePage = () => {
             </div>
             
             <div>
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Información académica</h3>
+              <h3 className="text-lg font-medium text-slate-900 mb-4">Información académica</h3>
               {session?.user?.role === 'student' && (
                 <>
                   <div className="mb-4">
-                    <label htmlFor="year" className="block text-sm font-medium text-gray-700 mb-1">Año</label>
+                    <label htmlFor="year" className="block text-sm font-medium text-slate-700 mb-1">Año</label>
                     <select
                       id="year"
                       name="year"
                       value={formData.year ?? ''}
                       onChange={handleInputChange}
                       disabled={academicLocked}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-yellow-500 focus:border-yellow-500"
+                      className="w-full px-3 py-2 border border-slate-200 rounded-xl shadow-sm focus:outline-none focus:ring-yellow-300 focus:border-yellow-300"
                     >
                       <option value="">Seleccionar...</option>
                       <option value="1">1° Año</option>
@@ -460,14 +460,14 @@ const ProfilePage = () => {
                   </div>
 
                   <div className="mb-4">
-                    <label htmlFor="division" className="block text-sm font-medium text-gray-700 mb-1">División</label>
+                    <label htmlFor="division" className="block text-sm font-medium text-slate-700 mb-1">División</label>
                     <select
                       id="division"
                       name="division"
                       value={formData.division}
                       onChange={handleInputChange}
                       disabled={academicLocked || (formData.year ? !yearHasDivisions(formData.year) : true)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-yellow-500 focus:border-yellow-500 disabled:bg-gray-100"
+                      className="w-full px-3 py-2 border border-slate-200 rounded-xl shadow-sm focus:outline-none focus:ring-yellow-300 focus:border-yellow-300 disabled:bg-slate-50"
                     >
                       <option value="">{formData.year && yearHasDivisions(formData.year) ? 'Seleccionar...' : 'No corresponde'}</option>
                       <option value="A">A</option>
@@ -476,8 +476,8 @@ const ProfilePage = () => {
                   </div>
 
                   {academicLocked && (
-                    <div className="bg-gray-50 border border-gray-200 rounded-md p-3">
-                      <p className="text-gray-700 text-sm">
+                    <div className="bg-slate-50 border border-slate-200 rounded-xl p-3">
+                      <p className="text-slate-700 text-sm">
                         Tu año/división ya están asignados. Si necesitás cambiarlos, contactá a un administrador.
                       </p>
                     </div>
@@ -486,14 +486,14 @@ const ProfilePage = () => {
               )}
               
               <div className="mb-4">
-                <label htmlFor="bio" className="block text-sm font-medium text-gray-700 mb-1">Biografía</label>
+                <label htmlFor="bio" className="block text-sm font-medium text-slate-700 mb-1">Biografía</label>
                 <textarea 
                   id="bio" 
                   name="bio"
                   rows={5} 
                   value={formData.bio}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-yellow-500 focus:border-yellow-500"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-xl shadow-sm focus:outline-none focus:ring-yellow-300 focus:border-yellow-300"
                   placeholder="Cuéntanos un poco sobre ti..."
                 />
               </div>
@@ -504,13 +504,13 @@ const ProfilePage = () => {
             <button 
               type="button" 
               onClick={handleCancel}
-              className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500"
+              className="px-4 py-2 border border-slate-200 rounded-xl shadow-sm text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-300"
             >
               Cancelar
             </button>
             <button 
               type="submit" 
-              className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-yellow-600 hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500"
+              className="px-4 py-2 border border-transparent rounded-xl shadow-sm text-sm font-medium text-white bg-yellow-600 hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-300"
             >
               Guardar cambios
             </button>

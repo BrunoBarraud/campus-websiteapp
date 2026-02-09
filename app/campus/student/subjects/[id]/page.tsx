@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import { useRouter, useParams } from "next/navigation";
 import LoadingSpinner from "../../../../../components/ui/LoadingSpinner";
 import UnitAccordionStudent from "@/components/student/UnitAccordionStudent";
+import SubjectHeroCard from "@/components/subjects/SubjectHeroCard";
 
 interface Subject {
   id: string;
@@ -25,6 +26,8 @@ export default function StudentSubjectDetailPage() {
   const [subject, setSubject] = useState<Subject | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [progress, setProgress] = useState<number | null>(null);
+  const [nextDueLabel, setNextDueLabel] = useState<string | null>(null);
 
   useEffect(() => {
     if (status === "loading") return;
@@ -35,6 +38,7 @@ export default function StudentSubjectDetailPage() {
     }
 
     fetchSubject();
+    fetchSummary();
   }, [session, status, subjectId]);
 
   const fetchSubject = async () => {
@@ -52,6 +56,50 @@ export default function StudentSubjectDetailPage() {
       setError(err.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchSummary = async () => {
+    try {
+      const response = await fetch(`/api/student/subjects/${subjectId}/assignments`);
+      if (!response.ok) {
+        setProgress(null);
+        setNextDueLabel(null);
+        return;
+      }
+
+      const assignments = await response.json();
+      const arr = Array.isArray(assignments) ? assignments : [];
+
+      const active = arr.filter((a: any) => a && a.is_active);
+      const completed = active.filter((a: any) => Boolean(a.submission));
+
+      if (active.length > 0) {
+        setProgress(Math.round((completed.length / active.length) * 100));
+      } else {
+        setProgress(null);
+      }
+
+      const now = new Date();
+      const pendingWithDue = active
+        .filter((a: any) => !a.submission && a.due_date)
+        .map((a: any) => ({
+          title: String(a.title ?? ""),
+          due: new Date(a.due_date),
+        }))
+        .filter((x: any) => x.due && !isNaN(x.due.getTime()) && x.due.getTime() >= now.getTime())
+        .sort((a: any, b: any) => a.due.getTime() - b.due.getTime());
+
+      if (pendingWithDue.length > 0) {
+        const first = pendingWithDue[0];
+        const dd = first.due.toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit" });
+        setNextDueLabel(`${dd} - ${first.title}`.trim());
+      } else {
+        setNextDueLabel("Sin entregas próximas");
+      }
+    } catch {
+      setProgress(null);
+      setNextDueLabel(null);
     }
   };
 
@@ -92,92 +140,25 @@ export default function StudentSubjectDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-blue-100 p-4 sm:p-6">
-      <div className="max-w-6xl mx-auto">
-        {/* Breadcrumb */}
-        <nav className="mb-6">
-          <div className="flex items-center space-x-2 text-sm text-gray-600">
-            <button
-              onClick={() => router.push("/campus/dashboard")}
-              className="hover:text-blue-600 transition-colors"
-            >
-              Dashboard
-            </button>
-            <i className="fas fa-chevron-right text-xs"></i>
-            <button
-              onClick={() => router.push("/campus/student/subjects")}
-              className="hover:text-blue-600 transition-colors"
-            >
-              Mis Materias
-            </button>
-            <i className="fas fa-chevron-right text-xs"></i>
-            <span className="text-gray-800 font-medium">
-              {subject?.name || "Materia"}
-            </span>
-          </div>
-        </nav>
+    <div className="min-h-screen bg-gray-50/50 p-4 md:p-8 font-sans text-slate-800">
+      <SubjectHeroCard
+        title={subject?.name || "Materia"}
+        teacher={null}
+        progress={progress}
+        nextDueLabel={nextDueLabel}
+        rightSlot={
+          <button
+            onClick={() => router.push(`/campus/student/subjects/${subjectId}/assignments`)}
+            className="px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white text-sm font-semibold rounded-xl transition-colors border border-white/20"
+            type="button"
+          >
+            Ver tareas
+          </button>
+        }
+      />
 
-        {/* Subject Info Card */}
-        {subject && (
-          <div className="bg-white/90 backdrop-blur-sm rounded-xl p-6 shadow-lg border-2 border-blue-100 mb-6">
-            <div className="flex items-start justify-between">
-              <div className="flex items-center gap-4">
-                {subject.image_url ? (
-                  <img
-                    src={subject.image_url}
-                    alt={subject.name}
-                    className="w-16 h-16 rounded-lg object-cover border-2 border-blue-200"
-                  />
-                ) : (
-                  <div className="w-16 h-16 bg-gradient-to-r from-blue-100 to-purple-100 rounded-lg flex items-center justify-center">
-                    <i className="fas fa-book text-blue-600 text-xl"></i>
-                  </div>
-                )}
-                <div>
-                  <div className="flex items-center gap-3 mb-2">
-                    <h1 className="text-2xl font-bold text-gray-800">
-                      {subject.name}
-                    </h1>
-                    <span className="bg-gradient-to-r from-blue-100 to-purple-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
-                      {subject.code}
-                    </span>
-                  </div>
-                  <p className="text-gray-600 mb-2">{subject.description}</p>
-                  <div className="flex items-center gap-4 text-sm text-gray-500">
-                    <span>
-                      <i className="fas fa-graduation-cap mr-1"></i>
-                      {subject.year}° Año
-                      {subject.division ? ` "${subject.division}"` : ""}
-                    </span>
-                    <span>
-                      <i className="fas fa-book mr-1"></i>
-                      {subject.code}
-                    </span>
-                  </div>
-                </div>
-              </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() =>
-                    router.push(
-                      `/campus/student/subjects/${subjectId}/assignments`
-                    )
-                  }
-                  className="px-3 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors text-sm"
-                >
-                  <i className="fas fa-tasks mr-1"></i>
-                  Mis Tareas
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Unidades y contenidos */}
-        <UnitAccordionStudent
-          subjectId={subjectId}
-          subjectName={subject?.name || ""}
-        />
+      <div className="max-w-4xl mx-auto">
+        <UnitAccordionStudent subjectId={subjectId} subjectName={subject?.name || ""} />
       </div>
     </div>
   );

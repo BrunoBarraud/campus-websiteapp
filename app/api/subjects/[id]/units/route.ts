@@ -44,6 +44,7 @@ export async function GET(
         title,
         description,
         order_index,
+        is_visible,
         is_active,
         created_at,
         updated_at
@@ -148,7 +149,8 @@ export async function POST(
         title,
         description: description || null,
         order_index: nextOrderIndex,
-        is_active: true
+        is_active: true,
+        is_visible: true
       }])
       .select(`
         id,
@@ -157,6 +159,7 @@ export async function POST(
         title,
         description,
         order_index,
+        is_visible,
         is_active,
         created_at,
         updated_at
@@ -213,7 +216,7 @@ export async function PUT(
       );
     }
 
-    const { id: unitId, title, description, unit_number } = await request.json();
+    const { id: unitId, title, description, unit_number, is_visible } = await request.json();
 
     // Validaciones
     if (!unitId || !title || !unit_number) {
@@ -263,6 +266,7 @@ export async function PUT(
         unit_number,
         title,
         description: description || null,
+        ...(typeof is_visible === 'boolean' ? { is_visible } : {}),
         updated_at: new Date().toISOString()
       })
       .eq('id', unitId)
@@ -273,6 +277,7 @@ export async function PUT(
         title,
         description,
         order_index,
+        is_visible,
         is_active,
         created_at,
         updated_at

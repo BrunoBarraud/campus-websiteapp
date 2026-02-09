@@ -4,8 +4,6 @@ import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
@@ -32,6 +30,7 @@ import {
   PlusIcon,
   EditIcon,
   TrashIcon,
+  ChevronLeft,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -229,234 +228,271 @@ export default function TeacherAssignmentsPage({
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-lg">Cargando tareas...</div>
+      <div className="min-h-screen bg-slate-100 flex items-center justify-center">
+        <div className="bg-white border border-slate-200 shadow-sm rounded-2xl p-4 flex items-center gap-3">
+          <div className="animate-spin rounded-full h-5 w-5 border-2 border-border border-t-primary" />
+          <span className="text-slate-700 text-sm">Cargando tareas…</span>
+        </div>
       </div>
     );
   }
 
+  const totalSubmissions = assignments.reduce(
+    (sum, a) => sum + (Number(a.submissions_count) || 0),
+    0
+  );
+  const pendingCorrections = assignments.reduce((sum, a) => {
+    const sub = Number(a.submissions_count) || 0;
+    const graded = Number(a.graded_count) || 0;
+    return sum + Math.max(0, sub - graded);
+  }, 0);
+
   return (
-    <div className="container mx-auto p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Gestión de Tareas</h1>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button
-              onClick={() => {
-                setEditingAssignment(null);
-                setFormData({
-                  title: "",
-                  description: "",
-                  due_date: "",
-                  max_score: 100,
-                  instructions: "",
-                  unit_id: null,
-                });
-              }}
-            >
-              <PlusIcon className="h-4 w-4 mr-2" />
-              Nueva Tarea
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>
-                {editingAssignment ? "Editar Tarea" : "Crear Nueva Tarea"}
-              </DialogTitle>
-            </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <Label htmlFor="title">Título *</Label>
-                <Input
-                  id="title"
-                  value={formData.title}
-                  onChange={(e) =>
-                    setFormData({ ...formData, title: e.target.value })
-                  }
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="description">Descripción *</Label>
-                <Textarea
-                  id="description"
-                  value={formData.description}
-                  onChange={(e) =>
-                    setFormData({ ...formData, description: e.target.value })
-                  }
-                  required
-                  rows={3}
-                />
-              </div>
-              <div>
-                <Label htmlFor="instructions">Instrucciones</Label>
-                <Textarea
-                  id="instructions"
-                  value={formData.instructions}
-                  onChange={(e) =>
-                    setFormData({ ...formData, instructions: e.target.value })
-                  }
-                  rows={4}
-                  placeholder="Instrucciones detalladas para los estudiantes..."
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
+    <div className="min-h-screen bg-slate-100 p-4 md:p-8">
+      <div className="max-w-5xl mx-auto space-y-6">
+        <button
+          onClick={() => router.back()}
+          className="text-sm text-slate-500 hover:text-indigo-600 flex items-center gap-1"
+          type="button"
+        >
+          <ChevronLeft className="w-4 h-4" /> Volver
+        </button>
+
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            <h2 className="text-2xl font-bold text-slate-800">Tareas</h2>
+            <p className="text-slate-500">Creá, administrá y revisá entregas</p>
+          </div>
+
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <button
+                onClick={() => {
+                  setEditingAssignment(null);
+                  setFormData({
+                    title: "",
+                    description: "",
+                    due_date: "",
+                    max_score: 100,
+                    instructions: "",
+                    unit_id: null,
+                  });
+                }}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl font-medium shadow-lg shadow-indigo-200 transition-all active:scale-95 inline-flex items-center gap-2"
+                type="button"
+              >
+                <PlusIcon className="h-5 w-5" /> Nueva Tarea
+              </button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>
+                  {editingAssignment ? "Editar Tarea" : "Crear Nueva Tarea"}
+                </DialogTitle>
+              </DialogHeader>
+              <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <Label htmlFor="due_date">Fecha de entrega *</Label>
+                  <Label htmlFor="title">Título *</Label>
                   <Input
-                    id="due_date"
-                    type="datetime-local"
-                    value={formData.due_date}
-                    onChange={(e) =>
-                      setFormData({ ...formData, due_date: e.target.value })
-                    }
+                    id="title"
+                    value={formData.title}
+                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                     required
                   />
                 </div>
                 <div>
-                  <Label htmlFor="max_score">Puntuación máxima</Label>
-                  <Input
-                    id="max_score"
-                    type="number"
-                    min="1"
-                    value={formData.max_score}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        max_score: parseInt(e.target.value),
-                      })
-                    }
+                  <Label htmlFor="description">Descripción *</Label>
+                  <Textarea
+                    id="description"
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    required
+                    rows={3}
                   />
                 </div>
-              </div>
-              <div>
-                <Label htmlFor="unit_id">Unidad (opcional)</Label>
-                <Select
-                  value={formData.unit_id || "none"}
-                  onValueChange={(value) =>
-                    setFormData({
-                      ...formData,
-                      unit_id: value === "none" ? null : value,
-                    })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleccionar unidad" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Sin unidad específica</SelectItem>
-                    {units.map((unit) => (
-                      <SelectItem key={unit.id} value={unit.id}>
-                        {unit.title}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex justify-end gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setIsDialogOpen(false)}
-                >
-                  Cancelar
-                </Button>
-                <Button type="submit">
-                  {editingAssignment ? "Actualizar" : "Crear"} Tarea
-                </Button>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog>
-      </div>
+                <div>
+                  <Label htmlFor="instructions">Instrucciones</Label>
+                  <Textarea
+                    id="instructions"
+                    value={formData.instructions}
+                    onChange={(e) => setFormData({ ...formData, instructions: e.target.value })}
+                    rows={4}
+                    placeholder="Instrucciones detalladas para los estudiantes..."
+                  />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="due_date">Fecha de entrega *</Label>
+                    <Input
+                      id="due_date"
+                      type="datetime-local"
+                      value={formData.due_date}
+                      onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="max_score">Puntuación máxima</Label>
+                    <Input
+                      id="max_score"
+                      type="number"
+                      min="1"
+                      value={formData.max_score}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          max_score: parseInt(e.target.value),
+                        })
+                      }
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label htmlFor="unit_id">Unidad (opcional)</Label>
+                  <Select
+                    value={formData.unit_id || "none"}
+                    onValueChange={(value) =>
+                      setFormData({
+                        ...formData,
+                        unit_id: value === "none" ? null : value,
+                      })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccionar unidad" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Sin unidad específica</SelectItem>
+                      {units.map((unit) => (
+                        <SelectItem key={unit.id} value={unit.id}>
+                          {unit.title}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex justify-end gap-2">
+                  <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                    Cancelar
+                  </Button>
+                  <Button type="submit">{editingAssignment ? "Actualizar" : "Crear"} Tarea</Button>
+                </div>
+              </form>
+            </DialogContent>
+          </Dialog>
+        </div>
 
-      <Tabs defaultValue="active" className="w-full">
-        <TabsList>
-          <TabsTrigger value="active">
-            Tareas Activas ({activeAssignments.length})
-          </TabsTrigger>
-          <TabsTrigger value="inactive">
-            Tareas Inactivas ({inactiveAssignments.length})
-          </TabsTrigger>
-        </TabsList>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
+            <div className="p-3 rounded-xl bg-blue-50 text-blue-600">
+              <FileTextIcon className="w-6 h-6" />
+            </div>
+            <div>
+              <p className="text-3xl font-bold text-slate-800">{activeAssignments.length}</p>
+              <p className="text-sm font-medium text-slate-500">Tareas Activas</p>
+            </div>
+          </div>
+          <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
+            <div className="p-3 rounded-xl bg-amber-50 text-amber-600">
+              <UsersIcon className="w-6 h-6" />
+            </div>
+            <div>
+              <p className="text-3xl font-bold text-slate-800">{pendingCorrections}</p>
+              <p className="text-sm font-medium text-slate-500">Por corregir</p>
+            </div>
+          </div>
+          <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
+            <div className="p-3 rounded-xl bg-emerald-50 text-emerald-600">
+              <ClockIcon className="w-6 h-6" />
+            </div>
+            <div>
+              <p className="text-3xl font-bold text-slate-800">{totalSubmissions}</p>
+              <p className="text-sm font-medium text-slate-500">Entregas Totales</p>
+            </div>
+          </div>
+        </div>
 
-        <TabsContent value="active" className="space-y-4">
-          {activeAssignments.length === 0 ? (
-            <Card>
-              <CardContent className="p-6 text-center">
-                <FileTextIcon className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                <p className="text-gray-600">No hay tareas activas</p>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid gap-4">
-              {activeAssignments.map((assignment) => (
-                <Card
-                  key={assignment.id}
-                  className={`${
-                    isOverdue(assignment.due_date)
-                      ? "border-red-200 bg-red-50"
-                      : ""
-                  }`}
-                >
-                  <CardHeader>
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <CardTitle className="flex items-center gap-2">
-                          {assignment.title}
-                          {isOverdue(assignment.due_date) && (
-                            <Badge variant="destructive">Vencida</Badge>
-                          )}
-                        </CardTitle>
-                        <p className="text-sm text-gray-600 mt-1">
-                          {assignment.description}
-                        </p>
-                        {assignment.unit && (
-                          <Badge variant="secondary" className="mt-2">
-                            {assignment.unit.title}
-                          </Badge>
-                        )}
+        <Tabs defaultValue="active" className="w-full">
+          <TabsList>
+            <TabsTrigger value="active">Tareas Activas ({activeAssignments.length})</TabsTrigger>
+            <TabsTrigger value="inactive">Tareas Inactivas ({inactiveAssignments.length})</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="active" className="space-y-4 mt-4">
+            {activeAssignments.length === 0 ? (
+              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-10 text-center">
+                <h3 className="text-lg font-bold text-slate-700">No hay tareas activas</h3>
+                <p className="text-slate-500 mt-1">Creá la primera tarea para esta materia.</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {activeAssignments.map((assignment) => (
+                  <div
+                    key={assignment.id}
+                    className={`bg-white p-6 rounded-2xl border shadow-sm hover:shadow-md transition-shadow ${
+                      isOverdue(assignment.due_date)
+                        ? "border-red-200 bg-red-50/40"
+                        : "border-slate-200"
+                    }`}
+                  >
+                    <div className="flex flex-col md:flex-row justify-between items-start gap-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h3 className="text-lg font-bold text-slate-900 truncate">{assignment.title}</h3>
+                          {isOverdue(assignment.due_date) ? (
+                            <span className="bg-red-100 text-red-700 text-xs font-bold px-2.5 py-1 rounded-full border border-red-200">
+                              Vencida
+                            </span>
+                          ) : null}
+                          {!assignment.is_active ? (
+                            <span className="bg-slate-100 text-slate-700 text-xs font-bold px-2.5 py-1 rounded-full border border-slate-200">
+                              Inactiva
+                            </span>
+                          ) : null}
+                        </div>
+                        <p className="text-slate-600 mt-1 line-clamp-2">{assignment.description}</p>
+                        {assignment.unit?.title ? (
+                          <div className="mt-3">
+                            <span className="bg-purple-100 text-purple-700 text-xs font-bold px-2.5 py-1 rounded-full">
+                              {assignment.unit.title}
+                            </span>
+                          </div>
+                        ) : null}
                       </div>
+
                       <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleEdit(assignment)}
-                        >
+                        <Button variant="outline" size="sm" onClick={() => handleEdit(assignment)}>
                           <EditIcon className="h-4 w-4" />
                         </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDelete(assignment.id)}
-                        >
+                        <Button variant="outline" size="sm" onClick={() => handleDelete(assignment.id)}>
                           <TrashIcon className="h-4 w-4" />
                         </Button>
                       </div>
                     </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                      <div className="flex items-center gap-2">
-                        <CalendarIcon className="h-4 w-4 text-gray-500" />
-                        <span>{formatDate(assignment.due_date)}</span>
+
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm mt-5 pt-5 border-t border-slate-100">
+                      <div className="flex items-center gap-2 text-slate-700">
+                        <CalendarIcon className="h-4 w-4 text-indigo-500" />
+                        <span className="truncate">{formatDate(assignment.due_date)}</span>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <ClockIcon className="h-4 w-4 text-gray-500" />
+                      <div className="flex items-center gap-2 text-slate-700">
+                        <ClockIcon className="h-4 w-4 text-amber-500" />
                         <span>{assignment.max_score} puntos</span>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <UsersIcon className="h-4 w-4 text-gray-500" />
+                      <div className="flex items-center gap-2 text-slate-700">
+                        <UsersIcon className="h-4 w-4 text-emerald-500" />
                         <span>{assignment.submissions_count} entregas</span>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <FileTextIcon className="h-4 w-4 text-gray-500" />
+                      <div className="flex items-center gap-2 text-slate-700">
+                        <FileTextIcon className="h-4 w-4 text-slate-500" />
                         <span>{assignment.graded_count} calificadas</span>
                       </div>
                     </div>
-                    <div className="mt-4">
-                      <Button
-                        variant="outline"
+
+                    <div className="mt-4 flex justify-end">
+                      <button
+                        className="px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50"
+                        type="button"
                         onClick={() =>
                           router.push(
                             `/campus/teacher/subjects/${subjectId}/assignments/${assignment.id}/submissions`
@@ -464,50 +500,62 @@ export default function TeacherAssignmentsPage({
                         }
                       >
                         Ver Entregas ({assignment.submissions_count})
-                      </Button>
+                      </button>
                     </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-        </TabsContent>
+                  </div>
+                ))}
+              </div>
+            )}
+          </TabsContent>
 
-        <TabsContent value="inactive" className="space-y-4">
-          {inactiveAssignments.length === 0 ? (
-            <Card>
-              <CardContent className="p-6 text-center">
-                <FileTextIcon className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                <p className="text-gray-600">No hay tareas inactivas</p>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid gap-4">
-              {inactiveAssignments.map((assignment) => (
-                <Card key={assignment.id} className="opacity-60">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      {assignment.title}
-                      <Badge variant="secondary">Inactiva</Badge>
-                    </CardTitle>
-                    <p className="text-sm text-gray-600">
-                      {assignment.description}
-                    </p>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex items-center gap-4 text-sm">
-                      <span>
-                        Fecha límite: {formatDate(assignment.due_date)}
-                      </span>
-                      <span>{assignment.submissions_count} entregas</span>
+          <TabsContent value="inactive" className="space-y-4 mt-4">
+            {inactiveAssignments.length === 0 ? (
+              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-10 text-center">
+                <h3 className="text-lg font-bold text-slate-700">No hay tareas inactivas</h3>
+                <p className="text-slate-500 mt-1">Cuando desactives una tarea, aparecerá acá.</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {inactiveAssignments.map((assignment) => (
+                  <div
+                    key={assignment.id}
+                    className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm opacity-70"
+                  >
+                    <div className="flex flex-col md:flex-row justify-between items-start gap-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h3 className="text-lg font-bold text-slate-900 truncate">{assignment.title}</h3>
+                          <span className="bg-slate-100 text-slate-700 text-xs font-bold px-2.5 py-1 rounded-full border border-slate-200">
+                            Inactiva
+                          </span>
+                        </div>
+                        <p className="text-slate-600 mt-1 line-clamp-2">{assignment.description}</p>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button variant="outline" size="sm" onClick={() => handleEdit(assignment)}>
+                          <EditIcon className="h-4 w-4" />
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => handleDelete(assignment.id)}>
+                          <TrashIcon className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-        </TabsContent>
-      </Tabs>
+
+                    <div className="flex flex-wrap items-center gap-4 text-sm mt-5 pt-5 border-t border-slate-100 text-slate-700">
+                      <span className="flex items-center gap-2">
+                        <CalendarIcon className="h-4 w-4 text-indigo-500" /> {formatDate(assignment.due_date)}
+                      </span>
+                      <span className="flex items-center gap-2">
+                        <UsersIcon className="h-4 w-4 text-emerald-500" /> {assignment.submissions_count} entregas
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
+      </div>
     </div>
   );
 }

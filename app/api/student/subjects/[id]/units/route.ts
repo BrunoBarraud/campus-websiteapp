@@ -30,6 +30,7 @@ export async function GET(
       .select("*")
       .eq("subject_id", subjectId)
       .eq("is_active", true)
+      .eq("is_visible", true)
       .order("order_index", { ascending: true });
 
     if (unitsError) {

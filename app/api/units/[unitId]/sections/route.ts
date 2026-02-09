@@ -128,8 +128,9 @@ export async function POST(
 
     if (file) {
       // Selecciona el bucket según el tipo de contenido
-      const bucket =
-        content_type === "assignment" ? "submission-files" : "assignment-files";
+      // - assignment: adjunto del enunciado (no es una entrega de alumno)
+      // - document: material/subida del docente
+      const bucket = content_type === "assignment" ? "assignment-files" : "documents";
       const filePath = `subject_content/${unitId}/${uuidv4()}-${file.name}`;
 
       const { error: uploadError } = await supabaseAdmin.storage

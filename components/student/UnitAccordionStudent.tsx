@@ -1,5 +1,16 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import {
+  AlertCircle,
+  BookOpen,
+  CheckCircle,
+  ChevronDown,
+  Download,
+  FileText,
+  Link as LinkIcon,
+  MessageSquare,
+  Video,
+} from "lucide-react";
 
 interface UnitAccordionProps {
   subjectId: string;
@@ -34,7 +45,7 @@ interface Section {
 
 const UnitAccordionStudent: React.FC<UnitAccordionProps> = ({
   subjectId,
-  subjectName,
+  subjectName: _subjectName,
 }) => {
   const router = useRouter();
   const [units, setUnits] = useState<Unit[]>([]);
@@ -128,17 +139,17 @@ const UnitAccordionStudent: React.FC<UnitAccordionProps> = ({
   const getSectionIcon = (section: Section) => {
     switch (section.content_type) {
       case "video":
-        return "🎥";
+        return <Video className="w-5 h-5 text-blue-500" />;
       case "document":
-        return "📄";
+        return <FileText className="w-5 h-5 text-red-500" />;
       case "link":
-        return "🔗";
+        return <LinkIcon className="w-5 h-5 text-purple-500" />;
       case "assignment":
-        return "📝";
+        return <BookOpen className="w-5 h-5 text-emerald-600" />;
       case "forum":
-        return "💬";
+        return <MessageSquare className="w-5 h-5 text-indigo-600" />;
       default:
-        return "📖";
+        return <FileText className="w-5 h-5 text-slate-500" />;
     }
   };
 
@@ -168,27 +179,13 @@ const UnitAccordionStudent: React.FC<UnitAccordionProps> = ({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5 pb-20">
       {/* Mensaje de error */}
       {error && (
         <div className="bg-red-100 text-red-700 px-4 py-2 rounded mb-4 text-center">
           {error}
         </div>
       )}
-
-      {/* Header */}
-      <div className="bg-white rounded-xl shadow-soft p-6 mb-8 border border-gray-100">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-yellow-600 to-pink-500 gradient-text">
-              {subjectName}
-            </h1>
-            <p className="text-gray-600 mt-2">
-              Unidades y contenidos de la materia
-            </p>
-          </div>
-        </div>
-      </div>
 
       {/* Unidades */}
       <div className="space-y-3">
@@ -201,34 +198,52 @@ const UnitAccordionStudent: React.FC<UnitAccordionProps> = ({
         {units.map((unit) => (
           <div
             key={unit.id}
-            className="bg-white rounded-xl shadow-soft overflow-hidden border border-gray-100 hover:border-yellow-200 transition-colors duration-200"
+            className={`bg-white rounded-xl border transition-all duration-300 overflow-hidden ${
+              expandedUnit === unit.id
+                ? "shadow-lg border-indigo-200 ring-1 ring-indigo-50"
+                : "shadow-sm border-slate-200 hover:border-slate-300"
+            }`}
           >
             <button
-              className="unit-header w-full flex justify-between items-center px-6 py-5 focus:outline-none hover:bg-gray-50 transition-colors duration-150"
+              className="w-full flex items-center justify-between p-6 text-left bg-white hover:bg-slate-50/80 transition-colors group"
               onClick={() => handleExpand(unit.id)}
               aria-expanded={expandedUnit === unit.id}
               aria-controls={`unit-panel-${unit.id}`}
               id={`unit-header-${unit.id}`}
               role="button"
             >
-              <div className="text-left">
-                <div className="font-bold text-gray-800 text-lg flex items-center gap-2">
-                  <span className="bg-yellow-100 text-yellow-800 rounded-full w-8 h-8 flex items-center justify-center text-sm">
-                    {unit.unit_number}
-                  </span>
-                  <span>{unit.title}</span>
+              <div className="flex items-start gap-4">
+                <div
+                  className={`p-2 rounded-lg transition-colors ${
+                    expandedUnit === unit.id
+                      ? "bg-indigo-100 text-indigo-600"
+                      : "bg-slate-100 text-slate-500 group-hover:bg-slate-200"
+                  }`}
+                >
+                  <BookOpen className="w-6 h-6" />
                 </div>
-                {unit.description && (
-                  <div className="text-sm text-gray-600 mt-1">
-                    {unit.description}
-                  </div>
-                )}
+                <div>
+                  <h3
+                    className={`text-lg font-bold transition-colors ${
+                      expandedUnit === unit.id ? "text-indigo-900" : "text-slate-700"
+                    }`}
+                  >
+                    {unit.title}
+                  </h3>
+                  <p className="text-sm text-slate-500 mt-1 font-medium">
+                    {unit.description || `Unidad ${unit.unit_number}`}
+                  </p>
+                </div>
               </div>
-              <i
-                className={`fas fa-chevron-down text-gray-400 transition-transform duration-200 ${
-                  expandedUnit === unit.id ? "transform rotate-180" : ""
+              <div
+                className={`transform transition-transform duration-300 p-1 rounded-full ${
+                  expandedUnit === unit.id
+                    ? "rotate-180 bg-indigo-50 text-indigo-600"
+                    : "text-slate-400"
                 }`}
-              ></i>
+              >
+                <ChevronDown className="w-6 h-6" />
+              </div>
             </button>
             <div
               className={`accordion-content ${
@@ -237,7 +252,7 @@ const UnitAccordionStudent: React.FC<UnitAccordionProps> = ({
                   : "max-h-0 opacity-0"
               } transition-all duration-300 overflow-hidden`}
             >
-              <div className="px-6 pb-6 space-y-4">
+              <div className="border-t border-slate-100 bg-slate-50/50 p-4 space-y-3">
                 {Array.isArray(sections[unit.id]) &&
                 sections[unit.id].length > 0 ? (
                   sections[unit.id]
@@ -249,90 +264,98 @@ const UnitAccordionStudent: React.FC<UnitAccordionProps> = ({
                     .map((section) => (
                       <div
                         key={section.id}
-                        className="bg-yellow-50 border border-yellow-100 rounded-lg p-5 fade-in"
+                        className="flex flex-col md:flex-row items-start md:items-center justify-between bg-white p-4 rounded-xl border border-slate-200 hover:border-indigo-300 hover:shadow-md hover:shadow-indigo-100/50 transition-all duration-200 group/item"
                       >
-                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
-                          <div className="flex items-center gap-3">
-                            <span className="bg-yellow-100 text-yellow-800 rounded-full w-8 h-8 flex items-center justify-center">
-                              {getSectionIcon(section)}
-                            </span>
-                            <span className="font-medium text-gray-900">
-                              {section.title}
-                            </span>
-                            <span className="px-2.5 py-0.5 bg-yellow-100 text-yellow-800 text-xs rounded-full font-medium">
-                              {getSectionTypeLabel(section)}
-                            </span>
+                        <div className="flex items-center gap-4 mb-3 md:mb-0 w-full md:w-auto">
+                          <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-100 group-hover/item:bg-indigo-50 group-hover/item:border-indigo-100 transition-colors">
+                            {getSectionIcon(section)}
                           </div>
-                          {section.content_type === "assignment" && (
+                          <div className="min-w-0">
+                            <p className="font-semibold text-slate-700 group-hover/item:text-indigo-700 transition-colors truncate">
+                              {section.title}
+                            </p>
+                            <p className="text-xs text-slate-400 font-medium mt-0.5 flex items-center gap-2">
+                              {getSectionTypeLabel(section).toUpperCase()}
+                              <span className="w-1 h-1 rounded-full bg-slate-300"></span>
+                              {section.content_type === "assignment" && section.due_date
+                                ? `Vence: ${new Date(section.due_date).toLocaleDateString("es-AR")}`
+                                : section.content_type === "link"
+                                  ? "Enlace externo"
+                                  : section.file_name
+                                    ? section.file_name
+                                    : ""}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end pl-[52px] md:pl-0">
+                          {section.content_type === "assignment" ? (
+                            <span className="flex items-center text-xs font-medium text-amber-700 bg-amber-100 px-2.5 py-1 rounded-full border border-amber-200">
+                              {section.due_date && new Date(section.due_date) < new Date() ? (
+                                <>
+                                  <AlertCircle className="w-3 h-3 mr-1.5" />
+                                  Vencida
+                                </>
+                              ) : (
+                                <>
+                                  <CheckCircle className="w-3 h-3 mr-1.5" />
+                                  Pendiente
+                                </>
+                              )}
+                            </span>
+                          ) : null}
+
+                          {section.content_type === "forum" ? (
                             <button
-                              onClick={() =>
-                                router.push(
-                                  `/campus/student/subjects/${subjectId}/assignments`
-                                )
-                              }
-                              className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full hover:bg-blue-200 text-xs font-medium flex items-center gap-1"
-                            >
-                              📝 Realizar Entrega
-                            </button>
-                          )}
-                          {section.content_type === "forum" && (
-                            <button
+                              type="button"
                               onClick={() =>
                                 router.push(
                                   `/campus/student/subjects/${subjectId}/forums/${section.forum_id}`
                                 )
                               }
-                              className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full hover:bg-purple-200 text-xs font-medium flex items-center gap-1"
+                              className="text-slate-400 hover:text-indigo-600 px-3 py-2 rounded-lg hover:bg-indigo-50 transition-all text-sm font-semibold"
                             >
-                              💬 Ver Foro
+                              Ver foro
                             </button>
-                          )}
-                        </div>
-                        <div className="text-gray-700 mb-3 pl-11 whitespace-pre-wrap">
-                          {section.content}
-                        </div>
-                        {section.file_url && section.file_name && (
-                          <div className="pl-11 mb-3">
-                            <a
-                              href={section.file_url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center px-3 py-2 bg-yellow-100 text-yellow-800 rounded-lg hover:bg-yellow-200 transition-colors text-sm font-medium"
-                              download
+                          ) : null}
+
+                          {section.content_type === "assignment" ? (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                router.push(
+                                  `/campus/student/subjects/${subjectId}/assignments`
+                                )
+                              }
+                              className="text-slate-400 hover:text-indigo-600 px-3 py-2 rounded-lg hover:bg-indigo-50 transition-all text-sm font-semibold"
                             >
-                              📄 Descargar {section.file_name}
-                            </a>
-                          </div>
-                        )}
-                        {section.content_type === "link" && (
-                          <div className="pl-11 mb-3">
+                              Ver tareas
+                            </button>
+                          ) : null}
+
+                          {section.content_type === "link" ? (
                             <a
                               href={section.content}
                               target="_blank"
-                              className="inline-flex items-center px-3 py-2 bg-yellow-100 text-yellow-800 rounded-lg hover:bg-yellow-200 transition-colors text-sm font-medium"
+                              rel="noopener noreferrer"
+                              className="text-slate-400 hover:text-indigo-600 px-3 py-2 rounded-lg hover:bg-indigo-50 transition-all text-sm font-semibold"
                             >
-                              🔗 Abrir enlace
+                              Abrir
                             </a>
-                          </div>
-                        )}
-                        {section.content_type === "forum" && (
-                          <div className="pl-11 mb-2">
-                            <div className="flex items-center gap-4 text-xs text-gray-600">
-                              <span className="flex items-center gap-1">
-                                <span className="font-medium">{section.questions_count || 0}</span>
-                                {section.questions_count === 1 ? 'pregunta' : 'preguntas'}
-                              </span>
-                              {section.is_closed && (
-                                <span className="px-2 py-0.5 bg-red-100 text-red-700 rounded-full font-medium">
-                                  🔒 Cerrado
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        )}
-                        <div className="text-xs text-gray-500 pl-11">
-                          Por {section.creator_name || "Desconocido"} •{" "}
-                          {new Date(section.created_at).toLocaleDateString()}
+                          ) : null}
+
+                          {section.file_url ? (
+                            <a
+                              className="text-slate-400 hover:text-indigo-600 p-2 rounded-lg hover:bg-indigo-50 transition-all"
+                              title="Descargar / Ver"
+                              href={`/api/files/download?url=${encodeURIComponent(section.file_url)}${section.file_name ? `&name=${encodeURIComponent(section.file_name)}` : ""}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              download
+                            >
+                              <Download className="w-5 h-5" />
+                            </a>
+                          ) : null}
                         </div>
                       </div>
                     ))
