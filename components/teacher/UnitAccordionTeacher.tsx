@@ -5,6 +5,7 @@ import {
   CheckCircle,
   ChevronDown,
   Download,
+  Edit3,
   Eye,
   EyeOff,
   FileText,
@@ -66,6 +67,12 @@ const UnitAccordionTeacher: React.FC<UnitAccordionProps> = ({
   });
   const [error, setError] = useState<string | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
+  const [editingContent, setEditingContent] = useState<{
+    unitId: string;
+    contentId: string;
+    title: string;
+    content: string;
+  } | null>(null);
 
   useEffect(() => {
     fetchUnits();
@@ -176,6 +183,69 @@ const UnitAccordionTeacher: React.FC<UnitAccordionProps> = ({
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleDeleteContent = async (
+    unitId: string,
+    contentId: string
+  ) => {
+    if (!window.confirm("¿Seguro que quieres eliminar este contenido?")) return;
+
+    const res = await fetch(`/api/subjects/${subjectId}/content/${contentId}` as string, {
+      method: "DELETE",
+    });
+
+    if (res.ok) {
+      setSections((prev) => ({
+        ...prev,
+        [unitId]: (prev[unitId] || []).filter((s) => s.id !== contentId),
+      }));
+      return;
+    }
+
+    const data = await res.json().catch(() => ({}));
+    alert(data?.error || "Error al eliminar el contenido");
+  };
+
+  const handleSaveEditedContent = async () => {
+    if (!editingContent) return;
+    if (!editingContent.title.trim()) return;
+
+    const res = await fetch(
+      `/api/subjects/${subjectId}/content/${editingContent.contentId}` as string,
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: editingContent.title,
+          content: editingContent.content,
+        }),
+      }
+    );
+
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      alert(data?.error || "Error al actualizar el contenido");
+      return;
+    }
+
+    const updated = await res.json().catch(() => null);
+    if (updated) {
+      setSections((prev) => ({
+        ...prev,
+        [editingContent.unitId]: (prev[editingContent.unitId] || []).map((s) =>
+          s.id === editingContent.contentId
+            ? {
+                ...s,
+                title: updated.title ?? editingContent.title,
+                content: updated.content ?? editingContent.content,
+              }
+            : s
+        ),
+      }));
+    }
+
+    setEditingContent(null);
   };
 
   const handleDeleteForum = async (unitId: string, forumId: string) => {
@@ -323,7 +393,6 @@ const UnitAccordionTeacher: React.FC<UnitAccordionProps> = ({
 
     if (newSection.content_type === "link" || newSection.content_type === "video") {
       try {
-        // eslint-disable-next-line no-new
         new URL(newSection.content.trim());
       } catch {
         setFileError("El enlace (URL) no es válido.");
@@ -355,8 +424,11 @@ const UnitAccordionTeacher: React.FC<UnitAccordionProps> = ({
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "No se pudo agregar la sección.");
+        const errorData = await response.json().catch(() => ({}));
+        const msg = errorData?.detalle
+          ? `${errorData.error || "No se pudo agregar la sección."} (${errorData.detalle})`
+          : errorData.error || "No se pudo agregar la sección.";
+        throw new Error(msg);
       }
 
       setNewSection({
@@ -412,7 +484,7 @@ const UnitAccordionTeacher: React.FC<UnitAccordionProps> = ({
     <div className="space-y-5 pb-20">
       {error && (
         <div className="bg-red-100 text-red-700 px-4 py-2 rounded mb-4 text-center">
-          {error} Por favor, verifica tu conexión o contacta al administrador.
+          {error}
         </div>
       )}
 
@@ -603,12 +675,32 @@ const UnitAccordionTeacher: React.FC<UnitAccordionProps> = ({
                           </a>
                         ) : null}
 
+                        {section.content_type !== "forum" && section.content_type !== "assignment" ? (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setEditingContent({
+                                unitId: unit.id,
+                                contentId: section.id,
+                                title: section.title,
+                                content: section.content || "",
+                              })
+                            }
+                            className="text-slate-400 hover:text-indigo-600 p-2 rounded-lg hover:bg-indigo-50 transition-all"
+                            title="Editar"
+                          >
+                            <Edit3 className="w-5 h-5" />
+                          </button>
+                        ) : null}
+
                         <button
                           type="button"
                           onClick={() =>
                             section.content_type === "forum"
                               ? handleDeleteForum(unit.id, String(section.forum_id || section.id))
-                              : handleDeleteAssignment(unit.id, section.id)
+                              : section.content_type === "assignment"
+                                ? handleDeleteAssignment(unit.id, section.id)
+                                : handleDeleteContent(unit.id, section.id)
                           }
                           className="text-slate-400 hover:text-red-700 p-2 rounded-lg hover:bg-red-50 transition-all"
                           title="Eliminar"
@@ -782,6 +874,53 @@ const UnitAccordionTeacher: React.FC<UnitAccordionProps> = ({
             <div className="flex gap-3 mt-6">
               <button onClick={() => setShowAddSection(null)} className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">Cancelar</button>
               <button onClick={() => showAddSection && handleAddSection(showAddSection)} className="flex-1 px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg hover:shadow-lg transition-colors font-semibold">Agregar Sección</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {editingContent && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl p-6 w-full max-w-md">
+            <h3 className="text-lg font-bold mb-4">Editar contenido</h3>
+            <div className="space-y-4">
+              <input
+                type="text"
+                value={editingContent.title}
+                onChange={(e) =>
+                  setEditingContent((prev) =>
+                    prev ? { ...prev, title: e.target.value } : prev
+                  )
+                }
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                placeholder="Título"
+              />
+              <textarea
+                value={editingContent.content}
+                onChange={(e) =>
+                  setEditingContent((prev) =>
+                    prev ? { ...prev, content: e.target.value } : prev
+                  )
+                }
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 h-24"
+                placeholder="Descripción / contenido"
+              />
+            </div>
+            <div className="flex gap-3 mt-6">
+              <button
+                type="button"
+                onClick={() => setEditingContent(null)}
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveEditedContent}
+                className="flex-1 px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg hover:shadow-lg transition-colors font-semibold"
+              >
+                Guardar
+              </button>
             </div>
           </div>
         </div>
