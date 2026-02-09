@@ -21,10 +21,31 @@ export async function GET(_request: NextRequest) {
 
     const subjectIds = relations.map((r: any) => r.subject_id);
 
+    if (!subjectIds.length) {
+      return NextResponse.json([]);
+    }
+
     // Ahora busca los datos de las materias
     const { data: subjects, error: subjectsError } = await supabaseAdmin
       .from("subjects")
-      .select("*")
+      .select(`
+        id,
+        name,
+        code,
+        description,
+        year,
+        division,
+        teacher_id,
+        image_url,
+        is_active,
+        created_at,
+        updated_at,
+        teacher:users!teacher_id(
+          id,
+          name,
+          email
+        )
+      `)
       .in("id", subjectIds)
       .eq("is_active", true);
 

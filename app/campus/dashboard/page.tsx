@@ -5,17 +5,101 @@ export const dynamic = 'force-dynamic';
 
 import React, { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import CourseCard from "../../../components/dashboard/CourseCard";
-import { User, Subject } from "@/app/lib/types";
+import { User, Subject, CalendarEvent } from "@/app/lib/types";
 
 const DashboardPage = () => {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
+  const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [nextEvents, setNextEvents] = useState<CalendarEvent[]>([]);
+  const [nextAssignment, setNextAssignment] = useState<{
+    subjectId: string;
+    subjectName: string;
+    title: string;
+    dueDate: string;
+  } | null>(null);
+  const [upcomingAssignmentsCount, setUpcomingAssignmentsCount] = useState(0);
+
+  const formatShortDate = (iso: string) => {
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return '';
+    return d.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' });
+  };
+
+  useEffect(() => {
+    if (!user || user.role !== 'student') return;
+    if (!user.year) return;
+    if (!subjects.length) {
+      setNextEvents([]);
+      setUpcomingAssignmentsCount(0);
+      setNextAssignment(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadSummary = async () => {
+      try {
+        const now = new Date();
+
+        // Próximos eventos (global/año/materia/personales) según rol en el backend
+        const eventsRes = await fetch(`/api/calendar/events?year=${user.year}`);
+        if (eventsRes.ok) {
+          const json = await eventsRes.json();
+          const events = (json?.data ?? []) as CalendarEvent[];
+          const upcoming = (events || [])
+            .filter((e) => {
+              const d = e?.date ? new Date(e.date) : null;
+              return d && !isNaN(d.getTime()) && d.getTime() >= now.getTime();
+            })
+            .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+            .slice(0, 3);
+
+          if (!cancelled) setNextEvents(upcoming);
+        }
+
+        // Próximas entregas (optimizado): 1 solo request
+        const upcomingRes = await fetch(`/api/student/assignments/upcoming?days=7`);
+        if (upcomingRes.ok) {
+          const data = await upcomingRes.json();
+          if (!cancelled) {
+            setUpcomingAssignmentsCount(Number(data?.count) || 0);
+            setNextAssignment(data?.nearest || null);
+          }
+        }
+      } catch {
+        if (!cancelled) {
+          setNextEvents([]);
+          setUpcomingAssignmentsCount(0);
+          setNextAssignment(null);
+        }
+      }
+    };
+
+    loadSummary();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user, subjects]);
 
   // Fetch user data and subjects
   useEffect(() => {
+    if (status === "loading") return;
+
+    if (!session || !session.user) {
+      router.push("/campus/auth/login");
+      return;
+    }
+
+    // Si es estudiante y no tiene año asignado, NO redirigir.
+    // Se mostrará un estado de "perfil incompleto" en el render.
+
     const fetchData = async () => {
       if (session?.user?.email) {
         try {
@@ -79,7 +163,48 @@ const DashboardPage = () => {
     };
 
     fetchData();
-  }, [session]);
+  }, [session, status, router]);
+
+  // Estado bloqueado: el alumno debe completar año/división desde Perfil
+  if (
+    status !== "loading" &&
+    session?.user?.role === "student" &&
+    !session.user.year
+  ) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
+        <div className="max-w-xl w-full bg-white rounded-xl shadow-sm border border-gray-100 p-8">
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">
+            Bienvenido/a {session.user.name || 'al Campus'}
+          </h1>
+          <p className="text-gray-600 mb-6">
+            Para poder continuar, andá al ícono de tu <span className="font-semibold">Perfil</span> y completá
+            tu <span className="font-semibold">año educativo</span> y tu <span className="font-semibold">división</span>.
+            Recordá que <span className="font-semibold">5° y 6° año</span> no tienen división.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <button
+              type="button"
+              onClick={() => router.push("/campus/profile")}
+              className="px-6 py-3 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition font-semibold"
+            >
+              Ir a mi Perfil
+            </button>
+            <button
+              type="button"
+              onClick={() => router.push("/campus/auth/logout")}
+              className="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition font-semibold"
+            >
+              Cerrar sesión
+            </button>
+          </div>
+          <p className="text-xs text-gray-500 mt-6">
+            Si tus datos académicos no corresponden, contactá a un administrador.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   const getWelcomeMessage = () => {
     if (!user) return "Bienvenido al Campus Virtual";
@@ -129,6 +254,22 @@ const DashboardPage = () => {
     return null;
   };
 
+  const normalizedSearch = searchTerm.trim().toLowerCase();
+  const filteredSubjects = !normalizedSearch
+    ? subjects
+    : subjects.filter((s) => {
+        const haystack = [
+          s.name,
+          s.code,
+          s.teacher?.name,
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+
+        return haystack.includes(normalizedSearch);
+      });
+
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto px-4 md:px-6 py-6">
@@ -150,12 +291,19 @@ const DashboardPage = () => {
       <div className="max-w-7xl mx-auto px-4 md:px-6 py-6 sm:py-8">
         {/* Header */}
         <header className="mb-8 sm:mb-12 text-center fade-in">
-          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-4 text-foreground">
-            {getWelcomeMessage()}
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-4 text-gray-900">
+            {user?.role === 'student'
+              ? `Bienvenido/a ${user?.name || ''}`.trim()
+              : getWelcomeMessage()}
           </h1>
-          <p className="text-gray-600 dark:text-gray-400 mb-4 sm:mb-6 text-sm sm:text-base">
-            {getSubjectCountMessage()} ({subjects.length} materias disponibles)
-          </p>
+          {user?.role !== 'student' && (
+            <p className="mb-4 sm:mb-6 text-sm sm:text-base text-gray-700">
+              <span className="font-medium text-gray-800">
+                {subjects.length}
+              </span>
+              <span className="text-gray-600"> materias disponibles · {getSubjectCountMessage()}</span>
+            </p>
+          )}
         </header>
 
         {/* Search (themed for dark/light) */}
@@ -165,6 +313,8 @@ const DashboardPage = () => {
               type="text"
               placeholder="Buscar materias..."
               className="w-full pl-10 pr-4 py-2 rounded-full bg-surface border border-border text-foreground placeholder-gray-500 dark:placeholder-gray-400 shadow-soft focus:outline-none focus:ring-2 focus:ring-yellow-400"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
             />
             <svg className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500 dark:text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <circle cx="11" cy="11" r="8"></circle>
@@ -173,88 +323,116 @@ const DashboardPage = () => {
           </div>
         </div>
 
-        {/* Quick Actions */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-          <a href="/campus/calendar" className="bg-surface border border-border rounded-xl p-3 shadow-soft hover:shadow-elevated hover:bg-muted transition">
-            <div className="text-sm font-semibold text-foreground">Calendario</div>
-            <div className="text-xs text-gray-500 dark:text-gray-400">Ver eventos</div>
-          </a>
-          <a href="/campus/mensajeria" className="bg-surface border border-border rounded-xl p-3 shadow-soft hover:shadow-elevated hover:bg-muted transition">
-            <div className="text-sm font-semibold text-foreground">Mensajería</div>
-            <div className="text-xs text-gray-500 dark:text-gray-400">Contactar</div>
-          </a>
-          <a href="/campus/notifications" className="bg-surface border border-border rounded-xl p-3 shadow-soft hover:shadow-elevated hover:bg-muted transition">
-            <div className="text-sm font-semibold text-foreground">Notificaciones</div>
-            <div className="text-xs text-gray-500 dark:text-gray-400">Novedades</div>
-          </a>
-          <a href="/campus/profile" className="bg-surface border border-border rounded-xl p-3 shadow-soft hover:shadow-elevated hover:bg-muted transition">
-            <div className="text-sm font-semibold text-foreground">Perfil</div>
-            <div className="text-xs text-gray-500 dark:text-gray-400">Ajustes</div>
-          </a>
-        </div>
+        {user?.role === 'student' && (
+          <div className="mb-2 sm:mb-4">
+            <h2 className="text-lg sm:text-xl font-bold text-gray-900">Mis cursos</h2>
+            <p className="text-sm text-gray-600">
+              {filteredSubjects.length} {filteredSubjects.length === 1 ? 'materia' : 'materias'}
+            </p>
+          </div>
+        )}
 
-        {/* Stats Section */}
-        <div className="mt-8 sm:mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-            <div className="bg-surface p-4 sm:p-6 rounded-xl shadow-soft border border-border hover:shadow-elevated transition-all duration-300 fade-in delay-2">
-                <div className="flex items-center">
-                    <div className="p-2 sm:p-3 rounded-full bg-yellow-100 text-yellow-700 mr-3 sm:mr-4">
-                        <i className="fas fa-book text-lg sm:text-xl"></i>
+        {user?.role === 'student' && (
+          <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <a
+              href="/campus/calendar"
+              className="bg-surface border border-border rounded-xl p-4 shadow-soft hover:shadow-elevated hover:bg-muted transition"
+            >
+              <div className="text-sm font-semibold text-foreground">Próximos eventos</div>
+              {nextEvents.length ? (
+                <div className="mt-2 space-y-1">
+                  {nextEvents.map((e) => (
+                    <div key={e.id} className="text-xs sm:text-sm text-gray-600 truncate">
+                      <span className="font-medium text-gray-800">{formatShortDate(e.date)}</span>
+                      <span className="text-gray-600"> · {e.title}</span>
                     </div>
-                    <div>
-                        <p className="text-gray-500 text-xs sm:text-sm font-medium">
-                          {user?.role === 'student' ? 'Mis Materias' : user?.role === 'teacher' ? 'Mis Materias' : 'Total Materias'}
-                        </p>
-                        <h3 className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-gray-100">{subjects.length}</h3>
-                    </div>
+                  ))}
                 </div>
+              ) : (
+                <div className="mt-2 text-xs sm:text-sm text-gray-600">No tenés eventos próximos.</div>
+              )}
+            </a>
+
+            <a
+              href={nextAssignment ? `/campus/student/subjects/${nextAssignment.subjectId}/assignments` : '/campus/dashboard'}
+              className="bg-surface border border-border rounded-xl p-4 shadow-soft hover:shadow-elevated hover:bg-muted transition"
+            >
+              <div className="text-sm font-semibold text-foreground">Tareas próximas</div>
+              <div className="mt-2 text-xs sm:text-sm text-gray-600">
+                {upcomingAssignmentsCount > 0
+                  ? `Tenés ${upcomingAssignmentsCount} ${upcomingAssignmentsCount === 1 ? 'entrega' : 'entregas'} en los próximos 7 días.`
+                  : 'No tenés entregas en los próximos 7 días.'}
+              </div>
+              {nextAssignment && (
+                <div className="mt-1 text-xs sm:text-sm text-gray-600 truncate">
+                  <span className="font-medium text-gray-800">{formatShortDate(nextAssignment.dueDate)}</span>
+                  <span className="text-gray-600"> · {nextAssignment.subjectName}: {nextAssignment.title}</span>
+                </div>
+              )}
+            </a>
+          </div>
+        )}
+
+        {user?.role !== 'student' && (
+          <>
+            {/* Quick Actions */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6">
+              <a href="/campus/calendar" className="bg-surface border border-border rounded-xl p-3 shadow-soft hover:shadow-elevated hover:bg-muted transition">
+                <div className="text-sm font-semibold text-foreground">Calendario</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400">Ver eventos</div>
+              </a>
+              {/* <a href="/campus/mensajeria" className="bg-surface border border-border rounded-xl p-3 shadow-soft hover:shadow-elevated hover:bg-muted transition">
+                <div className="text-sm font-semibold text-foreground">Mensajería</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400">Contactar</div>
+              </a> */}
+              <a href="/campus/notifications" className="bg-surface border border-border rounded-xl p-3 shadow-soft hover:shadow-elevated hover:bg-muted transition">
+                <div className="text-sm font-semibold text-foreground">Notificaciones</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400">Novedades</div>
+              </a>
+              <a href="/campus/profile" className="bg-surface border border-border rounded-xl p-3 shadow-soft hover:shadow-elevated hover:bg-muted transition">
+                <div className="text-sm font-semibold text-foreground">Perfil</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400">Ajustes</div>
+              </a>
             </div>
-            
-            {user?.role === 'student' && (
-              <>
-                <div className="bg-surface p-4 sm:p-6 rounded-xl shadow-soft border border-border hover:shadow-elevated transition-all duration-300 fade-in delay-3">
-                    <div className="flex items-center">
-                        <div className="p-2 sm:p-3 rounded-full bg-blue-100 text-blue-700 mr-3 sm:mr-4">
-                            <i className="fas fa-graduation-cap text-lg sm:text-xl"></i>
-                        </div>
-                        <div>
-                            <p className="text-gray-500 text-xs sm:text-sm font-medium">Año Cursando</p>
-                            <h3 className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-gray-100">{user.year}°</h3>
-                        </div>
-                    </div>
+
+            {/* Stats Section */}
+            <div className="mt-8 sm:mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+              <div className="bg-surface p-4 sm:p-6 rounded-xl shadow-soft border border-border hover:shadow-elevated transition-all duration-300 fade-in delay-2">
+                <div className="flex items-center">
+                  <div className="p-2 sm:p-3 rounded-full bg-yellow-100 text-yellow-700 mr-3 sm:mr-4">
+                    <i className="fas fa-book text-lg sm:text-xl"></i>
+                  </div>
+                  <div>
+                    <p className="text-gray-600 text-xs sm:text-sm font-medium">
+                      {user?.role === 'teacher' ? 'Mis Materias' : 'Total Materias'}
+                    </p>
+                    <h3 className="text-2xl sm:text-3xl font-extrabold text-gray-900">
+                      {subjects.length}
+                    </h3>
+                  </div>
                 </div>
-                <div className="bg-surface p-4 sm:p-6 rounded-xl shadow-soft border border-border hover:shadow-elevated transition-all duration-300 fade-in delay-4">
-                    <div className="flex items-center">
-                        <div className="p-2 sm:p-3 rounded-full bg-green-100 text-green-700 mr-3 sm:mr-4">
-                            <i className="fas fa-chalkboard-teacher text-lg sm:text-xl"></i>
-                        </div>
-                        <div>
-                            <p className="text-gray-500 text-xs sm:text-sm font-medium">Profesores</p>
-                            <h3 className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-gray-100">
-                              {[...new Set(subjects.map(s => s.teacher?.name).filter(Boolean))].length}
-                            </h3>
-                        </div>
-                    </div>
-                </div>
-              </>
-            )}
-        </div>
+              </div>
+            </div>
+          </>
+        )}
 
         {/* Subjects Grid or Empty State */}
-        {subjects.length === 0 ? (
+        {filteredSubjects.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-64 mt-8 sm:mt-16 px-4">
             <div className="p-6 bg-yellow-100 rounded-full mb-6">
               <i className="fas fa-book text-4xl sm:text-6xl text-yellow-700 mb-4"></i>
             </div>
             <h3 className="text-lg sm:text-xl font-medium text-gray-900 mb-2 text-center">
-              {getEmptyStateMessage()}
+              {subjects.length === 0 ? getEmptyStateMessage() : 'No se encontraron materias'}
             </h3>
             <p className="text-gray-500 text-center max-w-md mb-4 text-sm sm:text-base">
-              {user?.role === 'admin' 
-                ? 'Comienza creando materias para el campus virtual'
-                : user?.role === 'teacher'
-                ? 'Contacta con el administrador para que te asigne materias'
-                : 'Las materias se mostrarán aquí cuando estén disponibles'
-              }
+              {subjects.length === 0
+                ? (user?.role === 'admin' 
+                    ? 'Comienza creando materias para el campus virtual'
+                    : user?.role === 'teacher'
+                    ? 'Contacta con el administrador para que te asigne materias'
+                    : 'Las materias se mostrarán aquí cuando estén disponibles')
+                : 'Probá con otro texto en el buscador.'}
             </p>
             {getEmptyStateAction() && (
               <a
@@ -267,8 +445,8 @@ const DashboardPage = () => {
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 mt-8 sm:mt-12">
-            {subjects.map((subject, index) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4 sm:gap-6 mt-8 sm:mt-12">
+            {filteredSubjects.map((subject, index) => (
               <CourseCard 
                 key={subject.id} 
                 course={{

@@ -54,39 +54,39 @@ const CourseCard: React.FC<CourseCardProps> = memo(({ course, delay }) => {
             alt={course.title} 
             fill
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110 subject-image" 
+            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105 subject-image" 
             priority={delay <= 4} // Solo priorizar las primeras 4 imágenes
             onError={handleImageError}
             loading={delay <= 4 ? "eager" : "lazy"} // Lazy loading para las imágenes que no están en el fold
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-
           {/* (Editor removed from card image; editor remains available on subject/admin pages) */}
         </div>
-        <div className="p-3 sm:p-5">
-          <div className="flex justify-between items-start mb-2">
-            <h3 className="text-base sm:text-xl font-bold text-gray-800 group-hover:bg-gradient-to-r group-hover:from-[color:var(--primary)] group-hover:to-[color:var(--accent)] group-hover:bg-clip-text group-hover:text-transparent transition-all duration-300 line-clamp-2">{course.title}</h3>
-            <span className="bg-[color:var(--muted)] text-[color:var(--foreground)] text-xs px-2 py-1 rounded-full ml-2 flex-shrink-0 border border-[color:var(--border)]">
-              {course.year && course.division 
-                ? `${course.year}° ${course.division}` 
-                : course.code || course.year 
-                  ? `${course.code || ''} ${course.year ? `${course.year}°` : ''}`.trim() 
-                  : 'Curso'
-              }
-            </span>
+        <div className="p-3 sm:p-5 flex flex-col justify-between min-h-[150px] sm:min-h-[170px]">
+          <div>
+            <div className="flex justify-between items-start mb-2">
+              <h3 className="text-base sm:text-xl font-bold text-gray-800 transition-colors duration-200 line-clamp-2">
+                {course.title}
+              </h3>
+              <span className="bg-[color:var(--muted)] text-[color:var(--foreground)] text-xs px-2 py-1 rounded-full ml-2 flex-shrink-0 border border-[color:var(--border)]">
+                {course.year && course.division 
+                  ? `${course.year}° ${course.division}` 
+                  : course.code || course.year 
+                    ? `${course.code || ''} ${course.year ? `${course.year}°` : ''}`.trim() 
+                    : 'Curso'
+                }
+              </span>
+            </div>
+            <p className="text-gray-600 mb-3 text-sm sm:text-base line-clamp-2">
+              Ver contenido de la materia.
+            </p>
           </div>
-          <p className="text-gray-600 mb-3 sm:mb-4 text-sm sm:text-base line-clamp-2">Haz clic para ver el contenido completo de la materia.</p>
-          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-2 sm:space-y-0">
-            <div className="flex items-center">
-              <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-gradient-to-r from-[color:var(--primary)]/15 to-[color:var(--accent)]/15 flex items-center justify-center mr-2">
-                <i className="fas fa-chalkboard-teacher text-[color:var(--primary)] text-xs sm:text-sm"></i>
-              </div>
-              <span className="teacher-chip bg-gradient-to-r from-gray-100 to-gray-200 text-gray-800 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm truncate border border-gray-200">{course.teacher}</span>
+          <div className="mt-1 flex items-center min-w-0">
+            <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-gradient-to-r from-[color:var(--primary)]/15 to-[color:var(--accent)]/15 flex items-center justify-center mr-2">
+              <i className="fas fa-chalkboard-teacher text-[color:var(--primary)] text-xs sm:text-sm"></i>
             </div>
-            <div className="text-[color:var(--primary)] group-hover:text-[color:var(--accent)] text-xs sm:text-sm font-medium text-right transition-colors duration-300 flex items-center">
-              <span className="mr-1">Ver materia</span>
-              <i className="fas fa-arrow-right transform group-hover:translate-x-1 transition-transform duration-300"></i>
-            </div>
+            <span className="teacher-chip bg-gradient-to-r from-gray-100 to-gray-200 text-gray-800 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm truncate border border-gray-200 max-w-full">
+              {course.teacher}
+            </span>
           </div>
         </div>
       </div>
