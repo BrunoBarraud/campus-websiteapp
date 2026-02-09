@@ -14,8 +14,8 @@ function VerifyEmailContent() {
     const verifyEmail = async () => {
       try {
         // Obtener tokens de la URL
-        const token_hash = searchParams.get('token_hash');
-        const type = searchParams.get('type');
+        const token_hash = searchParams?.get('token_hash') || null;
+        const type = searchParams?.get('type') || null;
 
         if (!token_hash || type !== 'email') {
           setStatus('error');
