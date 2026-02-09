@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { Bell } from 'lucide-react';
+import { supabase } from '@/app/lib/supabaseClient';
 
 /**
  * Componente que muestra un indicador de notificaciones en la barra de navegación
@@ -20,7 +21,30 @@ export default function NotificationBadge() {
       
       // Actualizar cada 5 minutos
       const interval = setInterval(fetchNotificationCount, 5 * 60 * 1000);
-      return () => clearInterval(interval);
+
+      const userId = (session.user as any).id as string | undefined;
+      const channel = userId
+        ? supabase
+            .channel(`notifications:user:${userId}`)
+            .on(
+              'postgres_changes',
+              {
+                event: '*',
+                schema: 'public',
+                table: 'notifications',
+                filter: `user_id=eq.${userId}`,
+              },
+              () => {
+                fetchNotificationCount();
+              }
+            )
+            .subscribe()
+        : null;
+
+      return () => {
+        clearInterval(interval);
+        if (channel) supabase.removeChannel(channel);
+      };
     }
   }, [session]);
 
