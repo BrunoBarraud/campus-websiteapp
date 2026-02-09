@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Loader2, Lock, Unlock, Pin, CheckCircle } from "lucide-react";
+import { Loader2, Lock, Unlock, Pin, CheckCircle, Plus } from "lucide-react";
 import QuestionCard from "@/components/forums/QuestionCard";
+import AskQuestionModal from "@/components/forums/AskQuestionModal";
 
 interface Question {
   id: string;
@@ -35,12 +36,13 @@ interface Forum {
 export default function TeacherForumDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const { id: subjectId, forumId } = params;
+  const { id: subjectId, forumId } = params as { id: string; forumId: string };
 
   const [forum, setForum] = useState<Forum | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | "pending" | "answered" | "unanswered">("all");
+  const [isAskModalOpen, setIsAskModalOpen] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -69,6 +71,21 @@ export default function TeacherForumDetailPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleAskQuestion = async (data: { title: string; content: string }) => {
+    const response = await fetch(`/api/forums/${forumId}/questions`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error?.error || "Error al crear la pregunta");
+    }
+
+    await fetchData();
   };
 
   const handleToggleLock = async () => {
@@ -192,26 +209,39 @@ export default function TeacherForumDetailPage() {
                 </div>
               </div>
 
-              <button
-                onClick={handleToggleLock}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-                  forum.is_locked
-                    ? "bg-green-100 text-green-700 hover:bg-green-200"
-                    : "bg-red-100 text-red-700 hover:bg-red-200"
-                }`}
-              >
-                {forum.is_locked ? (
-                  <>
-                    <Unlock className="w-4 h-4" />
-                    Abrir Foro
-                  </>
-                ) : (
-                  <>
-                    <Lock className="w-4 h-4" />
-                    Cerrar Foro
-                  </>
-                )}
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsAskModalOpen(true)}
+                  disabled={forum.is_locked}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg transition-colors bg-yellow-500 text-white hover:bg-yellow-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Plus className="w-4 h-4" />
+                  Hacer pregunta
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleToggleLock}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+                    forum.is_locked
+                      ? "bg-green-100 text-green-700 hover:bg-green-200"
+                      : "bg-red-100 text-red-700 hover:bg-red-200"
+                  }`}
+                >
+                  {forum.is_locked ? (
+                    <>
+                      <Unlock className="w-4 h-4" />
+                      Abrir Foro
+                    </>
+                  ) : (
+                    <>
+                      <Lock className="w-4 h-4" />
+                      Cerrar Foro
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -290,6 +320,13 @@ export default function TeacherForumDetailPage() {
             ))}
           </div>
         )}
+
+        <AskQuestionModal
+          isOpen={isAskModalOpen}
+          onClose={() => setIsAskModalOpen(false)}
+          onSubmit={handleAskQuestion}
+          forumTitle={forum.title}
+        />
       </div>
     </div>
   );

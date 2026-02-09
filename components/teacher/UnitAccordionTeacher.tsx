@@ -199,6 +199,34 @@ const UnitAccordionTeacher: React.FC<UnitAccordionProps> = ({
     setExpandedUnit(expandedUnit === unitId ? null : unitId);
   };
 
+  const handleDeleteUnit = async (e: React.MouseEvent, unitId: string) => {
+    e.stopPropagation();
+
+    if (!window.confirm("¿Seguro que quieres eliminar esta unidad?")) return;
+
+    try {
+      const res = await fetch(`/api/subjects/${subjectId}/units/${unitId}` as string, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setError(data?.error || "No se pudo eliminar la unidad.");
+        return;
+      }
+
+      setUnits((prev) => prev.filter((u) => u.id !== unitId));
+      setSections((prev) => {
+        const next = { ...prev };
+        delete next[unitId];
+        return next;
+      });
+      if (expandedUnit === unitId) setExpandedUnit(null);
+    } catch {
+      setError("No se pudo eliminar la unidad.");
+    }
+  };
+
   const handleToggleVisibility = async (e: React.MouseEvent, unit: Unit) => {
     e.stopPropagation();
 
@@ -460,6 +488,15 @@ const UnitAccordionTeacher: React.FC<UnitAccordionProps> = ({
                   title={unit.is_visible === false ? "Hacer visible" : "Ocultar a alumnos"}
                 >
                   {unit.is_visible === false ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={(e) => handleDeleteUnit(e, unit.id)}
+                  className="p-2 text-slate-400 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
+                  title="Eliminar unidad"
+                >
+                  <Trash2 className="w-4 h-4" />
                 </button>
 
                 <div
