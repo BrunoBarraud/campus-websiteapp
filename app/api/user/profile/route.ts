@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { supabaseAdmin } from '@/app/lib/supabaseClient';
+import { isValidDivisionForYear, yearHasDivisions } from '@/app/lib/utils/divisions';
 
 export async function POST(request: NextRequest) {
   try {
@@ -19,13 +20,8 @@ export async function POST(request: NextRequest) {
       phone,
       bio,
       profile_image,
-      // Campos adicionales que pueden no estar en la BD aún
-      birthdate,
-      location,
-      course,
-      student_id,
-      interests,
-      title
+      year,
+      division
     } = body;
 
     // Primero verificar que el usuario existe usando supabaseAdmin
@@ -51,11 +47,53 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Preparar la actualización solo con campos que sabemos que existen
-    const basicUpdate = {
-      name: name || existingUser.name,
-      phone: phone || existingUser.phone,
-      bio: bio || existingUser.bio,
+    const nextYear: number | null = year === null || year === undefined || year === '' ? null : Number(year);
+    const nextDivision: string | null = division === null || division === undefined || division === '' ? null : String(division);
+
+    if (nextYear !== null && (Number.isNaN(nextYear) || nextYear < 1 || nextYear > 6)) {
+      return NextResponse.json(
+        { error: 'Año inválido' },
+        { status: 400 }
+      );
+    }
+
+    if (nextYear !== null && !isValidDivisionForYear(nextYear, nextDivision || undefined)) {
+      return NextResponse.json(
+        { error: yearHasDivisions(nextYear)
+          ? 'Para años de 1° a 4°, debes seleccionar una división válida (A o B)'
+          : 'Para 5° y 6° año no debe haber división' },
+        { status: 400 }
+      );
+    }
+
+    const isStudent = session.user.role === 'student';
+    const isAdmin = session.user.role === 'admin';
+
+    // Solo bloquear si el alumno intenta CAMBIAR year/division cuando ya existen en DB.
+    // Si el frontend manda los mismos valores (o manda nulls), se permite actualizar el resto del perfil.
+    if (isStudent && !isAdmin) {
+      const alreadyHasAcademicData = existingUser.year !== null || existingUser.division !== null;
+      if (alreadyHasAcademicData) {
+        const existingYear: number | null = existingUser.year ?? null;
+        const existingDivision: string | null = existingUser.division ?? null;
+
+        const normalizedNextDivision = nextDivision || null;
+        const normalizedExistingDivision = existingDivision || null;
+
+        const isAcademicChange = nextYear !== existingYear || normalizedNextDivision !== normalizedExistingDivision;
+        if (isAcademicChange) {
+          return NextResponse.json(
+            { error: 'No podés modificar tu año/división. Contactá a un administrador.' },
+            { status: 403 }
+          );
+        }
+      }
+    }
+
+    const basicUpdate: Record<string, any> = {
+      name: name ?? existingUser.name,
+      phone: phone ?? existingUser.phone,
+      bio: bio ?? existingUser.bio,
       updated_at: new Date().toISOString()
     };
 
@@ -64,36 +102,69 @@ export async function POST(request: NextRequest) {
       (basicUpdate as any).avatar_url = profile_image;
     }
 
-    const { data, error } = await supabaseAdmin
+    if (nextYear !== null) {
+      (basicUpdate as any).year = nextYear;
+      (basicUpdate as any).division = yearHasDivisions(nextYear) ? nextDivision : null;
+    }
+
+    const { data: updatedUser, error: updateErr } = await supabaseAdmin
       .from('users')
       .update(basicUpdate)
-      .eq('email', session.user.email)
-      .select()
+      .eq('id', session.user.id)
+      .select('id, email, name, role, year, division, phone, bio, avatar_url, updated_at')
       .single();
 
-    if (error) {
-      console.error('Error al actualizar perfil:', error);
+    if (updateErr) {
+      console.error('Error al actualizar perfil:', updateErr);
       return NextResponse.json(
-        { error: 'Error al actualizar el perfil: ' + error.message },
+        { error: 'Error al actualizar el perfil: ' + updateErr.message },
         { status: 500 }
       );
     }
 
-    // Combinar datos guardados con campos adicionales del frontend
-    const extendedData = {
-      ...data,
-      birthdate: birthdate || '',
-      location: location || '',
-      course: course || '6to Año',
-      student_id: student_id || '',
-      interests: interests || [],
-      title: title || 'Estudiante de Secundaria',
-      profile_image: data.avatar_url || profile_image
-    };
+    // Auto-inscribir al estudiante en materias de su año/división (solo cuando se completa por primera vez)
+    if (session.user.role === 'student' && existingUser.year === null && updatedUser?.year) {
+      try {
+        let query = supabaseAdmin
+          .from('subjects')
+          .select('id, division')
+          .eq('year', updatedUser.year)
+          .eq('is_active', true);
+
+        if (yearHasDivisions(updatedUser.year)) {
+          if (updatedUser.division) {
+            query = query.or(`division.eq.${updatedUser.division},division.is.null`);
+          } else {
+            query = query.is('division', null);
+          }
+        }
+
+        const { data: subjects } = await query;
+
+        if (subjects && subjects.length > 0) {
+          const enrollments = subjects.map((subject) => ({
+            student_id: updatedUser.id,
+            subject_id: subject.id
+          }));
+
+          await supabaseAdmin
+            .from('student_subjects')
+            .upsert(enrollments, {
+              onConflict: 'student_id,subject_id',
+              ignoreDuplicates: true
+            });
+        }
+      } catch (enrollError) {
+        console.log('[Profile] Error en auto-inscripción (no crítico):', enrollError);
+      }
+    }
 
     return NextResponse.json({
       message: 'Perfil actualizado exitosamente',
-      user: extendedData
+      user: {
+        ...updatedUser,
+        profile_image: updatedUser.avatar_url || profile_image || ''
+      }
     });
 
   } catch (error) {
@@ -105,7 +176,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const session = await auth();
 
@@ -116,10 +187,9 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Obtener el perfil del usuario usando supabaseAdmin
     const { data, error } = await supabaseAdmin
       .from('users')
-      .select('*')
+      .select('id, email, name, role, phone, bio, avatar_url, avatar, year, division, is_active, created_at, updated_at')
       .eq('email', session.user.email)
       .maybeSingle();
 
@@ -133,43 +203,28 @@ export async function GET(request: NextRequest) {
 
     if (!data) {
       console.error('Usuario no encontrado en la base de datos:', session.user.email);
-      // Retornar datos por defecto basados en la sesión
-      const defaultData = {
+      return NextResponse.json({
         id: '',
         email: session.user.email,
         name: session.user.name || '',
-        role: 'student',
+        role: (session.user.role as string) || 'student',
         phone: '',
-        bio: 'Estudiante del Instituto Privado Dalmacio Vélez Sarsfield',
+        bio: '',
         avatar_url: '',
+        avatar: '',
+        year: null,
+        division: null,
         is_active: true,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-        // Campos adicionales
-        birthdate: '',
-        location: '',
-        course: '6to Año',
-        student_id: '',
-        interests: [],
-        title: 'Estudiante de Secundaria',
         profile_image: ''
-      };
-      return NextResponse.json(defaultData);
+      });
     }
 
-    // Agregar campos adicionales con valores por defecto
-    const extendedData = {
+    return NextResponse.json({
       ...data,
-      birthdate: data.birthdate || '',
-      location: data.location || '',
-      course: data.course || (data.year ? `${data.year}° Año` : '6to Año'),
-      student_id: data.student_id || '',
-      interests: data.interests || [],
-      title: data.title || 'Estudiante de Secundaria',
-      profile_image: data.avatar_url || ''
-    };
-
-    return NextResponse.json(extendedData);
+      profile_image: data.avatar_url || data.avatar || ''
+    });
 
   } catch (error) {
     console.error('Error en GET /api/user/profile:', error);

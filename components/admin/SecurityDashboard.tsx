@@ -4,7 +4,8 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+
 import { useCsrfToken } from '@/components/common/CsrfToken';
 import SecurityAlert from '@/components/ui/SecurityAlert';
 import SecurityStats from './SecurityStats';
@@ -28,6 +29,8 @@ const SecurityDashboard = () => {
   const [filter, setFilter] = useState('all');
   const { fetchWithCsrf } = useCsrfToken();
 
+  const hasFetchedRef = useRef(false);
+
   // Cargar registros de auditoría
   useEffect(() => {
     const fetchAuditLogs = async () => {
@@ -49,9 +52,12 @@ const SecurityDashboard = () => {
         setLoading(false);
       }
     };
-    
+
+    // Evitar ejecuciones múltiples del efecto en desarrollo (StrictMode)
+    if (hasFetchedRef.current) return;
+    hasFetchedRef.current = true;
     fetchAuditLogs();
-  }, [fetchWithCsrf]);
+  }, []);
 
   // Filtrar registros por tipo
   const filteredLogs = filter === 'all' 
@@ -72,118 +78,151 @@ const SecurityDashboard = () => {
   };
 
   return (
-    <div className="bg-white shadow rounded-lg p-6">
+    <div className="bg-white shadow-soft rounded-xl p-6 border border-gray-100">
       {error && (
-        <SecurityAlert 
-          type="error" 
-          title="Error" 
-          message={error} 
+        <SecurityAlert
+          type="error"
+          title="Error"
+          message={error}
         />
       )}
-      
+
       <div className="mb-6">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold flex items-center">
-            <Shield className="h-5 w-5 text-blue-600 mr-2" />
-            Registros de Auditoría
-          </h2>
-          
-          <button 
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
+          <div>
+            <h2 className="text-xl font-semibold flex items-center text-rose-950">
+              <Shield className="h-5 w-5 text-[var(--primary)] mr-2" />
+              Registros de auditoría
+            </h2>
+            <p className="text-sm text-gray-500">
+              Actividad reciente relacionada con seguridad y autenticación.
+            </p>
+          </div>
+
+          <button
             onClick={() => {
               setLoading(true);
               fetchWithCsrf('/api/admin/security/audit-logs')
-                .then(response => response.json())
-                .then(data => {
+                .then((response) => response.json())
+                .then((data) => {
                   setAuditLogs(data);
                   setLoading(false);
                 })
-                .catch(err => {
+                .catch(() => {
                   setError('Error al actualizar los registros');
                   setLoading(false);
                 });
             }}
-            className="flex items-center text-sm text-blue-600 hover:text-blue-800"
+            className="inline-flex items-center justify-center px-3 py-2 rounded-lg text-sm font-medium text-rose-950 bg-amber-100 hover:bg-amber-200 transition-colors"
           >
             <RefreshCw className="h-4 w-4 mr-1" />
             Actualizar
           </button>
         </div>
-        
-        <div className="flex space-x-4 mb-4 items-center">
-          <Filter className="h-4 w-4 text-gray-500 mr-1" />
+
+        <div className="flex flex-wrap gap-2 items-center">
+          <div className="flex items-center text-sm text-gray-500 mr-2">
+            <Filter className="h-4 w-4 mr-1" />
+            <span>Filtrar por tipo</span>
+          </div>
           <button
             onClick={() => setFilter('all')}
-            className={`px-3 py-1 rounded text-sm ${filter === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
+            className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+              filter === 'all'
+                ? 'bg-rose-950 text-amber-300 border-rose-950'
+                : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
+            }`}
           >
             Todos
           </button>
           <button
             onClick={() => setFilter('login')}
-            className={`px-3 py-1 rounded text-sm ${filter === 'login' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
+            className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+              filter === 'login'
+                ? 'bg-rose-950 text-amber-300 border-rose-950'
+                : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
+            }`}
           >
             Inicios de sesión
           </button>
           <button
             onClick={() => setFilter('security')}
-            className={`px-3 py-1 rounded text-sm ${filter === 'security' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
+            className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+              filter === 'security'
+                ? 'bg-rose-950 text-amber-300 border-rose-950'
+                : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
+            }`}
           >
             Seguridad
           </button>
         </div>
       </div>
-      
+
       {loading ? (
-        <div className="text-center py-4">Cargando registros...</div>
+        <div className="flex items-center justify-center py-10 text-gray-500 text-sm">
+          Cargando registros...
+        </div>
       ) : filteredLogs.length === 0 ? (
-        <div className="text-center py-4 text-gray-500">No hay registros disponibles</div>
+        <div className="flex flex-col items-center justify-center py-10 text-center text-gray-500 text-sm">
+          <p className="font-medium mb-1">No hay registros disponibles</p>
+          <p className="text-xs text-gray-400">
+            Los eventos de seguridad recientes aparecerán aquí.
+          </p>
+        </div>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Usuario</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acción</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">IP</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Detalles</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {filteredLogs.map((log) => (
-                <tr key={log.id}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {formatDate(log.created_at)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {log.email || 'N/A'}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {log.action}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {log.ip_address}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">
-                    {log.details ? (
-                      <div className="tooltip" title={JSON.stringify(log.details, null, 2)}>
-                        {typeof log.details === 'object' 
-                          ? Object.entries(log.details).map(([key, value]) => (
-                              <div key={key} className="text-xs">
-                                <span className="font-medium">{key}:</span> {String(value).substring(0, 30)}
-                                {String(value).length > 30 ? '...' : ''}
-                              </div>
-                            ))
-                          : JSON.stringify(log.details).substring(0, 50) + '...'}
-                      </div>
-                    ) : 'N/A'}
-                  </td>
+        <div className="overflow-hidden border border-gray-100 rounded-lg">
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-left text-sm">
+              <thead className="bg-gray-50 text-xs uppercase tracking-wide text-gray-500">
+                <tr>
+                  <th className="px-6 py-3">Fecha</th>
+                  <th className="px-6 py-3">Usuario</th>
+                  <th className="px-6 py-3">Acción</th>
+                  <th className="px-6 py-3">IP</th>
+                  <th className="px-6 py-3">Detalles</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-gray-100 bg-white">
+                {filteredLogs.map((log) => (
+                  <tr key={log.id} className="hover:bg-gray-50/80">
+                    <td className="px-6 py-3 whitespace-nowrap text-gray-600">
+                      {formatDate(log.created_at)}
+                    </td>
+                    <td className="px-6 py-3 whitespace-nowrap text-gray-700">
+                      {log.email || 'N/A'}
+                    </td>
+                    <td className="px-6 py-3 whitespace-nowrap">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-rose-900 border border-amber-100">
+                        {log.action}
+                      </span>
+                    </td>
+                    <td className="px-6 py-3 whitespace-nowrap text-gray-600">
+                      {log.ip_address}
+                    </td>
+                    <td className="px-6 py-3 text-gray-600 align-top">
+                      {log.details ? (
+                        <details className="group text-xs cursor-pointer">
+                          <summary className="text-rose-900 font-medium group-open:mb-1">
+                            Ver detalles
+                          </summary>
+                          <div className="mt-1 max-h-40 overflow-y-auto rounded bg-gray-50 p-2 border border-gray-100">
+                            <pre className="whitespace-pre-wrap text-[11px] text-gray-700">
+                              {JSON.stringify(log.details, null, 2)}
+                            </pre>
+                          </div>
+                        </details>
+                      ) : (
+                        <span className="text-xs text-gray-400">N/A</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
-      
+
       <div className="mt-6">
         <SecurityStats className="mb-6" />
       </div>

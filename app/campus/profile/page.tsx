@@ -5,10 +5,14 @@ export const dynamic = 'force-dynamic';
 
 import React, { useState, useEffect } from "react";
 import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
+import { yearHasDivisions } from '@/app/lib/utils/divisions';
 
 const ProfilePage = () => {
-  const { data: session } = useSession();
+  const { data: session, update } = useSession();
+  const router = useRouter();
+  const academicLocked = session?.user?.role === 'student' && !!session.user.year;
   const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState('informacion');
   const [profileImage, setProfileImage] = useState<string | null>(null);
@@ -16,14 +20,9 @@ const ProfilePage = () => {
     name: '',
     email: '',
     phone: '',
-    birthdate: '',
-    location: '',
-    course: '',
-    year: '',
-    student_id: '',
     bio: '',
-    interests: [] as string[],
-    title: ''
+    year: null as number | null,
+    division: ''
   });
 
   useEffect(() => {
@@ -42,14 +41,9 @@ const ProfilePage = () => {
           name: userData.name || session?.user?.name || '',
           email: userData.email || session?.user?.email || '',
           phone: userData.phone || '',
-          birthdate: userData.birthdate || '',
-          location: userData.location || '',
-          course: userData.course || '6to Año',
-          year: userData.year || '2025',
-          student_id: userData.student_id || '',
           bio: userData.bio || 'Estudiante del Instituto Privado Dalmacio Vélez Sarsfield',
-          interests: userData.interests || [],
-          title: userData.title || 'Estudiante de Secundaria'
+          year: typeof userData.year === 'number' ? userData.year : (userData.year ? Number(userData.year) : null),
+          division: userData.division || ''
         });
         setProfileImage(userData.profile_image);
       } else {
@@ -77,6 +71,16 @@ const ProfilePage = () => {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
+    if (name === 'year') {
+      const nextYear = value === '' ? null : Number(value);
+      setFormData(prev => ({
+        ...prev,
+        year: nextYear,
+        division: nextYear && !yearHasDivisions(nextYear) ? '' : prev.division
+      }));
+      return;
+    }
+
     setFormData(prev => ({
       ...prev,
       [name]: value
@@ -99,6 +103,10 @@ const ProfilePage = () => {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      const wasYearEmpty = session?.user?.role === 'student' && !session.user.year;
+
+      const nextDivision = formData.year && yearHasDivisions(formData.year) ? formData.division : null;
+
       const response = await fetch('/api/user/profile', {
         method: 'POST',
         headers: {
@@ -106,6 +114,7 @@ const ProfilePage = () => {
         },
         body: JSON.stringify({
           ...formData,
+          division: nextDivision,
           profile_image: profileImage
         }),
       });
@@ -113,9 +122,25 @@ const ProfilePage = () => {
       if (response.ok) {
         toast.success('Perfil actualizado exitosamente');
         setIsEditing(false);
+
+        // Refrescar sesión para que el dashboard deje de ver year/division como null
+        await update();
+
         fetchUserProfile(); // Recargar datos
+
+        // Si venía bloqueado por falta de año, volver al dashboard
+        if (wasYearEmpty && formData.year) {
+          router.push('/campus/dashboard');
+        }
       } else {
-        toast.error('Error al actualizar el perfil');
+        let msg = 'Error al actualizar el perfil';
+        try {
+          const data = await response.json();
+          msg = data?.error || msg;
+        } catch {
+          // ignore
+        }
+        toast.error(msg);
       }
     } catch (error) {
       console.error('Error al actualizar perfil:', error);
@@ -160,7 +185,7 @@ const ProfilePage = () => {
                 <div className="flex justify-between items-start">
                   <div>
                     <h2 className="text-2xl font-bold text-gray-800">{formData.name || session?.user?.name}</h2>
-                    <p className="text-gray-600 mt-1">{formData.title}</p>
+                    <p className="text-gray-600 mt-1">{session?.user?.role === 'teacher' ? 'Profesor' : session?.user?.role === 'admin' ? 'Administrador' : 'Estudiante'}</p>
                   </div>
                   <button 
                     onClick={() => setIsEditing(true)}
@@ -176,10 +201,12 @@ const ProfilePage = () => {
                     <i className="fas fa-school mr-2 text-yellow-600"></i>
                     <span>Instituto Privado Dalmacio Vélez Sarsfield</span>
                   </div>
-                  {formData.location && (
+                  {session?.user?.role === 'student' && formData.year && (
                     <div className="flex items-center text-gray-600">
-                      <i className="fas fa-map-marker-alt mr-2 text-yellow-600"></i>
-                      <span>{formData.location}</span>
+                      <i className="fas fa-graduation-cap mr-2 text-yellow-600"></i>
+                      <span>
+                        {formData.year}° Año{formData.division ? ` ${formData.division}` : ''}
+                      </span>
                     </div>
                   )}
                   <div className="flex items-center text-gray-600">
@@ -261,27 +288,23 @@ const ProfilePage = () => {
                       <p className="text-sm text-gray-500">Teléfono</p>
                       <p className="text-gray-800">{formData.phone || 'No especificado'}</p>
                     </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Fecha de nacimiento</p>
-                      <p className="text-gray-800">{formData.birthdate || 'No especificado'}</p>
-                    </div>
                   </div>
                 </div>
                 <div>
                   <h3 className="text-lg font-medium text-gray-900 mb-4">Información académica</h3>
                   <div className="space-y-4">
-                    <div>
-                      <p className="text-sm text-gray-500">Curso actual</p>
-                      <p className="text-gray-800">{formData.course}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Año lectivo</p>
-                      <p className="text-gray-800">{formData.year}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">ID de estudiante</p>
-                      <p className="text-gray-800">{formData.student_id || 'No asignado'}</p>
-                    </div>
+                    {session?.user?.role === 'student' && (
+                      <>
+                        <div>
+                          <p className="text-sm text-gray-500">Año</p>
+                          <p className="text-gray-800">{formData.year ? `${formData.year}°` : 'Sin asignar'}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500">División</p>
+                          <p className="text-gray-800">{formData.division || 'Sin asignar'}</p>
+                        </div>
+                      </>
+                    )}
                     <div>
                       <p className="text-sm text-gray-500">Estado académico</p>
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
@@ -294,18 +317,6 @@ const ProfilePage = () => {
                   <div className="md:col-span-2 mt-8">
                     <h3 className="text-lg font-medium text-gray-900 mb-4">Biografía</h3>
                     <p className="text-gray-700">{formData.bio}</p>
-                  </div>
-                )}
-                {formData.interests.length > 0 && (
-                  <div className="md:col-span-2 mt-6">
-                    <h3 className="text-lg font-medium text-gray-900 mb-4">Intereses académicos</h3>
-                    <div className="flex flex-wrap gap-2">
-                      {formData.interests.map((interest, index) => (
-                        <span key={index} className="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm">
-                          {interest}
-                        </span>
-                      ))}
-                    </div>
                   </div>
                 )}
               </div>
@@ -421,90 +432,58 @@ const ProfilePage = () => {
               </div>
               
               <div className="mb-4">
-                <label htmlFor="birthdate" className="block text-sm font-medium text-gray-700 mb-1">Fecha de nacimiento</label>
-                <input 
-                  type="date" 
-                  id="birthdate" 
-                  name="birthdate"
-                  value={formData.birthdate} 
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-yellow-500 focus:border-yellow-500"
-                />
-              </div>
-              
-              <div className="mb-4">
-                <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-1">Ubicación</label>
-                <input 
-                  type="text" 
-                  id="location" 
-                  name="location"
-                  value={formData.location} 
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-yellow-500 focus:border-yellow-500"
-                />
               </div>
             </div>
             
             <div>
               <h3 className="text-lg font-medium text-gray-900 mb-4">Información académica</h3>
-              
-              <div className="mb-4">
-                <label htmlFor="course" className="block text-sm font-medium text-gray-700 mb-1">Curso actual</label>
-                <select 
-                  id="course" 
-                  name="course"
-                  value={formData.course}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-yellow-500 focus:border-yellow-500"
-                >
-                  <option value="1er Año">1er Año</option>
-                  <option value="2do Año">2do Año</option>
-                  <option value="3er Año">3er Año</option>
-                  <option value="4to Año">4to Año</option>
-                  <option value="5to Año">5to Año</option>
-                  <option value="6to Año">6to Año</option>
-                </select>
-              </div>
-              
-              <div className="mb-4">
-                <label htmlFor="year" className="block text-sm font-medium text-gray-700 mb-1">Año lectivo</label>
-                <select 
-                  id="year" 
-                  name="year"
-                  value={formData.year}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-yellow-500 focus:border-yellow-500"
-                >
-                  <option value="2024">2024</option>
-                  <option value="2025">2025</option>
-                  <option value="2026">2026</option>
-                </select>
-              </div>
-              
-              <div className="mb-4">
-                <label htmlFor="student_id" className="block text-sm font-medium text-gray-700 mb-1">ID de estudiante</label>
-                <input 
-                  type="text" 
-                  id="student_id" 
-                  name="student_id"
-                  value={formData.student_id} 
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-yellow-500 focus:border-yellow-500"
-                />
-              </div>
-              
-              <div className="mb-4">
-                <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">Título/Descripción</label>
-                <input 
-                  type="text" 
-                  id="title" 
-                  name="title"
-                  placeholder="Ej: Estudiante de 6to Año" 
-                  value={formData.title} 
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-yellow-500 focus:border-yellow-500"
-                />
-              </div>
+              {session?.user?.role === 'student' && (
+                <>
+                  <div className="mb-4">
+                    <label htmlFor="year" className="block text-sm font-medium text-gray-700 mb-1">Año</label>
+                    <select
+                      id="year"
+                      name="year"
+                      value={formData.year ?? ''}
+                      onChange={handleInputChange}
+                      disabled={academicLocked}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-yellow-500 focus:border-yellow-500"
+                    >
+                      <option value="">Seleccionar...</option>
+                      <option value="1">1° Año</option>
+                      <option value="2">2° Año</option>
+                      <option value="3">3° Año</option>
+                      <option value="4">4° Año</option>
+                      <option value="5">5° Año</option>
+                      <option value="6">6° Año</option>
+                    </select>
+                  </div>
+
+                  <div className="mb-4">
+                    <label htmlFor="division" className="block text-sm font-medium text-gray-700 mb-1">División</label>
+                    <select
+                      id="division"
+                      name="division"
+                      value={formData.division}
+                      onChange={handleInputChange}
+                      disabled={academicLocked || (formData.year ? !yearHasDivisions(formData.year) : true)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-yellow-500 focus:border-yellow-500 disabled:bg-gray-100"
+                    >
+                      <option value="">{formData.year && yearHasDivisions(formData.year) ? 'Seleccionar...' : 'No corresponde'}</option>
+                      <option value="A">A</option>
+                      <option value="B">B</option>
+                    </select>
+                  </div>
+
+                  {academicLocked && (
+                    <div className="bg-gray-50 border border-gray-200 rounded-md p-3">
+                      <p className="text-gray-700 text-sm">
+                        Tu año/división ya están asignados. Si necesitás cambiarlos, contactá a un administrador.
+                      </p>
+                    </div>
+                  )}
+                </>
+              )}
               
               <div className="mb-4">
                 <label htmlFor="bio" className="block text-sm font-medium text-gray-700 mb-1">Biografía</label>

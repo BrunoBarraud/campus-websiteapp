@@ -26,6 +26,9 @@ interface Section {
   assignment_id?: string;
   due_date?: string;
   is_active?: boolean;
+  forum_id?: string;
+  questions_count?: number;
+  is_closed?: boolean;
 }
 
 const UnitAccordionTeacher: React.FC<UnitAccordionProps> = ({
@@ -109,6 +112,34 @@ const UnitAccordionTeacher: React.FC<UnitAccordionProps> = ({
               }
             }
 
+            // Cargar también los foros asociados a esta unidad
+            try {
+              console.log(`Iniciando fetch de foros para unidad ${unit.id}`);
+              const forumsRes = await fetch(`/api/forums?unit_id=${unit.id}`);
+              if (forumsRes.ok) {
+                const forumsData = await forumsRes.json();
+                console.log(`Foros obtenidos para unidad ${unit.id}:`, forumsData);
+                
+                // Convertir foros a formato de sección
+                if (Array.isArray(forumsData) && forumsData.length > 0) {
+                  const forumSections = forumsData.map((forum: any) => ({
+                    id: forum.id,
+                    title: forum.title,
+                    content_type: 'forum',
+                    content: forum.description || '',
+                    created_at: forum.created_at,
+                    creator_name: 'Profesor',
+                    forum_id: forum.id,
+                    questions_count: forum.questions_count || 0,
+                    is_closed: forum.is_closed || false,
+                  }));
+                  secData = [...secData, ...forumSections];
+                }
+              }
+            } catch (forumError) {
+              console.error('Error al obtener foros para unidad', unit.id, forumError);
+            }
+
             return [unit.id, secData] as [string, Section[]];
           } catch (sectionError) {
             console.error('Error al obtener secciones para unidad', unit.id, sectionError);
@@ -190,6 +221,14 @@ const UnitAccordionTeacher: React.FC<UnitAccordionProps> = ({
 
   const handleAddSection = async (unitId: string) => {
     if (!newSection.title.trim()) return;
+    
+    // Si es un foro, redirigir a la creación de foro
+    if (newSection.content_type === "forum") {
+      // Redirigir a la página de foros con el unitId
+      window.location.href = `/campus/teacher/subjects/${subjectId}/forums?unit_id=${unitId}&create=true&title=${encodeURIComponent(newSection.title)}`;
+      return;
+    }
+    
     if (newSection.content_type === "document" && !newSection.file) {
       setFileError("Debes seleccionar un archivo.");
       return;
@@ -253,6 +292,8 @@ const UnitAccordionTeacher: React.FC<UnitAccordionProps> = ({
         return "Contenido / Documento";
       case "assignment":
         return "Tarea";
+      case "forum":
+        return "Foro de Discusión";
       default:
         return "Contenido";
     }
@@ -344,8 +385,8 @@ const UnitAccordionTeacher: React.FC<UnitAccordionProps> = ({
                         <span className="bg-yellow-100 text-yellow-800 rounded-full w-8 h-8 flex items-center justify-center">
                           {/* Icon logic */}
                           {section.content_type === 'document' && <i className="fas fa-book-open"></i>}
-                          {section.content_type === 'document' && <i className="fas fa-file-pdf"></i>}
                           {section.content_type === 'assignment' && <i className="fas fa-tasks"></i>}
+                          {section.content_type === 'forum' && <i className="fas fa-comments"></i>}
                         </span>
                         <span className="font-medium text-gray-900">{section.title}</span>
                         <span className="px-2.5 py-0.5 bg-yellow-100 text-yellow-800 text-xs rounded-full font-medium">
@@ -353,6 +394,18 @@ const UnitAccordionTeacher: React.FC<UnitAccordionProps> = ({
                         </span>
                       </div>
                       <div className="flex gap-2">
+                        {/* Forum buttons */}
+                        {section.content_type === "forum" && (
+                          <>
+                            <button
+                              onClick={() => (window.location.href = `/campus/teacher/subjects/${subjectId}/forums/${section.forum_id}`)}
+                              className="px-3 py-1 bg-blue-600 text-white rounded-full hover:bg-blue-700 text-xs font-medium flex items-center gap-1"
+                            >
+                              <i className="fas fa-eye mr-1"></i>
+                              Ver foro
+                            </button>
+                          </>
+                        )}
                         {/* Assignment buttons */}
                         {section.content_type === "assignment" && (
                           <>
@@ -373,7 +426,7 @@ const UnitAccordionTeacher: React.FC<UnitAccordionProps> = ({
                           </>
                         )}
                         {/* Delete for other types */}
-                        {section.content_type !== "assignment" && (
+                        {section.content_type !== "assignment" && section.content_type !== "forum" && (
                           <button
                             onClick={() => handleDeleteAssignment(unit.id, section.id)}
                             className="px-3 py-1 bg-red-100 text-red-700 rounded-full hover:bg-red-200 text-xs font-medium flex items-center gap-1"
@@ -392,6 +445,16 @@ const UnitAccordionTeacher: React.FC<UnitAccordionProps> = ({
                           <i className="fas fa-download mr-2"></i>
                           Descargar {section.file_name}
                         </a>
+                      </div>
+                    )}
+                    {section.content_type === "forum" && (
+                      <div className="flex flex-wrap gap-2 pl-11 mb-3">
+                        <span className="px-2.5 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium flex items-center gap-1">
+                          <i className="fas fa-question-circle"></i> {section.questions_count || 0} pregunta{section.questions_count !== 1 ? 's' : ''}
+                        </span>
+                        <span className={`px-2.5 py-1 ${!section.is_closed ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'} rounded-full text-xs font-medium`}>
+                          <i className={`fas fa-${!section.is_closed ? 'lock-open' : 'lock'}`}></i> {!section.is_closed ? 'Abierto' : 'Cerrado'}
+                        </span>
                       </div>
                     )}
                     {section.content_type === "assignment" && (
@@ -474,6 +537,7 @@ const UnitAccordionTeacher: React.FC<UnitAccordionProps> = ({
                 <option value="document">Contenido</option>
                 <option value="document">Documento</option>
                 <option value="assignment">Tarea</option>
+                <option value="forum">Foro de Discusión</option>
               </select>
               <textarea
                 value={newSection.content}
@@ -484,6 +548,8 @@ const UnitAccordionTeacher: React.FC<UnitAccordionProps> = ({
                     ? "Descripción del documento que estás subiendo..."
                     : newSection.content_type === "assignment"
                     ? "Instrucciones detalladas de la tarea..."
+                    : newSection.content_type === "forum"
+                    ? "Descripción del foro (opcional)..."
                     : "Descripción del contenido..."
                 }
               />
@@ -510,7 +576,13 @@ const UnitAccordionTeacher: React.FC<UnitAccordionProps> = ({
                 </>
               )}
               {/* Archivos */}
-              {newSection.content_type === "document" ? (
+              {newSection.content_type === "forum" ? (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <p className="text-sm text-blue-800">
+                    💬 Se creará un foro de discusión donde los estudiantes podrán hacer preguntas públicas visibles para todo el curso.
+                  </p>
+                </div>
+              ) : newSection.content_type === "document" ? (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Archivo del Documento</label>
                   <input

@@ -2,6 +2,7 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/app/lib/supabaseClient";
 import { checkAdminAccess } from "@/app/lib/auth/adminCheck";
+import { isValidDivisionForYear, yearHasDivisions } from "@/app/lib/utils/divisions";
 
 export async function GET(request: Request) {
   try {
@@ -42,7 +43,7 @@ export async function GET(request: Request) {
     let query = supabaseAdmin
       .from("users")
       .select(
-        "id, name, email, role, year, is_active, created_at, updated_at",
+        "id, name, email, role, year, division, is_active, created_at, updated_at",
         { count: "exact" }
       );
 
@@ -152,9 +153,9 @@ export async function POST(request: Request) {
       adminCheck.user?.email
     );
 
-    const { name, email, role, year, is_active } = await request.json();
+    const { name, email, role, year, division, is_active } = await request.json();
 
-    console.log("📝 Datos recibidos:", { name, email, role, year, is_active });
+    console.log("📝 Datos recibidos:", { name, email, role, year, division, is_active });
 
     // Validaciones básicas
     if (!name || !email || !role) {
@@ -178,6 +179,28 @@ export async function POST(request: Request) {
       );
     }
 
+    const nextYear: number | null = role === 'student'
+      ? (year === null || year === undefined || year === '' ? null : Number(year))
+      : null;
+
+    const nextDivision: string | null = division === null || division === undefined || division === '' ? null : String(division);
+
+    if (role === 'student' && nextYear !== null && (Number.isNaN(nextYear) || nextYear < 1 || nextYear > 6)) {
+      return NextResponse.json(
+        { error: 'Año inválido' },
+        { status: 400 }
+      );
+    }
+
+    if (role === 'student' && nextYear !== null && !isValidDivisionForYear(nextYear, nextDivision || undefined)) {
+      return NextResponse.json(
+        { error: yearHasDivisions(nextYear)
+          ? 'Para años de 1° a 4°, debes seleccionar una división válida (A o B)'
+          : 'Para 5° y 6° año no debe haber división' },
+        { status: 400 }
+      );
+    }
+
     // Crear el usuario
     const { data, error } = await supabaseAdmin
       .from("users")
@@ -185,12 +208,15 @@ export async function POST(request: Request) {
         name,
         email,
         role,
-        year: role === "student" ? year || 1 : null,
+        year: role === "student" ? (nextYear ?? 1) : null,
+        division: role === 'student'
+          ? (nextYear !== null && yearHasDivisions(nextYear) ? nextDivision : null)
+          : null,
         is_active: is_active !== false,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       })
-      .select("id, name, email, role, year, is_active, created_at, updated_at")
+      .select("id, name, email, role, year, division, is_active, created_at, updated_at")
       .single();
 
     if (error) {

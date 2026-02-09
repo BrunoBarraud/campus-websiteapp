@@ -9,6 +9,7 @@ const MensajeriaPage: React.FC = () => {
   const [conversationId, setConversationId] = useState<string | undefined>(undefined);
   const [loadingChat, setLoadingChat] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | undefined>(undefined);
+  const [mobileView, setMobileView] = useState<'list' | 'chat'>('list');
 
   // Obtener el usuario actual al montar el componente
   React.useEffect(() => {
@@ -62,33 +63,58 @@ const MensajeriaPage: React.FC = () => {
     setConversationId(convId);
     setSelectedUser(userId);
     setLoadingChat(false);
+    setMobileView('chat');
   };
 
   return (
-    <div className="bg-gray-100 min-h-screen flex flex-col">
-      {/* Main Content */}
-      <main className="container mx-auto py-6 px-4 flex flex-col lg:flex-row gap-4 lg:gap-8 flex-grow">
-        {/* Sidebar */}
-        <div className="w-full lg:w-[320px] lg:min-w-[280px] lg:max-w-[360px]">
-          <ChatSidebar onSelectConversation={handleSelectUser} selectedConversation={selectedUser} />
-        </div>
-        {/* Chat window */}
-        <div className="flex-1 min-w-0 flex flex-col">
-          {loadingChat ? (
-            <div className="flex flex-1 items-center justify-center text-amber-400 text-2xl animate-pulse">
-              Cargando chat...
+    <div className="bg-gray-50 min-h-screen flex flex-col">
+      <main className="flex-1 px-4 py-6">
+        <div className="max-w-6xl mx-auto">
+          {/* Card principal de mensajería */}
+          <div className="bg-white rounded-2xl shadow-md overflow-hidden flex flex-col h-[calc(100vh-7rem)]">
+            <div className="flex flex-1 flex-col lg:flex-row">
+              {/* Sidebar */}
+              <div
+                className={`w-full lg:w-[320px] lg:min-w-[280px] lg:max-w-[360px] border-b lg:border-b-0 lg:border-r border-gray-200 ${
+                  mobileView === 'chat' ? 'hidden lg:block' : 'block'
+                }`}
+              >
+                <ChatSidebar onSelectConversation={handleSelectUser} selectedConversation={selectedUser} />
+              </div>
+
+              {/* Chat window */}
+              <div
+                className={`flex-1 min-w-0 flex flex-col ${
+                  mobileView === 'list' ? 'hidden lg:flex' : 'flex'
+                }`}
+              >
+                {loadingChat ? (
+                  <div className="flex flex-1 items-center justify-center text-amber-400 text-2xl animate-pulse">
+                    Cargando chat...
+                  </div>
+                ) : conversationId && currentUserId && conversationId.trim() !== '' && currentUserId.trim() !== '' ? (
+                  <ChatWindow
+                    conversationId={conversationId}
+                    currentUserId={currentUserId}
+                    onBack={() => setMobileView('list')}
+                  />
+                ) : currentUserId ? (
+                  <div className="flex flex-1 items-center justify-center text-gray-400 text-center text-lg sm:text-xl px-6">
+                    <div>
+                      <p className="font-semibold text-gray-700 mb-2">No hay una conversación seleccionada</p>
+                      <p className="text-sm text-gray-500">
+                        Elige un contacto en la lista de la izquierda para comenzar una conversación en el campus.
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-1 items-center justify-center text-amber-400 text-2xl animate-pulse">
+                    Cargando usuario...
+                  </div>
+                )}
+              </div>
             </div>
-          ) : conversationId && currentUserId && conversationId.trim() !== '' && currentUserId.trim() !== '' ? (
-            <ChatWindow conversationId={conversationId} currentUserId={currentUserId} />
-          ) : currentUserId ? (
-            <div className="flex flex-1 items-center justify-center text-gray-400 text-2xl">
-              Selecciona un usuario para comenzar a chatear
-            </div>
-          ) : (
-            <div className="flex flex-1 items-center justify-center text-amber-400 text-2xl animate-pulse">
-              Cargando usuario...
-            </div>
-          )}
+          </div>
         </div>
       </main>
     </div>

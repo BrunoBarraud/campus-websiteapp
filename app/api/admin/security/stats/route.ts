@@ -6,8 +6,9 @@ import { supabaseAdmin } from '@/app/lib/supabaseClient';
  * API para obtener estadísticas de seguridad para el panel de administración
  * Solo accesible para administradores
  */
-export async function GET(request: Request) {
+export async function GET(_request: Request) {
   try {
+
     // Verificar autenticación
     const session = await auth();
     if (!session?.user) {
@@ -20,13 +21,12 @@ export async function GET(request: Request) {
     }
 
     // Obtener estadísticas de inicios de sesión
-const { data: loginStats, error: loginError } = await supabaseAdmin
-  .from('audit_login_stats')
-  .select('*');
+    const { data: loginStats, error: loginError } = await supabaseAdmin
+      .from('audit_login_stats')
+      .select('*');
 
     if (loginError) {
-      console.error('Error al obtener estadísticas de inicios de sesión:', loginError);
-      return NextResponse.json({ error: 'Error al obtener estadísticas' }, { status: 500 });
+      console.error('Error al obtener estadísticas de inicios de sesión (se usarán valores por defecto):', loginError);
     }
 
     // Obtener estadísticas de incidentes de seguridad
@@ -36,8 +36,7 @@ const { data: loginStats, error: loginError } = await supabaseAdmin
       .eq('action', 'security_violation');
 
     if (securityError) {
-      console.error('Error al obtener estadísticas de incidentes:', securityError);
-      return NextResponse.json({ error: 'Error al obtener estadísticas' }, { status: 500 });
+      console.error('Error al obtener estadísticas de incidentes (se usarán valores por defecto):', securityError);
     }
 
     // Obtener usuarios activos (con inicio de sesión en los últimos 30 días)
@@ -50,15 +49,14 @@ const { data: loginStats, error: loginError } = await supabaseAdmin
       .gte('last_login_at', thirtyDaysAgo.toISOString());
 
     if (usersError) {
-      console.error('Error al obtener usuarios activos:', usersError);
-      return NextResponse.json({ error: 'Error al obtener estadísticas' }, { status: 500 });
+      console.error('Error al obtener usuarios activos (se usarán valores por defecto):', usersError);
     }
 
-    // Procesar y formatear los datos
-    const totalLoginAttempts = loginStats?.reduce((sum, item) => sum + parseInt(item.count), 0) || 0;
-    const failedLoginAttempts = loginStats?.find(item => item.action === 'login_failure')?.count || 0;
-    const securityIncidentsCount = securityIncidents?.length || 0;
-    const activeUsersCount = activeUsers?.[0]?.count || 0;
+    // Procesar y formatear los datos, usando 0 si alguna consulta falla
+    const totalLoginAttempts = loginStats?.reduce((sum: number, item: any) => sum + parseInt(item.count, 10), 0) || 0;
+    const failedLoginAttempts = loginStats?.find((item: any) => item.action === 'login_failure')?.count || 0;
+    const securityIncidentsCount = Array.isArray(securityIncidents) ? securityIncidents.length : 0;
+    const activeUsersCount = Array.isArray(activeUsers) && activeUsers[0]?.count ? activeUsers[0].count : 0;
 
     return NextResponse.json({
       totalLoginAttempts,

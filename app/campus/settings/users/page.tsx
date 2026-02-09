@@ -6,6 +6,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { FiUsers, FiPlus, FiEdit2, FiTrash2, FiSearch, FiX, FiDownload, FiUpload, FiFileText } from 'react-icons/fi';
 import AdminProtected from '@/components/auth/AdminProtected';
 import Pagination from '@/components/ui/Pagination';
+import { yearHasDivisions } from '@/app/lib/utils/divisions';
 
 // Definir tipos
 interface User {
@@ -14,6 +15,7 @@ interface User {
   email: string;
   role: 'admin' | 'teacher' | 'student';
   year?: number;
+  division?: string | null;
   is_active: boolean;
   created_at: string;
 }
@@ -59,6 +61,8 @@ function EditUserModal({
     email: '',
     role: 'student' as 'admin' | 'teacher' | 'student',
     year: undefined as number | undefined,
+    division: '' as string,
+    recalcEnrollments: true,
     is_active: true
   });
 
@@ -69,6 +73,8 @@ function EditUserModal({
         email: user.email,
         role: user.role,
         year: user.year,
+        division: user.division || '',
+        recalcEnrollments: true,
         is_active: user.is_active
       });
     } else {
@@ -77,6 +83,8 @@ function EditUserModal({
         email: '',
         role: 'student',
         year: undefined,
+        division: '',
+        recalcEnrollments: true,
         is_active: true
       });
     }
@@ -189,7 +197,8 @@ function EditUserModal({
               onChange={(e) => setFormData(prev => ({ 
                 ...prev, 
                 role: e.target.value as 'admin' | 'teacher' | 'student',
-                year: e.target.value === 'student' ? prev.year : undefined
+                year: e.target.value === 'student' ? prev.year : undefined,
+                division: e.target.value === 'student' ? prev.division : ''
               }))}
               style={{
                 width: '100%',
@@ -212,7 +221,14 @@ function EditUserModal({
               </label>
               <select
                 value={formData.year || ''}
-                onChange={(e) => setFormData(prev => ({ ...prev, year: e.target.value ? parseInt(e.target.value) : undefined }))}
+                onChange={(e) => {
+                  const nextYear = e.target.value ? parseInt(e.target.value) : undefined;
+                  setFormData(prev => ({
+                    ...prev,
+                    year: nextYear,
+                    division: nextYear && !yearHasDivisions(nextYear) ? '' : prev.division
+                  }));
+                }}
                 style={{
                   width: '100%',
                   padding: '0.5rem',
@@ -226,6 +242,43 @@ function EditUserModal({
                   <option key={year} value={year}>{year}° Año</option>
                 ))}
               </select>
+            </div>
+          )}
+
+          {formData.role === 'student' && formData.year && yearHasDivisions(formData.year) && (
+            <div style={{ marginBottom: '1rem' }}>
+              <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: '#374151', marginBottom: '0.5rem' }}>
+                División
+              </label>
+              <select
+                value={formData.division}
+                onChange={(e) => setFormData(prev => ({ ...prev, division: e.target.value }))}
+                style={{
+                  width: '100%',
+                  padding: '0.5rem',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '0.5rem',
+                  fontSize: '1rem'
+                }}
+              >
+                <option value="">Seleccionar división</option>
+                <option value="A">A</option>
+                <option value="B">B</option>
+              </select>
+            </div>
+          )}
+
+          {formData.role === 'student' && (
+            <div style={{ marginBottom: '1.5rem' }}>
+              <label style={{ display: 'flex', alignItems: 'center', fontSize: '0.875rem', fontWeight: '500', color: '#374151' }}>
+                <input
+                  type="checkbox"
+                  checked={formData.recalcEnrollments}
+                  onChange={(e) => setFormData(prev => ({ ...prev, recalcEnrollments: e.target.checked }))}
+                  style={{ marginRight: '0.5rem' }}
+                />
+                Recalcular materias del alumno
+              </label>
             </div>
           )}
 
@@ -396,7 +449,11 @@ function UsersPageContent() {
       const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(userData)
+        body: JSON.stringify({
+          ...userData,
+          division: (userData as any).division || null,
+          recalcEnrollments: (userData as any).recalcEnrollments
+        })
       });
 
       if (response.ok) {
@@ -943,6 +1000,7 @@ function UsersPageContent() {
                   <th style={{ textAlign: 'left', padding: '0.75rem', fontWeight: '600', color: '#374151' }}>Usuario</th>
                   <th style={{ textAlign: 'left', padding: '0.75rem', fontWeight: '600', color: '#374151' }}>Rol</th>
                   <th style={{ textAlign: 'left', padding: '0.75rem', fontWeight: '600', color: '#374151' }}>Año</th>
+                  <th style={{ textAlign: 'left', padding: '0.75rem', fontWeight: '600', color: '#374151' }}>División</th>
                   <th style={{ textAlign: 'left', padding: '0.75rem', fontWeight: '600', color: '#374151' }}>Estado</th>
                   <th style={{ textAlign: 'center', padding: '0.75rem', fontWeight: '600', color: '#374151' }}>Acciones</th>
                 </tr>
@@ -971,6 +1029,9 @@ function UsersPageContent() {
                       </td>
                       <td style={{ padding: '0.75rem', color: '#6b7280' }}>
                         {user.year ? `${user.year}° Año` : '-'}
+                      </td>
+                      <td style={{ padding: '0.75rem', color: '#6b7280' }}>
+                        {user.role === 'student' ? (user.division || '-') : '-'}
                       </td>
                       <td style={{ padding: '0.75rem' }}>
                         <span style={{ 

@@ -92,14 +92,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Auto-inscribir al estudiante en materias de su año si especificó año
+    // Auto-inscribir al estudiante en materias de su año y división
     if (year) {
       try {
-        const { data: subjects } = await supabaseAdmin
+        let query = supabaseAdmin
           .from('subjects')
-          .select('id')
+          .select('id, division')
           .eq('year', year)
           .eq('is_active', true);
+
+        // Si el estudiante tiene división, filtrar por división o materias sin división
+        if (division) {
+          query = query.or(`division.eq.${division},division.is.null`);
+        } else {
+          // Si no tiene división, solo materias sin división específica
+          query = query.is('division', null);
+        }
+
+        const { data: subjects } = await query;
 
         if (subjects && subjects.length > 0) {
           const enrollments = subjects.map(subject => ({
@@ -113,6 +123,8 @@ export async function POST(request: NextRequest) {
               onConflict: 'student_id,subject_id',
               ignoreDuplicates: true 
             });
+          
+          console.log(`[Registro] Inscrito en ${subjects.length} materias (Año: ${year}, División: ${division || 'sin división'})`);
         }
       } catch (enrollError) {
         console.log('Error en auto-inscripción (no crítico):', enrollError);

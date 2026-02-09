@@ -1,12 +1,11 @@
 import NextAuth from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
 import GoogleProvider from "next-auth/providers/google"
-import type { JWT } from "next-auth/jwt"
 import { supabaseAdmin } from "@/app/lib/supabaseClient"
 import bcrypt from "bcryptjs"
 import { sanitizeText } from "./app/lib/utils/sanitize"
 import { isAccountLocked, recordLoginAttempt } from "./app/lib/security/brute-force-protection"
-import { notifySuspiciousLogin, notifyAccountLocked } from "./app/lib/services/security-notifications"
+import { notifySuspiciousLogin } from "./app/lib/services/security-notifications"
 import { UAParser } from './app/lib/utils/user-agent-parser'
 import { logAuditEvent, AuditAction } from './app/lib/services/audit-service'
 import speakeasy from 'speakeasy'
@@ -161,7 +160,7 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
     maxAge: 24 * 60 * 60, // 24 horas
   },
   callbacks: {
-    async signIn({ user, account, profile, email, credentials }) {
+    async signIn({ user, account }) {
       if (account?.provider === 'google') {
         const allowed = (process.env.ALLOWED_GOOGLE_DOMAINS || '')
           .split(',')
@@ -174,8 +173,11 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
         const emailAddr = (user?.email || '').toLowerCase()
         const domain = emailAddr.split('@')[1]
         const isAdminEmail = adminEmails.includes(emailAddr)
-        if (!isAdminEmail) {
-          if (!domain || (allowed.length > 0 && !allowed.includes(domain))) {
+        
+        // Solo validar dominio si ALLOWED_GOOGLE_DOMAINS está configurado
+        if (!isAdminEmail && allowed.length > 0) {
+          if (!domain || !allowed.includes(domain)) {
+            console.log(`[Google OAuth] Acceso denegado: dominio ${domain} no está en la lista permitida`)
             return false
           }
         }
@@ -187,23 +189,34 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
             .select('*')
             .eq('email', emailAddr)
             .single()
+          
           if (findErr || !existing) {
-            const { data: created, error: createErr } = await supabaseAdmin
+            // Usuario no existe, crear uno nuevo
+            console.log(`[Google OAuth] Creando nuevo usuario: ${emailAddr}`)
+            const defaultRole = isAdminEmail ? 'admin' : 'student';
+            
+            const { error: createErr } = await supabaseAdmin
               .from('users')
               .insert({
                 email: emailAddr,
                 name: user?.name || emailAddr.split('@')[0],
-                role: isAdminEmail ? 'admin' : 'teacher',
+                role: defaultRole,
                 is_active: true,
+                year: null, // Sin año asignado inicialmente para estudiantes
+                division: null,
                 last_login: new Date().toISOString()
               })
               .select('*')
               .single()
+            
             if (createErr) {
+              console.error('[Google OAuth] Error al crear usuario:', createErr)
               return false
             }
+            console.log(`[Google OAuth] Usuario creado exitosamente: ${emailAddr} (${defaultRole})`)
           } else {
-            // Update last login timestamp
+            // Usuario existe, actualizar last_login
+            console.log(`[Google OAuth] Usuario existente: ${emailAddr} (${existing.role})`)
             const updates: any = { last_login: new Date().toISOString() }
             if (isAdminEmail && existing.role !== 'admin') {
               updates.role = 'admin'
@@ -213,34 +226,40 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
               .update(updates)
               .eq('id', existing.id)
           }
-        } catch (e) {
+        } catch (error) {
+          console.error('[Google OAuth] Error en signIn callback:', error)
           return false
         }
       }
       return true
     },
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger }) {
       if (user) {
         token.role = (user as any).role;
         token.id = (user as any).id;
         token.division = (user as any).division;
         token.year = (user as any).year;
       }
-      // If token lacks our custom fields, enrich from DB using email
-      if ((!token.id || !token.role) && token.email) {
-        try {
-          const { data: dbUser } = await supabaseAdmin
-            .from('users')
-            .select('id, role, division, year')
-            .eq('email', token.email)
-            .single()
-          if (dbUser) {
-            token.id = dbUser.id
-            token.role = dbUser.role
-            token.division = dbUser.division
-            token.year = dbUser.year
+      
+      // Actualizar desde BD si es un update trigger o si faltan campos
+      if (trigger === 'update' || !token.id || !token.role) {
+        if (token.email) {
+          try {
+            const { data: dbUser } = await supabaseAdmin
+              .from('users')
+              .select('id, role, division, year')
+              .eq('email', token.email)
+              .single()
+            if (dbUser) {
+              token.id = dbUser.id
+              token.role = dbUser.role
+              token.division = dbUser.division
+              token.year = dbUser.year
+            }
+          } catch (error) {
+            console.error('[JWT] Error refrescando datos del usuario:', error)
           }
-        } catch {}
+        }
       }
       return token;
     },

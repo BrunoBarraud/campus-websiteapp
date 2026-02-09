@@ -27,6 +27,9 @@ interface Section {
   assignment_id?: string; // ID real del assignment
   is_active?: boolean; // Estado activo de la tarea
   due_date?: string; // Fecha de vencimiento
+  forum_id?: string; // ID del foro
+  questions_count?: number; // Número de preguntas en el foro
+  is_closed?: boolean; // Si el foro está cerrado
 }
 
 const UnitAccordionStudent: React.FC<UnitAccordionProps> = ({
@@ -57,6 +60,7 @@ const UnitAccordionStudent: React.FC<UnitAccordionProps> = ({
       const sectionsArr = await Promise.all(
         data.map(async (unit: Unit) => {
           try {
+            // Cargar secciones regulares
             const secRes = await fetch(
               `/api/student/subjects/${subjectId}/units/${unit.id}/contents`
             );
@@ -65,6 +69,42 @@ const UnitAccordionStudent: React.FC<UnitAccordionProps> = ({
               secData = secData.sections;
             }
             if (!Array.isArray(secData)) secData = [];
+
+            // Cargar foros de esta unidad
+            try {
+              console.log(`[Student] Cargando foros para unidad ${unit.id}...`);
+              const forumsRes = await fetch(`/api/forums?unit_id=${unit.id}`);
+              console.log(`[Student] Respuesta de foros:`, forumsRes.status);
+              
+              if (forumsRes.ok) {
+                const forumsData = await forumsRes.json();
+                console.log(`[Student] Foros recibidos para unidad ${unit.id}:`, forumsData);
+                
+                if (Array.isArray(forumsData) && forumsData.length > 0) {
+                  const forumSections = forumsData.map((forum: any) => ({
+                    id: `forum-${forum.id}`,
+                    forum_id: forum.id,
+                    title: forum.title,
+                    content_type: 'forum',
+                    content: forum.description || '',
+                    created_at: forum.created_at,
+                    creator_name: forum.creator?.name || 'Profesor',
+                    questions_count: forum.questions_count || 0,
+                    is_closed: forum.is_locked || false
+                  }));
+                  console.log(`[Student] Agregando ${forumSections.length} foros a la unidad`);
+                  secData = [...secData, ...forumSections];
+                } else {
+                  console.log(`[Student] No hay foros para la unidad ${unit.id}`);
+                }
+              } else {
+                const errorText = await forumsRes.text();
+                console.error(`[Student] Error al cargar foros (${forumsRes.status}):`, errorText);
+              }
+            } catch (forumError) {
+              console.error('[Student] Error cargando foros para unidad:', unit.id, forumError);
+            }
+
             return [unit.id, secData] as [string, Section[]];
           } catch {
             return [unit.id, []] as [string, Section[]];
@@ -95,6 +135,8 @@ const UnitAccordionStudent: React.FC<UnitAccordionProps> = ({
         return "🔗";
       case "assignment":
         return "📝";
+      case "forum":
+        return "💬";
       default:
         return "📖";
     }
@@ -110,6 +152,8 @@ const UnitAccordionStudent: React.FC<UnitAccordionProps> = ({
         return "Enlace";
       case "assignment":
         return "Tarea";
+      case "forum":
+        return "Foro";
       default:
         return "Contenido";
     }
@@ -231,6 +275,18 @@ const UnitAccordionStudent: React.FC<UnitAccordionProps> = ({
                               📝 Realizar Entrega
                             </button>
                           )}
+                          {section.content_type === "forum" && (
+                            <button
+                              onClick={() =>
+                                router.push(
+                                  `/campus/student/subjects/${subjectId}/forums/${section.forum_id}`
+                                )
+                              }
+                              className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full hover:bg-purple-200 text-xs font-medium flex items-center gap-1"
+                            >
+                              💬 Ver Foro
+                            </button>
+                          )}
                         </div>
                         <div className="text-gray-700 mb-3 pl-11 whitespace-pre-wrap">
                           {section.content}
@@ -257,6 +313,21 @@ const UnitAccordionStudent: React.FC<UnitAccordionProps> = ({
                             >
                               🔗 Abrir enlace
                             </a>
+                          </div>
+                        )}
+                        {section.content_type === "forum" && (
+                          <div className="pl-11 mb-2">
+                            <div className="flex items-center gap-4 text-xs text-gray-600">
+                              <span className="flex items-center gap-1">
+                                <span className="font-medium">{section.questions_count || 0}</span>
+                                {section.questions_count === 1 ? 'pregunta' : 'preguntas'}
+                              </span>
+                              {section.is_closed && (
+                                <span className="px-2 py-0.5 bg-red-100 text-red-700 rounded-full font-medium">
+                                  🔒 Cerrado
+                                </span>
+                              )}
+                            </div>
                           </div>
                         )}
                         <div className="text-xs text-gray-500 pl-11">

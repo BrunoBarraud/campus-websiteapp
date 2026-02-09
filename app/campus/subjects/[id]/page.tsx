@@ -15,6 +15,7 @@ import {
   DocumentModal,
   AssignmentModal,
 } from "@/components/modals/SubjectModals";
+import { UnitList } from "@/components/subjects/UnitList";
 import {
   FiPlus,
   FiEdit,
@@ -24,7 +25,6 @@ import {
   FiCalendar,
   FiUsers,
   FiArrowLeft,
-  FiUpload,
   FiFolder,
   FiClipboard,
 } from "react-icons/fi";
@@ -178,6 +178,50 @@ export default function SubjectDetailPage() {
 
   const handleEditUnit = (unit: SubjectUnit) => {
     setModal({ type: "unit", data: unit });
+  };
+
+  const handleDeleteUnit = async (unitId: string) => {
+    if (!confirm('¿Estás seguro de que quieres eliminar esta unidad? Esta acción no se puede deshacer.')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/subjects/${subjectId}/units/${unitId}`, {
+        method: 'DELETE'
+      });
+
+      if (response.ok) {
+        await refreshData();
+        alert('Unidad eliminada correctamente');
+      } else {
+        const error = await response.json();
+        alert(`Error al eliminar la unidad: ${error.error}`);
+      }
+    } catch (error) {
+      console.error('Error deleting unit:', error);
+      alert('Error al eliminar la unidad');
+    }
+  };
+
+  const handleReorderUnits = async (reorderedUnits: SubjectUnit[]) => {
+    try {
+      const response = await fetch(`/api/subjects/${subjectId}/units/reorder`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ units: reorderedUnits })
+      });
+
+      if (response.ok) {
+        setUnits(reorderedUnits);
+      } else {
+        const error = await response.json();
+        console.error('Error reordering units:', error);
+        await refreshData(); // Recargar el orden original en caso de error
+      }
+    } catch (error) {
+      console.error('Error reordering units:', error);
+      await refreshData(); // Recargar el orden original en caso de error
+    }
   };
 
   const handleCreateContent = () => {
@@ -343,14 +387,6 @@ export default function SubjectDetailPage() {
       default:
         return "📄";
     }
-  };
-
-  const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return "0 Bytes";
-    const k = 1024;
-    const sizes = ["Bytes", "KB", "MB", "GB"];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
   };
 
   if (loading) {
@@ -555,105 +591,16 @@ export default function SubjectDetailPage() {
 
           {activeTab === "units" && (
             <div className="space-y-6">
-              {units.map((unit) => (
-                <div key={unit.id} className="bg-surface rounded-xl shadow-soft border border-border">
-                  {/* Header de la unidad */}
-                  <div className="px-6 py-4 border-b border-border">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h3 className="text-lg font-medium text-gray-900">
-                          Unidad {unit.unit_number}: {unit.title}
-                        </h3>
-                        {unit.description && (
-                          <p className="text-sm text-gray-600 mt-1">
-                            {unit.description}
-                          </p>
-                        )}
-                      </div>
-                      {canEdit && (
-                        <div className="flex space-x-2">
-                          <button
-                            onClick={() => handleUploadDocument(unit.id)}
-                            className="text-yellow-700 hover:text-yellow-800 text-sm flex items-center"
-                          >
-                            <FiUpload className="w-4 h-4 mr-1" />
-                            Subir Archivo
-                          </button>
-                          <button
-                            onClick={() => handleEditUnit(unit)}
-                            className="text-gray-600 hover:text-gray-800"
-                          >
-                            <FiEdit className="w-4 h-4" />
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Documentos de la unidad */}
-                  <div className="px-6 py-4">
-                    {unit.documents && unit.documents.length > 0 ? (
-                      <div className="space-y-3">
-                        <h4 className="text-sm font-medium text-gray-900">
-                          Documentos
-                        </h4>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                          {unit.documents.map((doc) => (
-                            <div
-                              key={doc.id}
-                              className="border border-border rounded-lg p-4 hover:shadow-soft transition-shadow bg-surface"
-                            >
-                              <div className="flex items-start justify-between">
-                                <div className="flex-1">
-                                  <h5 className="font-medium text-gray-900 text-sm">
-                                    {doc.title}
-                                  </h5>
-                                  {doc.description && (
-                                    <p className="text-xs text-gray-600 mt-1">
-                                      {doc.description}
-                                    </p>
-                                  )}
-                                  <div className="flex items-center text-xs text-gray-500 mt-2">
-                                    <FiFile className="w-3 h-3 mr-1" />
-                                    {doc.file_type
-                                      ?.split("/")[1]
-                                      ?.toUpperCase() || "FILE"}
-                                    {doc.file_size && (
-                                      <span className="ml-2">
-                                        • {formatFileSize(doc.file_size)}
-                                      </span>
-                                    )}
-                                  </div>
-                                </div>
-                              </div>
-                              <div className="mt-3">
-                                <button className="text-yellow-700 hover:text-yellow-800 text-sm font-medium">
-                                  Descargar
-                                </button>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="text-center py-8 text-gray-500">
-                        <FiFile className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                        <p>No hay documentos en esta unidad</p>
-                        {canEdit && (
-                          <button
-                            onClick={() => handleUploadDocument(unit.id)}
-                            className="mt-2 text-yellow-700 hover:text-yellow-800 text-sm font-medium"
-                          >
-                            Subir primer documento
-                          </button>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
-
-              {units.length === 0 && (
+              {units.length > 0 ? (
+                <UnitList
+                  units={units}
+                  onReorder={handleReorderUnits}
+                  onEdit={handleEditUnit}
+                  onDelete={handleDeleteUnit}
+                  onAddContent={handleCreateContent}
+                  onUploadDocument={handleUploadDocument}
+                />
+              ) : (
                 <div className="text-center py-12 bg-surface rounded-xl shadow-soft border border-border">
                   <FiFolder className="w-12 h-12 mx-auto text-gray-400 mb-4" />
                   <h3 className="text-lg font-medium text-gray-900 mb-2">
