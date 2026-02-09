@@ -44,7 +44,7 @@ export default function TeacherQuestionDetailPage() {
   const [loading, setLoading] = useState(true);
   const [answerContent, setAnswerContent] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchQuestion();
@@ -53,16 +53,20 @@ export default function TeacherQuestionDetailPage() {
   const fetchQuestion = async () => {
     try {
       setLoading(true);
+      setError(null);
       const response = await fetch(`/api/forums/questions/${questionId}`);
       if (response.ok) {
         const data = await response.json();
         setQuestion(data);
       } else {
+        const e = await response.json().catch(() => ({}));
         setQuestion(null);
+        setError(e?.error || `No se pudo cargar la pregunta (HTTP ${response.status})`);
       }
     } catch (err) {
       console.error("Error fetching question:", err);
       setQuestion(null);
+      setError("Error al cargar la pregunta");
     } finally {
       setLoading(false);
     }
@@ -73,7 +77,7 @@ export default function TeacherQuestionDetailPage() {
     if (!answerContent.trim()) return;
 
     setSubmitting(true);
-    setError("");
+    setError(null);
 
     try {
       const response = await fetch(`/api/forums/questions/${questionId}/answers`, {
@@ -83,14 +87,15 @@ export default function TeacherQuestionDetailPage() {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Error al enviar la respuesta");
+        const errorData = await response.json().catch(() => ({}));
+        const msg = errorData?.error || `Error al enviar la respuesta (HTTP ${response.status})`;
+        throw new Error(msg);
       }
 
       setAnswerContent("");
       await fetchQuestion();
     } catch (err: any) {
-      setError(err.message);
+      setError(err?.message || "Error al enviar la respuesta");
     } finally {
       setSubmitting(false);
     }
@@ -108,7 +113,8 @@ export default function TeacherQuestionDetailPage() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Pregunta no encontrada</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">No se pudo cargar la pregunta</h2>
+          {error ? <p className="text-gray-600 mb-4">{error}</p> : null}
           <button onClick={() => router.back()} className="text-yellow-600 hover:text-yellow-700">
             ← Volver
           </button>

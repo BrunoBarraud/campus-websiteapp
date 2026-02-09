@@ -43,6 +43,7 @@ export default function TeacherForumDetailPage() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | "pending" | "answered" | "unanswered">("all");
   const [isAskModalOpen, setIsAskModalOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -51,6 +52,7 @@ export default function TeacherForumDetailPage() {
   const fetchData = async () => {
     try {
       setLoading(true);
+      setError(null);
 
       const [forumRes, questionsRes] = await Promise.all([
         fetch(`/api/forums/${forumId}`),
@@ -60,14 +62,21 @@ export default function TeacherForumDetailPage() {
       if (forumRes.ok) {
         const forumData = await forumRes.json();
         setForum(forumData);
+      } else {
+        const e = await forumRes.json().catch(() => ({}));
+        setError(e?.error || "No se pudo cargar el foro");
       }
 
       if (questionsRes.ok) {
         const questionsData = await questionsRes.json();
         setQuestions(questionsData);
+      } else {
+        const e = await questionsRes.json().catch(() => ({}));
+        setError(e?.error || "No se pudieron cargar las preguntas");
       }
     } catch (err) {
       console.error("Error fetching data:", err);
+      setError("Error al cargar el foro");
     } finally {
       setLoading(false);
     }
@@ -82,7 +91,8 @@ export default function TeacherForumDetailPage() {
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({}));
-      throw new Error(error?.error || "Error al crear la pregunta");
+      const msg = error?.error || `Error al crear la pregunta (HTTP ${response.status})`;
+      throw new Error(msg);
     }
 
     await fetchData();
@@ -172,6 +182,11 @@ export default function TeacherForumDetailPage() {
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-7xl mx-auto">
+        {error ? (
+          <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+            {error}
+          </div>
+        ) : null}
         {/* Header */}
         <div className="mb-8">
           <button

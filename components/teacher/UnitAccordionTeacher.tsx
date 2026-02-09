@@ -56,6 +56,7 @@ const UnitAccordionTeacher: React.FC<UnitAccordionProps> = ({
   const [loading, setLoading] = useState(true);
   const [showAddUnit, setShowAddUnit] = useState(false);
   const [showAddSection, setShowAddSection] = useState<string | null>(null);
+  const [editingUnit, setEditingUnit] = useState<Unit | null>(null);
   const [newUnit, setNewUnit] = useState({ title: "", description: "" });
   const [newSection, setNewSection] = useState({
     title: "",
@@ -185,6 +186,42 @@ const UnitAccordionTeacher: React.FC<UnitAccordionProps> = ({
     }
   };
 
+  const handleSaveEditedUnit = async () => {
+    if (!editingUnit) return;
+    if (!editingUnit.title?.trim()) return;
+    if (!editingUnit.unit_number || editingUnit.unit_number < 1) return;
+
+    try {
+      const res = await fetch(`/api/subjects/${subjectId}/units/${editingUnit.id}` as string, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: editingUnit.title,
+          description: editingUnit.description,
+          unit_number: editingUnit.unit_number,
+          is_visible: editingUnit.is_visible,
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        const msg = data?.error ? String(data.error) : "No se pudo actualizar la unidad.";
+        setError(msg);
+        return;
+      }
+
+      const updated = await res.json().catch(() => null);
+      if (updated) {
+        setUnits((prev) => prev.map((u) => (u.id === updated.id ? { ...u, ...updated } : u)));
+      } else {
+        await fetchUnits();
+      }
+      setEditingUnit(null);
+    } catch {
+      setError("No se pudo actualizar la unidad.");
+    }
+  };
+
   const handleDeleteContent = async (
     unitId: string,
     contentId: string
@@ -281,7 +318,8 @@ const UnitAccordionTeacher: React.FC<UnitAccordionProps> = ({
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        setError(data?.error || "No se pudo eliminar la unidad.");
+        const msg = data?.error ? String(data.error) : "No se pudo eliminar la unidad.";
+        setError(msg);
         return;
       }
 
@@ -560,6 +598,18 @@ const UnitAccordionTeacher: React.FC<UnitAccordionProps> = ({
                   title={unit.is_visible === false ? "Hacer visible" : "Ocultar a alumnos"}
                 >
                   {unit.is_visible === false ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setEditingUnit(unit);
+                  }}
+                  className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                  title="Editar unidad"
+                >
+                  <Edit3 className="w-4 h-4" />
                 </button>
 
                 <button
@@ -917,6 +967,73 @@ const UnitAccordionTeacher: React.FC<UnitAccordionProps> = ({
               <button
                 type="button"
                 onClick={handleSaveEditedContent}
+                className="flex-1 px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg hover:shadow-lg transition-colors font-semibold"
+              >
+                Guardar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {editingUnit && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl p-6 w-full max-w-md">
+            <h3 className="text-lg font-bold mb-4">Editar unidad</h3>
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div className="md:col-span-1">
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">N°</label>
+                  <input
+                    type="number"
+                    min={1}
+                    value={editingUnit.unit_number}
+                    onChange={(e) =>
+                      setEditingUnit((prev) =>
+                        prev
+                          ? { ...prev, unit_number: Number(e.target.value || 1) }
+                          : prev
+                      )
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Título</label>
+                  <input
+                    type="text"
+                    value={editingUnit.title}
+                    onChange={(e) =>
+                      setEditingUnit((prev) => (prev ? { ...prev, title: e.target.value } : prev))
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">Descripción</label>
+                <textarea
+                  value={editingUnit.description || ""}
+                  onChange={(e) =>
+                    setEditingUnit((prev) =>
+                      prev ? { ...prev, description: e.target.value } : prev
+                    )
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 h-24"
+                />
+              </div>
+            </div>
+            <div className="flex gap-3 mt-6">
+              <button
+                type="button"
+                onClick={() => setEditingUnit(null)}
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveEditedUnit}
                 className="flex-1 px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg hover:shadow-lg transition-colors font-semibold"
               >
                 Guardar
