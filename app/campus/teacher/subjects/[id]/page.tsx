@@ -5,6 +5,8 @@ import { useSession } from "next-auth/react";
 import { useRouter, useParams } from "next/navigation";
 import UnitAccordionTeacher from "../../../../../components/teacher/UnitAccordionTeacher";
 import SubjectImageEditor from "../../../../../components/dashboard/SubjectImageEditor";
+import SubjectHeroCard from "@/components/subjects/SubjectHeroCard";
+import { BarChart3, FileUp, MessageSquare, Plus, Users } from "lucide-react";
 interface Subject {
   id: string;
   name: string;
@@ -24,6 +26,12 @@ export default function TeacherSubjectPage() {
   const [subject, setSubject] = useState<Subject | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>("");
+  const [nextDueLabel, setNextDueLabel] = useState<string | null>(null);
+  const [teacherStats, setTeacherStats] = useState<{
+    studentsCount: number;
+    pendingCorrections: number;
+    participation: number | null;
+  } | null>(null);
 
   useEffect(() => {
     if (status === "loading") return;
@@ -39,7 +47,65 @@ export default function TeacherSubjectPage() {
     }
 
     fetchSubject();
+    fetchNextDue();
+    fetchTeacherStats();
   }, [session, status, router, subjectId]);
+
+  const fetchTeacherStats = async () => {
+    try {
+      const res = await fetch(`/api/teacher/subjects/${subjectId}/stats`);
+      if (!res.ok) {
+        setTeacherStats(null);
+        return;
+      }
+
+      const json = await res.json();
+      setTeacherStats({
+        studentsCount: Number(json?.studentsCount) || 0,
+        pendingCorrections: Number(json?.pendingCorrections) || 0,
+        participation:
+          json?.participation === null || json?.participation === undefined
+            ? null
+            : Number(json.participation),
+      });
+    } catch {
+      setTeacherStats(null);
+    }
+  };
+
+  const fetchNextDue = async () => {
+    try {
+      const res = await fetch(`/api/subjects/${subjectId}/assignments`);
+      if (!res.ok) {
+        setNextDueLabel(null);
+        return;
+      }
+
+      const data = await res.json();
+      const arr = Array.isArray(data) ? data : [];
+
+      const now = new Date();
+      const upcoming: Array<{ title: string; due: Date }> = arr
+        .map((a: any) => ({
+          title: String(a?.title ?? ""),
+          due: a?.due_date ? new Date(a.due_date) : null,
+        }))
+        .filter((x: any): x is { title: string; due: Date } =>
+          x.due && !isNaN(x.due.getTime()) && x.due.getTime() >= now.getTime()
+        )
+        .sort((a, b) => a.due.getTime() - b.due.getTime());
+
+      if (upcoming.length > 0) {
+        const first = upcoming[0];
+        const dd = first.due.toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit" });
+        setNextDueLabel(`${dd} - ${first.title}`.trim());
+      } else {
+        setNextDueLabel("Sin entregas próximas");
+      }
+    } catch {
+      setNextDueLabel(null);
+    }
+  };
 
   const fetchSubject = async () => {
     try {
@@ -140,85 +206,94 @@ export default function TeacherSubjectPage() {
   }
 
   return (
-    <div className="min-h-screen bg-muted p-4 sm:p-6">
-      <div className="max-w-6xl mx-auto">
-        {/* Breadcrumb */}
-        <nav className="mb-6">
-          <div className="flex items-center space-x-2 text-sm text-gray-600">
-            <button
-              onClick={() => router.push("/campus/dashboard")}
-              className="hover:text-yellow-600 transition-colors"
-            >
-              Dashboard
-            </button>
-            <i className="fas fa-chevron-right text-xs"></i>
-            <button
-              onClick={() => router.push("/campus/teacher/subjects")}
-              className="hover:text-yellow-600 transition-colors"
-            >
-              Mis Materias
-            </button>
-            <i className="fas fa-chevron-right text-xs"></i>
-            <span className="text-gray-800 font-medium">{subject.name}</span>
+    <div className="min-h-screen bg-gray-50/50 p-4 md:p-8 font-sans text-slate-800">
+      <SubjectHeroCard
+        title={subject.name}
+        teacher={session?.user?.name || null}
+        progress={null}
+        nextDueLabel={nextDueLabel}
+        rightSlot={
+          <div className="flex items-center gap-2">
+            <SubjectImageEditor
+              subjectId={subjectId}
+              currentImage={subject.image_url || ""}
+              canEdit={true}
+              onUpdated={(newUrl: string) => setSubject((prev) => (prev ? { ...prev, image_url: newUrl } : prev))}
+            />
           </div>
-        </nav>
+        }
+      />
 
-        {/* Subject Info Card */}
-        <div className="bg-surface rounded-xl p-6 shadow-soft border border-border mb-6">
-            <div className="flex items-start justify-between">
-            <div className="flex items-center gap-4">
-              {subject.image_url ? (
-                <img
-                  src={subject.image_url}
-                  alt={subject.name}
-                  className="w-16 h-16 rounded-lg object-cover border border-border"
-                />
-              ) : (
-                <div className="w-16 h-16 bg-yellow-100 rounded-lg flex items-center justify-center">
-                  <i className="fas fa-book text-yellow-600 text-xl"></i>
-                </div>
-              )}
-              <div>
-                <div className="flex items-center gap-3 mb-2">
-                  <h1 className="text-2xl font-bold text-gray-800">
-                    {subject.name}
-                  </h1>
-                  <span className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm font-medium border border-yellow-200">
-                    {subject.code}
-                  </span>
-                </div>
-                <p className="text-gray-600 mb-2">{subject.description}</p>
-                <div className="flex items-center gap-4 text-sm text-gray-500">
-                  <span>
-                    <i className="fas fa-graduation-cap mr-1"></i>
-                    {subject.year}° Año
-                    {subject.division ? ` "${subject.division}"` : ""}
-                  </span>
-                  <span>
-                    <i className="fas fa-book mr-1"></i>
-                    {subject.code}
-                  </span>
-                </div>
+      <div className="max-w-4xl mx-auto">
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8 mb-8">
+          <div className="flex flex-col md:flex-row justify-between md:items-start gap-4 mb-6">
+            <div>
+              <div className="flex items-center gap-2 mb-1 flex-wrap">
+                <h2 className="text-2xl md:text-3xl font-bold text-slate-900">{subject.name}</h2>
+                <span className="bg-indigo-100 text-indigo-700 text-xs px-2 py-0.5 rounded font-bold uppercase tracking-wider">
+                  {`${subject.year}°${subject.division ? ` '${subject.division}'` : ""}`}
+                </span>
               </div>
-            
-            {/* Editor para que el profesor pueda cambiar la imagen de la materia */}
-            <div className="flex gap-2 items-start">
-              <SubjectImageEditor
-                subjectId={subjectId}
-                currentImage={subject.image_url || ""}
-                canEdit={true}
-                onUpdated={(newUrl: string) => setSubject((prev) => prev ? { ...prev, image_url: newUrl } : prev)}
-              />
+              <p className="text-slate-500 text-sm">Panel de Docente</p>
+            </div>
+
+            <div className="flex gap-2 flex-wrap">
+              <button
+                className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors shadow-sm"
+                type="button"
+                onClick={() => window.dispatchEvent(new Event("teacher-open-add-unit"))}
+              >
+                <Plus className="w-4 h-4" /> Nueva Unidad
+              </button>
+              <a
+                className="flex items-center gap-2 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
+                href={`/campus/teacher/subjects/${subjectId}/forums`}
+              >
+                <MessageSquare className="w-4 h-4" /> Avisos
+              </a>
             </div>
           </div>
-            <div className="flex gap-2"></div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 flex items-center gap-4">
+              <div className="p-3 bg-blue-100 text-blue-600 rounded-lg">
+                <Users className="w-6 h-6" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-slate-800">{teacherStats ? teacherStats.studentsCount : "—"}</p>
+                <p className="text-xs text-slate-500 uppercase font-bold tracking-wide">Alumnos inscriptos</p>
+              </div>
+            </div>
+
+            <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 flex items-center gap-4">
+              <div className="p-3 bg-amber-100 text-amber-600 rounded-lg">
+                <FileUp className="w-6 h-6" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-slate-800">{teacherStats ? teacherStats.pendingCorrections : "—"}</p>
+                <p className="text-xs text-slate-500 uppercase font-bold tracking-wide">Por corregir</p>
+              </div>
+            </div>
+
+            <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 flex items-center gap-4">
+              <div className="p-3 bg-emerald-100 text-emerald-600 rounded-lg">
+                <BarChart3 className="w-6 h-6" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-slate-800">
+                  {teacherStats
+                    ? teacherStats.participation === null
+                      ? "—"
+                      : `${teacherStats.participation}%`
+                    : "—"}
+                </p>
+                <p className="text-xs text-slate-500 uppercase font-bold tracking-wide">Participación</p>
+              </div>
+            </div>
           </div>
         </div>
 
-        <UnitAccordionTeacher
-          subjectId={subjectId}
-          subjectName={subject?.name || ""}
-        />
+        <UnitAccordionTeacher subjectId={subjectId} subjectName={subject?.name || ""} />
       </div>
     </div>
   );

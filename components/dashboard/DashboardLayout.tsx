@@ -1,32 +1,52 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
 import { usePathname } from "next/navigation";
+import {
+  Bell,
+  Calendar,
+  HelpCircle,
+  LayoutDashboard,
+  LogOut,
+  Settings,
+  User as UserIcon,
+} from "lucide-react";
 
 const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   const { data: session } = useSession();
   const pathname = usePathname();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
+  useEffect(() => {
+    const open = () => setIsSidebarOpen(true);
+    window.addEventListener("campus-open-sidebar", open);
+    return () => {
+      window.removeEventListener("campus-open-sidebar", open);
+    };
+  }, []);
+
   // No mostrar dashboard en páginas de autenticación
   const isAuthPage = pathname?.includes("/auth/");
 
-  const baseNavigation = [
-    { name: "Cursos", href: "/campus/dashboard", icon: "🏠" },
-    { name: "Calendario", href: "/campus/calendar", icon: "📅" },
-    // { name: "Mensajería", href: "/campus/mensajeria", icon: <i className="fas fa-comments"></i> },
-    { name: "Perfil", href: "/campus/profile", icon: "👤" },
-    { name: "Notificaciones", href: "/campus/notifications", icon: "🔔" },
+  const mainNavigation = [
+    { name: "Cursos", href: "/campus/dashboard", icon: LayoutDashboard },
+    { name: "Calendario", href: "/campus/calendar", icon: Calendar },
   ];
 
-  // Navegación extendida con Configuración (para admin) y Salir al final
-  const navigation = [
-    ...baseNavigation,
+  const accountNavigation = [
+    { name: "Perfil", href: "/campus/profile", icon: UserIcon },
+    { name: "Notificaciones", href: "/campus/notifications", icon: Bell },
+  ];
+
+  const settingsNavigation = [
     ...(session?.user?.role === "admin"
-      ? [{ name: "Configuración", href: "/campus/settings", icon: "⚙️" }]
+      ? [{ name: "Configuración", href: "/campus/settings", icon: Settings }]
       : []),
-    { name: "Salir", href: "#logout", icon: "🚪" },
+  ];
+
+  const supportNavigation = [
+    { name: "Soporte", href: "/campus/support", icon: HelpCircle },
   ];
 
   const handleLogout = async () => {
@@ -35,46 +55,125 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
 
   // Sidebar Component
   const Sidebar = ({ onNavigate }: { onNavigate?: () => void }) => (
-    <div className="h-full bg-white/95 backdrop-blur-sm border-r border-gray-200 flex flex-col">
-      <nav className="mt-6 flex-1">
-        <div className="px-3 space-y-1">
-          {navigation.map((item) => {
-            const isLogoutItem = item.name === "Salir";
+    <div className="h-full bg-white border-r border-slate-200 flex flex-col">
+      <nav className="flex-1 overflow-y-auto p-4 pt-6 space-y-6">
+        <div>
+          <p className="px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Menú</p>
+          <div className="space-y-1">
+            {mainNavigation.map((item) => {
+              const Icon = item.icon;
+              const active = pathname === item.href;
 
-            if (isLogoutItem) {
               return (
-                <button
+                <Link
                   key={item.name}
-                  type="button"
-                  onClick={handleLogout}
-                  className="w-full flex items-center px-3 py-2.5 text-sm font-semibold rounded-xl transition-colors text-gray-700 hover:bg-red-50 hover:text-red-700"
+                  href={item.href}
+                  onClick={onNavigate}
+                  className={`sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
+                    active
+                      ? "bg-yellow-50 text-slate-900 border border-yellow-100"
+                      : "text-slate-600 hover:text-slate-900 hover:bg-yellow-50/60"
+                  }`}
                 >
-                  <span className="mr-3 text-lg">{typeof item.icon === 'string' ? item.icon : item.icon}</span>
-                  {item.name}
-                </button>
-              );
-            }
-
-            return (
-              <Link
-                key={item.name}
-                href={item.href}
-                onClick={onNavigate}
-                className={`flex items-center justify-between px-3 py-2.5 text-sm font-semibold rounded-xl transition-all border ${
-                  pathname === item.href
-                    ? "bg-yellow-50 text-gray-900 border-yellow-200"
-                    : "text-gray-700 border-transparent hover:bg-yellow-50/60 hover:border-yellow-100"
-                }`}
-              >
-                <span className="flex items-center min-w-0">
-                  <span className="mr-3 text-lg">{typeof item.icon === 'string' ? item.icon : item.icon}</span>
+                  <Icon className={`h-5 w-5 ${active ? "text-yellow-700" : "text-slate-400"}`} />
                   <span className="truncate">{item.name}</span>
-                </span>
-              </Link>
-            );
-          })}
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+
+        <div>
+          <p className="px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Cuenta</p>
+          <div className="space-y-1">
+            {accountNavigation.map((item) => {
+              const Icon = item.icon;
+              const active = pathname === item.href;
+
+              return (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  onClick={onNavigate}
+                  className={`sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
+                    active
+                      ? "bg-yellow-50 text-slate-900 border border-yellow-100"
+                      : "text-slate-600 hover:text-slate-900 hover:bg-yellow-50/60"
+                  }`}
+                >
+                  <Icon className={`h-5 w-5 ${active ? "text-yellow-700" : "text-slate-400"}`} />
+                  <span className="truncate">{item.name}</span>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+
+        {settingsNavigation.length > 0 && (
+          <div>
+            <p className="px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Ajustes</p>
+            <div className="space-y-1">
+              {settingsNavigation.map((item) => {
+                const Icon = item.icon;
+                const active = pathname === item.href;
+
+                return (
+                  <Link
+                    key={item.name}
+                    href={item.href}
+                    onClick={onNavigate}
+                    className={`sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
+                      active
+                        ? "bg-yellow-50 text-slate-900 border border-yellow-100"
+                        : "text-slate-600 hover:text-slate-900 hover:bg-yellow-50/60"
+                    }`}
+                  >
+                    <Icon className={`h-5 w-5 ${active ? "text-yellow-700" : "text-slate-400"}`} />
+                    <span className="truncate">{item.name}</span>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        <div>
+          <p className="px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Soporte</p>
+          <div className="space-y-1">
+            {supportNavigation.map((item) => {
+              const Icon = item.icon;
+              const active = pathname === item.href;
+
+              return (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  onClick={onNavigate}
+                  className={`sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
+                    active
+                      ? "bg-yellow-50 text-slate-900 border border-yellow-100"
+                      : "text-slate-600 hover:text-slate-900 hover:bg-yellow-50/60"
+                  }`}
+                >
+                  <Icon className={`h-5 w-5 ${active ? "text-yellow-700" : "text-slate-400"}`} />
+                  <span className="truncate">{item.name}</span>
+                </Link>
+              );
+            })}
+          </div>
         </div>
       </nav>
+
+      <div className="p-4 border-t border-slate-100">
+        <button
+          type="button"
+          onClick={handleLogout}
+          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-slate-600 hover:text-red-700 hover:bg-red-50 transition-colors"
+        >
+          <LogOut className="h-5 w-5 text-slate-400" />
+          <span>Salir</span>
+        </button>
+      </div>
     </div>
   );
 
@@ -90,7 +189,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-muted">
+    <div className="flex flex-col min-h-screen bg-slate-50">
       {/* Sidebar Drawer (Mobile & Tablet) */}
       {isSidebarOpen && (
         <div className="lg:hidden fixed inset-0 z-40 flex">
@@ -107,13 +206,12 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
       {/* Main Content */}
       <div className="flex flex-1">
         {/* Static Sidebar (Desktop) */}
-        <aside className="hidden lg:block w-72 sticky top-0 h-screen">
+        <aside className="hidden lg:block w-72 sticky top-0 h-[calc(100vh-0px)]">
           <Sidebar />
         </aside>
 
         {/* Main content area */}
-        <main className="flex-1 bg-white">
-          {/* Proveedor de notificaciones de seguridad */}
+        <main className="flex-1">
           <div className="max-w-7xl mx-auto px-4 md:px-6 py-6 pb-24 lg:pb-6">
             {children}
           </div>
@@ -123,39 +221,30 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
       {/* Bottom navigation for mobile */}
       <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-border z-50 shadow-soft shadow-[0_-4px_16px_rgba(0,0,0,0.16)] pb-safe">
         <div className="flex items-center justify-around py-1 sm:py-2">
-          {navigation.map((item) => {
-            const isLogoutItem = item.name === "Salir";
-            const isActive = pathname === item.href && !isLogoutItem;
-
-            if (isLogoutItem) {
-              return (
-                <button
-                  key={item.name}
-                  onClick={handleLogout}
-                  className="flex flex-col items-center justify-center py-2 px-2 text-xs transition-colors text-[var(--primary)] hover:opacity-90"
-                  title="Cerrar sesión"
-                >
-                  <span className="text-base sm:text-lg mb-0.5 sm:mb-1">
-                    {typeof item.icon === 'string' ? item.icon : item.icon}
-                  </span>
-                </button>
-              );
-            }
+          {[...mainNavigation, ...accountNavigation].map((item) => {
+            const Icon = item.icon;
+            const isActive = pathname === item.href;
 
             return (
               <Link
                 key={item.name}
                 href={item.href}
                 className={`flex flex-col items-center justify-center py-2 px-2 text-xs transition-colors ${
-                  isActive ? "text-[var(--primary)]" : "text-gray-500 hover:text-gray-700"
+                  isActive ? "text-yellow-700" : "text-slate-500 hover:text-slate-700"
                 }`}
               >
-                <span className="text-base sm:text-lg mb-0.5 sm:mb-1">
-                  {typeof item.icon === 'string' ? item.icon : item.icon}
-                </span>
+                <Icon className="h-5 w-5 mb-1" />
               </Link>
             );
           })}
+
+          <button
+            onClick={handleLogout}
+            className="flex flex-col items-center justify-center py-2 px-2 text-xs transition-colors text-slate-500 hover:text-red-700"
+            title="Cerrar sesión"
+          >
+            <LogOut className="h-5 w-5 mb-1" />
+          </button>
         </div>
       </div>
     </div>

@@ -1,4 +1,17 @@
 import React, { useState, useEffect } from "react";
+import {
+  AlertCircle,
+  BookOpen,
+  CheckCircle,
+  ChevronDown,
+  Download,
+  Eye,
+  EyeOff,
+  FileText,
+  ListChecks,
+  MessageSquare,
+  Trash2,
+} from "lucide-react";
 
 interface UnitAccordionProps {
   subjectId: string;
@@ -12,6 +25,7 @@ interface Unit {
   description: string;
   order_index: number;
   created_at: string;
+  is_visible?: boolean;
 }
 
 interface Section {
@@ -56,6 +70,12 @@ const UnitAccordionTeacher: React.FC<UnitAccordionProps> = ({
   useEffect(() => {
     fetchUnits();
   }, [subjectId]);
+
+  useEffect(() => {
+    const onOpenAddUnit = () => setShowAddUnit(true);
+    window.addEventListener("teacher-open-add-unit", onOpenAddUnit);
+    return () => window.removeEventListener("teacher-open-add-unit", onOpenAddUnit);
+  }, []);
 
   // Agregar logs más detallados en el fetchUnits
   const fetchUnits = async () => {
@@ -158,8 +178,47 @@ const UnitAccordionTeacher: React.FC<UnitAccordionProps> = ({
     }
   };
 
+  const handleDeleteForum = async (unitId: string, forumId: string) => {
+    if (!window.confirm("¿Seguro que quieres eliminar este foro?")) return;
+    const res = await fetch(`/api/forums/${forumId}`, {
+      method: "DELETE",
+    });
+
+    if (res.ok) {
+      setSections((prev) => ({
+        ...prev,
+        [unitId]: (prev[unitId] || []).filter((s) => (s.forum_id || s.id) !== forumId),
+      }));
+    } else {
+      const data = await res.json().catch(() => ({}));
+      alert(data?.error || "Error al eliminar el foro");
+    }
+  };
+
   const handleExpand = (unitId: string) => {
     setExpandedUnit(expandedUnit === unitId ? null : unitId);
+  };
+
+  const handleToggleVisibility = async (e: React.MouseEvent, unit: Unit) => {
+    e.stopPropagation();
+
+    const next = unit.is_visible === false;
+    try {
+      const res = await fetch(`/api/subjects/${subjectId}/units/${unit.id}` as string, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ is_visible: next }),
+      });
+
+      if (!res.ok) {
+        setError("No se pudo actualizar la visibilidad de la unidad.");
+        return;
+      }
+
+      setUnits((prev) => prev.map((u) => (u.id === unit.id ? { ...u, is_visible: next } : u)));
+    } catch {
+      setError("No se pudo actualizar la visibilidad de la unidad.");
+    }
   };
 
   const handleAddUnit = async () => {
@@ -228,7 +287,22 @@ const UnitAccordionTeacher: React.FC<UnitAccordionProps> = ({
       window.location.href = `/campus/teacher/subjects/${subjectId}/forums?unit_id=${unitId}&create=true&title=${encodeURIComponent(newSection.title)}`;
       return;
     }
-    
+
+    if ((newSection.content_type === "link" || newSection.content_type === "video") && !newSection.content.trim()) {
+      setFileError("Debes ingresar un enlace (URL).");
+      return;
+    }
+
+    if (newSection.content_type === "link" || newSection.content_type === "video") {
+      try {
+        // eslint-disable-next-line no-new
+        new URL(newSection.content.trim());
+      } catch {
+        setFileError("El enlace (URL) no es válido.");
+        return;
+      }
+    }
+
     if (newSection.content_type === "document" && !newSection.file) {
       setFileError("Debes seleccionar un archivo.");
       return;
@@ -239,8 +313,7 @@ const UnitAccordionTeacher: React.FC<UnitAccordionProps> = ({
     try {
       const formData = new FormData();
       formData.append("title", newSection.title);
-      // Si el tipo es 'content', enviarlo como 'document' para el backend
-      formData.append("content_type", newSection.content_type === "content" ? "document" : newSection.content_type);
+      formData.append("content_type", newSection.content_type);
       formData.append("content", newSection.content);
       if (newSection.file) formData.append("file", newSection.file);
       if (newSection.content_type === "assignment") {
@@ -308,179 +381,217 @@ const UnitAccordionTeacher: React.FC<UnitAccordionProps> = ({
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-5xl">
-      {/* Error message */}
+    <div className="space-y-5 pb-20">
       {error && (
         <div className="bg-red-100 text-red-700 px-4 py-2 rounded mb-4 text-center">
           {error} Por favor, verifica tu conexión o contacta al administrador.
         </div>
       )}
 
-      {/* Header - matches beautiful HTML */}
-      <div className="bg-white rounded-xl shadow-soft p-6 mb-8 border border-gray-100">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold">
-              Contenido de la Materia
-            </h1>
-            <p className="text-gray-600 mt-2">
-              Gestiona las unidades y contenidos de la materia
-            </p>
-          </div>
-          <button
-            onClick={() => setShowAddUnit(true)}
-            className="px-5 py-3 bg-gradient-to-r from-yellow-500 to-pink-500 text-white rounded-lg hover:shadow-lg transition-all duration-300 flex items-center gap-2 font-medium"
-          >
-            <i className="fas fa-plus"></i>
-            Nueva Unidad
-          </button>
-        </div>
-      </div>
-
-      {/* Units List */}
-      <div className="space-y-4">
+      <div className="space-y-3">
         {units.length === 0 && (
-          <div className="text-center py-12">
-            <div className="mx-auto w-24 h-24 bg-yellow-100 rounded-full flex items-center justify-center text-yellow-500 mb-4">
-              <i className="fas fa-book-open text-3xl"></i>
+          <div className="text-center py-10 text-slate-500 bg-white rounded-2xl border border-slate-200">
+            <div className="mx-auto w-12 h-12 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center mb-3">
+              <BookOpen className="w-6 h-6 text-slate-600" />
             </div>
-            <h3 className="text-xl font-medium text-gray-700 mb-2">No hay unidades disponibles</h3>
-            <p className="text-gray-500 mb-6">No se encontraron unidades para esta materia. Intenta agregar una nueva unidad.</p>
-            <button onClick={() => setShowAddUnit(true)} className="px-5 py-2.5 bg-gradient-to-r from-yellow-500 to-pink-500 text-white rounded-lg hover:shadow-lg transition-all duration-300 flex items-center gap-2 font-medium mx-auto">
-              <i className="fas fa-plus"></i>
-              Crear Primera Unidad
-            </button>
+            <p className="font-medium">No hay unidades disponibles aún.</p>
           </div>
         )}
-        {units.map((unit, _idx) => (
-          <div key={unit.id} className="bg-white rounded-xl shadow-soft overflow-hidden border border-gray-100 hover:border-yellow-200 transition-colors duration-200">
-            <button
-              className="unit-header w-full flex justify-between items-center px-6 py-5 focus:outline-none hover:bg-gray-50 transition-colors duration-150"
+
+        {units.map((unit) => (
+          <div
+            key={unit.id}
+            className={`bg-white rounded-xl border transition-all duration-300 overflow-hidden ${
+              expandedUnit === unit.id
+                ? "shadow-lg border-indigo-200 ring-1 ring-indigo-50"
+                : unit.is_visible === false
+                  ? "shadow-sm border-dashed border-slate-300 opacity-90"
+                  : "shadow-sm border-slate-200 hover:border-slate-300"
+            }`}
+          >
+            <div
+              className="w-full flex items-center justify-between p-6 text-left bg-white hover:bg-slate-50/80 transition-colors group cursor-pointer"
               onClick={() => handleExpand(unit.id)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  handleExpand(unit.id);
+                }
+              }}
               aria-expanded={expandedUnit === unit.id}
               aria-controls={`unit-panel-${unit.id}`}
               id={`unit-header-${unit.id}`}
               role="button"
+              tabIndex={0}
             >
-              <div className="text-left">
-                <div className="font-bold text-gray-800 text-lg flex items-center gap-2">
-                  <span className="bg-yellow-100 text-yellow-800 rounded-full w-8 h-8 flex items-center justify-center text-sm">{unit.unit_number}</span>
-                  <span>{unit.title}</span>
+              <div className="flex items-start gap-4">
+                <div
+                  className={`p-2 rounded-lg transition-colors ${
+                    expandedUnit === unit.id
+                      ? "bg-indigo-100 text-indigo-600"
+                      : "bg-slate-100 text-slate-500 group-hover:bg-slate-200"
+                  }`}
+                >
+                  <BookOpen className="w-6 h-6" />
                 </div>
-                {unit.description && (
-                  <div className="text-sm text-gray-600 mt-1">
-                    {unit.description}
-                  </div>
-                )}
+                <div>
+                  <h3
+                    className={`text-lg font-bold transition-colors ${
+                      expandedUnit === unit.id ? "text-indigo-900" : "text-slate-700"
+                    }`}
+                  >
+                    {unit.title}
+                    {unit.is_visible === false ? (
+                      <span className="ml-2 text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full border border-slate-200 uppercase tracking-wide">
+                        Oculto
+                      </span>
+                    ) : null}
+                  </h3>
+                  <p className="text-sm text-slate-500 mt-1 font-medium">
+                    {unit.description || `Unidad ${unit.unit_number}`}
+                  </p>
+                </div>
               </div>
-              <i className={`fas fa-chevron-down text-gray-400 transition-transform duration-200 ${expandedUnit === unit.id ? 'transform rotate-180' : ''}`}></i>
-            </button>
-            <div className={`accordion-content ${expandedUnit === unit.id ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'} transition-all duration-300 overflow-hidden`}>
-              <div className="px-6 pb-6 space-y-4">
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={(e) => handleToggleVisibility(e, unit)}
+                  className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                  title={unit.is_visible === false ? "Hacer visible" : "Ocultar a alumnos"}
+                >
+                  {unit.is_visible === false ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+
+                <div
+                  className={`transform transition-transform duration-300 p-1 rounded-full ${
+                    expandedUnit === unit.id
+                      ? "rotate-180 bg-indigo-50 text-indigo-600"
+                      : "text-slate-400"
+                  }`}
+                >
+                  <ChevronDown className="w-6 h-6" />
+                </div>
+              </div>
+            </div>
+
+            <div
+              className={`accordion-content ${
+                expandedUnit === unit.id
+                  ? "max-h-[2000px] opacity-100"
+                  : "max-h-0 opacity-0"
+              } transition-all duration-300 overflow-hidden`}
+            >
+              <div className="border-t border-slate-100 bg-slate-50/50 p-4 space-y-3">
                 {Array.isArray(sections[unit.id]) && sections[unit.id].length > 0 ? (
                   sections[unit.id].map((section) => (
-                  <div key={section.id} className="bg-yellow-50 border border-yellow-100 rounded-lg p-5 fade-in">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
-                      <div className="flex items-center gap-3">
-                        <span className="bg-yellow-100 text-yellow-800 rounded-full w-8 h-8 flex items-center justify-center">
-                          {/* Icon logic */}
-                          {section.content_type === 'document' && <i className="fas fa-book-open"></i>}
-                          {section.content_type === 'assignment' && <i className="fas fa-tasks"></i>}
-                          {section.content_type === 'forum' && <i className="fas fa-comments"></i>}
-                        </span>
-                        <span className="font-medium text-gray-900">{section.title}</span>
-                        <span className="px-2.5 py-0.5 bg-yellow-100 text-yellow-800 text-xs rounded-full font-medium">
-                          {getSectionTypeLabel(section)}
-                        </span>
+                    <div
+                      key={section.id}
+                      className="flex flex-col md:flex-row items-start md:items-center justify-between bg-white p-4 rounded-xl border border-slate-200 hover:border-indigo-300 hover:shadow-md hover:shadow-indigo-100/50 transition-all duration-200 group/item"
+                    >
+                      <div className="flex items-center gap-4 mb-3 md:mb-0 w-full md:w-auto">
+                        <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-100 group-hover/item:bg-indigo-50 group-hover/item:border-indigo-100 transition-colors">
+                          {section.content_type === "assignment" ? (
+                            <ListChecks className="w-5 h-5 text-amber-600" />
+                          ) : section.content_type === "forum" ? (
+                            <MessageSquare className="w-5 h-5 text-indigo-600" />
+                          ) : (
+                            <FileText className="w-5 h-5 text-red-500" />
+                          )}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-semibold text-slate-700 group-hover/item:text-indigo-700 transition-colors truncate">
+                            {section.title}
+                          </p>
+                          <p className="text-xs text-slate-400 font-medium mt-0.5 flex items-center gap-2">
+                            {getSectionTypeLabel(section).toUpperCase()}
+                            <span className="w-1 h-1 rounded-full bg-slate-300"></span>
+                            {section.content_type === "assignment" && section.due_date
+                              ? `Entrega: ${new Date(section.due_date).toLocaleDateString("es-AR")}`
+                              : section.content_type === "forum"
+                                ? `${section.questions_count || 0} ${section.questions_count === 1 ? "pregunta" : "preguntas"}`
+                                : section.file_name
+                                  ? section.file_name
+                                  : ""}
+                          </p>
+                        </div>
                       </div>
-                      <div className="flex gap-2">
-                        {/* Forum buttons */}
-                        {section.content_type === "forum" && (
-                          <>
-                            <button
-                              onClick={() => (window.location.href = `/campus/teacher/subjects/${subjectId}/forums/${section.forum_id}`)}
-                              className="px-3 py-1 bg-blue-600 text-white rounded-full hover:bg-blue-700 text-xs font-medium flex items-center gap-1"
-                            >
-                              <i className="fas fa-eye mr-1"></i>
-                              Ver foro
-                            </button>
-                          </>
-                        )}
-                        {/* Assignment buttons */}
-                        {section.content_type === "assignment" && (
-                          <>
-                            <button
-                              onClick={() => handleDeleteAssignment(unit.id, section.id)}
-                              className="px-3 py-1 bg-red-100 text-red-700 rounded-full hover:bg-red-200 text-xs font-medium flex items-center gap-1"
-                            >
-                              <i className="fas fa-trash-alt text-xs"></i>
-                              Eliminar
-                            </button>
-                            <button
-                              onClick={() => (window.location.href = `/campus/teacher/subjects/${subjectId}/assignments/${section.assignment_id}/submissions`)}
-                              className="px-3 py-1 bg-blue-600 text-white rounded-full hover:bg-blue-700 text-xs font-medium flex items-center gap-1"
-                            >
-                              <i className="fas fa-list-check mr-1"></i>
-                              Ver entregas
-                            </button>
-                          </>
-                        )}
-                        {/* Delete for other types */}
-                        {section.content_type !== "assignment" && section.content_type !== "forum" && (
-                          <button
-                            onClick={() => handleDeleteAssignment(unit.id, section.id)}
-                            className="px-3 py-1 bg-red-100 text-red-700 rounded-full hover:bg-red-200 text-xs font-medium flex items-center gap-1"
-                          >
-                            <i className="fas fa-trash-alt text-xs"></i>
-                            Eliminar
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                    <div className="text-gray-700 mb-3 pl-11 whitespace-pre-wrap">{section.content}</div>
-                    {/* Download link for documents */}
-                    {section.file_url && section.file_name && (
-                      <div className="pl-11 mb-3">
-                        <a href={section.file_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center px-3 py-2 bg-yellow-100 text-yellow-800 rounded-lg hover:bg-yellow-200 transition-colors text-sm font-medium" download>
-                          <i className="fas fa-download mr-2"></i>
-                          Descargar {section.file_name}
-                        </a>
-                      </div>
-                    )}
-                    {section.content_type === "forum" && (
-                      <div className="flex flex-wrap gap-2 pl-11 mb-3">
-                        <span className="px-2.5 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium flex items-center gap-1">
-                          <i className="fas fa-question-circle"></i> {section.questions_count || 0} pregunta{section.questions_count !== 1 ? 's' : ''}
-                        </span>
-                        <span className={`px-2.5 py-1 ${!section.is_closed ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'} rounded-full text-xs font-medium`}>
-                          <i className={`fas fa-${!section.is_closed ? 'lock-open' : 'lock'}`}></i> {!section.is_closed ? 'Abierto' : 'Cerrado'}
-                        </span>
-                      </div>
-                    )}
-                    {section.content_type === "assignment" && (
-                      <div className="flex flex-wrap gap-2 pl-11 mb-3">
-                        {section.due_date && (
-                          <span className="px-2.5 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium flex items-center gap-1">
-                            <i className="fas fa-clock"></i> Entrega: {new Date(section.due_date).toLocaleDateString()}
+
+                      <div className="flex items-center gap-2 w-full md:w-auto justify-between md:justify-end pl-[52px] md:pl-0">
+                        {section.content_type === "assignment" ? (
+                          <span className={`flex items-center text-xs font-medium px-2.5 py-1 rounded-full border ${section.is_active ? "text-emerald-700 bg-emerald-100 border-emerald-200" : "text-slate-600 bg-slate-100 border-slate-200"}`}>
+                            {section.is_active ? (
+                              <>
+                                <CheckCircle className="w-3 h-3 mr-1.5" />
+                                Activa
+                              </>
+                            ) : (
+                              <>
+                                <AlertCircle className="w-3 h-3 mr-1.5" />
+                                Inactiva
+                              </>
+                            )}
                           </span>
-                        )}
-                        <span className={`px-2.5 py-1 ${section.is_active ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'} rounded-full text-xs font-medium`}>
-                          <i className={`fas fa-${section.is_active ? 'check-circle' : 'times-circle'}`}></i> {section.is_active ? 'Activa' : 'Inactiva'}
-                        </span>
+                        ) : null}
+
+                        {section.content_type === "forum" ? (
+                          <button
+                            type="button"
+                            onClick={() => (window.location.href = `/campus/teacher/subjects/${subjectId}/forums/${section.forum_id}`)}
+                            className="text-slate-400 hover:text-indigo-600 px-3 py-2 rounded-lg hover:bg-indigo-50 transition-all text-sm font-semibold"
+                          >
+                            Ver foro
+                          </button>
+                        ) : null}
+
+                        {section.content_type === "assignment" ? (
+                          <button
+                            type="button"
+                            onClick={() => (window.location.href = `/campus/teacher/subjects/${subjectId}/assignments/${section.assignment_id}/submissions`)}
+                            className="text-slate-400 hover:text-indigo-600 px-3 py-2 rounded-lg hover:bg-indigo-50 transition-all text-sm font-semibold"
+                          >
+                            Ver entregas
+                          </button>
+                        ) : null}
+
+                        {section.file_url ? (
+                          <a
+                            className="text-slate-400 hover:text-indigo-600 p-2 rounded-lg hover:bg-indigo-50 transition-all"
+                            title="Descargar / Ver"
+                            href={`/api/files/download?url=${encodeURIComponent(section.file_url)}${section.file_name ? `&name=${encodeURIComponent(section.file_name)}` : ""}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            download
+                          >
+                            <Download className="w-5 h-5" />
+                          </a>
+                        ) : null}
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            section.content_type === "forum"
+                              ? handleDeleteForum(unit.id, String(section.forum_id || section.id))
+                              : handleDeleteAssignment(unit.id, section.id)
+                          }
+                          className="text-slate-400 hover:text-red-700 p-2 rounded-lg hover:bg-red-50 transition-all"
+                          title="Eliminar"
+                        >
+                          <Trash2 className="w-5 h-5" />
+                        </button>
                       </div>
-                    )}
-                    <div className="text-xs text-gray-500 pl-11">
-                      <i className="fas fa-user-circle mr-1"></i> {section.creator_name || "Desconocido"} • {new Date(section.created_at).toLocaleDateString()}
                     </div>
-                  </div>
                   ))
                 ) : (
-                  <div className="text-center text-gray-500 py-6">No hay secciones en esta unidad.</div>
+                  <div className="text-center text-slate-500 py-6">No hay secciones en esta unidad.</div>
                 )}
-                {/* Add Section Button */}
-                <button onClick={() => setShowAddSection(unit.id)} className="add-section-btn w-full p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-yellow-400 hover:bg-yellow-50/30 transition-all duration-200 flex items-center justify-center gap-2 text-gray-600 font-medium">
-                  <i className="fas fa-plus-circle text-yellow-500"></i>
-                  Agregar Sección
+
+                <button
+                  onClick={() => setShowAddSection(unit.id)}
+                  className="w-full p-4 border-2 border-dashed border-slate-300 rounded-xl hover:border-indigo-300 hover:bg-indigo-50/30 transition-all duration-200 flex items-center justify-center gap-2 text-slate-600 font-semibold"
+                  type="button"
+                >
+                  <BookOpen className="w-5 h-5 text-indigo-600" />
+                  Agregar sección
                 </button>
               </div>
             </div>
@@ -510,7 +621,7 @@ const UnitAccordionTeacher: React.FC<UnitAccordionProps> = ({
             </div>
             <div className="flex gap-3 mt-6">
               <button onClick={() => setShowAddUnit(false)} className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">Cancelar</button>
-              <button onClick={handleAddUnit} className="flex-1 px-4 py-2 bg-gradient-to-r from-yellow-500 to-pink-500 text-white rounded-lg hover:shadow-lg">Crear Unidad</button>
+              <button onClick={handleAddUnit} className="flex-1 px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg hover:shadow-lg transition-colors font-semibold">Crear Unidad</button>
             </div>
           </div>
         </div>
@@ -531,28 +642,54 @@ const UnitAccordionTeacher: React.FC<UnitAccordionProps> = ({
               />
               <select
                 value={newSection.content_type}
-                onChange={(e) => setNewSection({ ...newSection, content_type: e.target.value, file: null })}
+                onChange={(e) => {
+                  const next = e.target.value;
+                  setNewSection({
+                    ...newSection,
+                    content_type: next,
+                    file: null,
+                    content: next === "link" || next === "video" ? "" : newSection.content,
+                  });
+                  setFileError(null);
+                }}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
               >
-                <option value="document">Contenido</option>
-                <option value="document">Documento</option>
+                <option value="document">Documento / Archivo</option>
+                <option value="link">Enlace</option>
+                <option value="video">Video</option>
                 <option value="assignment">Tarea</option>
                 <option value="forum">Foro de Discusión</option>
               </select>
-              <textarea
-                value={newSection.content}
-                onChange={(e) => setNewSection({ ...newSection, content: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 h-20"
-                placeholder={
-                  newSection.content_type === "document"
-                    ? "Descripción del documento que estás subiendo..."
-                    : newSection.content_type === "assignment"
-                    ? "Instrucciones detalladas de la tarea..."
-                    : newSection.content_type === "forum"
-                    ? "Descripción del foro (opcional)..."
-                    : "Descripción del contenido..."
-                }
-              />
+
+              {newSection.content_type === "link" || newSection.content_type === "video" ? (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Enlace (URL)</label>
+                  <input
+                    type="url"
+                    value={newSection.content}
+                    onChange={(e) => setNewSection({ ...newSection, content: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                    placeholder={newSection.content_type === "video" ? "https://... (YouTube, Drive, etc.)" : "https://..."}
+                    required
+                  />
+                  {fileError && <div className="text-red-500 text-xs mt-1">{fileError}</div>}
+                </div>
+              ) : (
+                <textarea
+                  value={newSection.content}
+                  onChange={(e) => setNewSection({ ...newSection, content: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 h-20"
+                  placeholder={
+                    newSection.content_type === "document"
+                      ? "Descripción del documento que estás subiendo..."
+                      : newSection.content_type === "assignment"
+                      ? "Instrucciones detalladas de la tarea..."
+                      : newSection.content_type === "forum"
+                      ? "Descripción del foro (opcional)..."
+                      : "Descripción"
+                  }
+                />
+              )}
               {/* Campos extra solo para tareas */}
               {newSection.content_type === "assignment" && (
                 <>
@@ -594,7 +731,7 @@ const UnitAccordionTeacher: React.FC<UnitAccordionProps> = ({
                   />
                   {fileError && <div className="text-red-500 text-xs mt-1">{fileError}</div>}
                 </div>
-              ) : (
+              ) : newSection.content_type === "link" || newSection.content_type === "video" ? null : (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Archivo (Opcional)</label>
                   <input
@@ -607,7 +744,7 @@ const UnitAccordionTeacher: React.FC<UnitAccordionProps> = ({
             </div>
             <div className="flex gap-3 mt-6">
               <button onClick={() => setShowAddSection(null)} className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">Cancelar</button>
-              <button onClick={() => showAddSection && handleAddSection(showAddSection)} className="flex-1 px-4 py-2 bg-gradient-to-r from-yellow-500 to-pink-500 text-white rounded-lg hover:shadow-lg">Agregar Sección</button>
+              <button onClick={() => showAddSection && handleAddSection(showAddSection)} className="flex-1 px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg hover:shadow-lg transition-colors font-semibold">Agregar Sección</button>
             </div>
           </div>
         </div>

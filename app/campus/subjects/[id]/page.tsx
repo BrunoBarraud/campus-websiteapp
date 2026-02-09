@@ -16,15 +16,19 @@ import {
   AssignmentModal,
 } from "@/components/modals/SubjectModals";
 import { UnitList } from "@/components/subjects/UnitList";
+import SubjectHeroCard from "@/components/subjects/SubjectHeroCard";
 import {
-  FiPlus,
+  BookOpen,
+  ClipboardList,
+  FileText,
+  Megaphone,
+} from "lucide-react";
+import {
   FiEdit,
   FiTrash2,
   FiFile,
   FiBookOpen,
   FiCalendar,
-  FiUsers,
-  FiArrowLeft,
   FiFolder,
   FiClipboard,
 } from "react-icons/fi";
@@ -377,24 +381,24 @@ export default function SubjectDetailPage() {
   const getContentTypeIcon = (type: string) => {
     switch (type) {
       case "announcement":
-        return "📢";
+        return <Megaphone className="w-4 h-4 text-indigo-600" />;
       case "resource":
-        return "📚";
+        return <BookOpen className="w-4 h-4 text-emerald-600" />;
       case "assignment":
-        return "📝";
+        return <ClipboardList className="w-4 h-4 text-amber-600" />;
       case "note":
-        return "📄";
+        return <FileText className="w-4 h-4 text-slate-600" />;
       default:
-        return "📄";
+        return <FileText className="w-4 h-4 text-slate-600" />;
     }
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-muted flex items-center justify-center px-4">
-        <div className="bg-surface border border-border shadow-soft rounded-xl p-4 flex items-center gap-3">
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center px-4">
+        <div className="bg-white border border-slate-200 shadow-sm rounded-2xl p-4 flex items-center gap-3">
           <div className="animate-spin rounded-full h-5 w-5 border-2 border-border border-t-primary"></div>
-          <span className="text-gray-700 dark:text-gray-200 text-sm">Cargando materia…</span>
+          <span className="text-slate-700 text-sm">Cargando materia…</span>
         </div>
       </div>
     );
@@ -402,12 +406,12 @@ export default function SubjectDetailPage() {
 
   if (!subject) {
     return (
-      <div className="min-h-screen bg-muted flex items-center justify-center px-4">
-        <div className="bg-surface border border-border shadow-soft rounded-xl p-6 text-center">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center px-4">
+        <div className="bg-white border border-slate-200 shadow-sm rounded-2xl p-6 text-center">
+          <h2 className="text-xl font-semibold text-slate-900">
             Materia no encontrada
           </h2>
-          <p className="text-gray-600 dark:text-gray-400 mt-2">
+          <p className="text-slate-600 mt-2">
             La materia que buscas no existe o no tienes permisos para verla.
           </p>
           <button
@@ -423,80 +427,80 @@ export default function SubjectDetailPage() {
 
   return (
     <>
-      <div className="min-h-screen bg-muted">
-        {/* Header */}
-        <div className="bg-surface border-b border-border shadow-soft">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="py-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <button
-                    onClick={() => router.back()}
-                    className="flex items-center text-gray-600 hover:text-gray-900"
-                  >
-                    <FiArrowLeft className="w-5 h-5 mr-2" />
-                    Volver
-                  </button>
-                  <div>
-                    <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-                      {subject.name}
-                    </h1>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                      {subject.code} • {subject.year}° Año
-                    </p>
-                    {subject.teacher && (
-                      <p className="text-sm text-blue-600 mt-1 flex items-center">
-                        <FiUsers className="w-4 h-4 mr-1" />
-                        {subject.teacher.name}
-                      </p>
-                    )}
-                  </div>
-                </div>
+      <div className="min-h-screen bg-slate-50">
+        <div className="p-4 md:p-8">
+          <SubjectHeroCard
+            title={subject.name}
+            teacher={subject.teacher?.name || null}
+            progress={null}
+            nextDueLabel={(() => {
+              const now = new Date();
+              const upcoming = (assignments || [])
+                .map((a) => ({ title: a.title, due: a.due_date ? new Date(a.due_date) : null }))
+                .filter((x): x is { title: string; due: Date } =>
+                  Boolean(x.due) && !isNaN((x.due as Date).getTime()) && (x.due as Date).getTime() >= now.getTime()
+                )
+                .sort((a, b) => a.due.getTime() - b.due.getTime());
 
-                <div className="flex items-center space-x-3">
-                  <button
-                    onClick={() => refreshData()}
-                    disabled={loading}
-                    className="flex items-center px-4 py-2 text-gray-600 hover:text-gray-900 hover:bg-muted rounded-lg transition-colors"
-                    title="Refrescar datos"
-                  >
-                    <FiFolder className="w-4 h-4 mr-2" />
-                    {loading ? "Cargando..." : "Refrescar"}
-                  </button>
+              if (upcoming.length > 0) {
+                const first = upcoming[0];
+                const dd = first.due.toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit" });
+                return `${dd} - ${first.title}`.trim();
+              }
 
-                  {canEdit && (
-                    <>
-                      <button
-                        onClick={handleCreateUnit}
-                        className="bg-primary text-white px-4 py-2 rounded-md text-sm font-medium hover:brightness-110 flex items-center"
-                      >
-                        <FiPlus className="w-4 h-4 mr-2" />
-                        Nueva Unidad
-                      </button>
-                      <button
-                        onClick={handleCreateContent}
-                        className="bg-primary text-white px-4 py-2 rounded-md text-sm font-medium hover:brightness-110 flex items-center"
-                      >
-                        <FiPlus className="w-4 h-4 mr-2" />
-                        Nuevo Contenido
-                      </button>
-                      <button
-                        onClick={handleCreateAssignment}
-                        className="bg-primary text-white px-4 py-2 rounded-md text-sm font-medium hover:brightness-110 flex items-center"
-                      >
-                        <FiPlus className="w-4 h-4 mr-2" />
-                        Nueva Tarea
-                      </button>
-                    </>
-                  )}
-                </div>
+              return "Sin entregas próximas";
+            })()}
+            rightSlot={
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  onClick={() => router.back()}
+                  className="px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white text-sm font-semibold rounded-xl transition-colors border border-white/20"
+                  type="button"
+                >
+                  Volver
+                </button>
+
+                <button
+                  onClick={() => refreshData()}
+                  disabled={loading}
+                  className="px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white text-sm font-semibold rounded-xl transition-colors border border-white/20 disabled:opacity-60"
+                  type="button"
+                >
+                  {loading ? "Cargando..." : "Refrescar"}
+                </button>
+
+                {canEdit && (
+                  <>
+                    <button
+                      onClick={handleCreateUnit}
+                      className="px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white text-sm font-semibold rounded-xl transition-colors border border-white/20"
+                      type="button"
+                    >
+                      Nueva Unidad
+                    </button>
+                    <button
+                      onClick={handleCreateContent}
+                      className="px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white text-sm font-semibold rounded-xl transition-colors border border-white/20"
+                      type="button"
+                    >
+                      Nuevo Contenido
+                    </button>
+                    <button
+                      onClick={handleCreateAssignment}
+                      className="px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white text-sm font-semibold rounded-xl transition-colors border border-white/20"
+                      type="button"
+                    >
+                      Nueva Tarea
+                    </button>
+                  </>
+                )}
               </div>
-            </div>
-          </div>
+            }
+          />
         </div>
 
         {/* Tabs */}
-        <div className="bg-surface border-b border-border">
+        <div className="bg-white border-b border-slate-200">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <nav className="-mb-px flex space-x-8">
               {[
@@ -519,7 +523,7 @@ export default function SubjectDetailPage() {
                   className={`flex items-center py-4 px-1 border-b-2 font-medium text-sm ${
                     activeTab === tab.id
                       ? "border-yellow-500 text-yellow-700"
-                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-border"
+                      : "border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300"
                   }`}
                 >
                   <tab.icon className="w-4 h-4 mr-2" />
@@ -535,54 +539,48 @@ export default function SubjectDetailPage() {
           {activeTab === "overview" && (
             <div className="space-y-6">
               {/* Descripción */}
-              <div className="bg-surface rounded-xl shadow-soft border border-border p-6">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">
+              <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                <h3 className="text-lg font-semibold text-slate-900 mb-4">
                   Descripción
                 </h3>
-                <p className="text-gray-700">
+                <p className="text-slate-700">
                   {subject.description ||
                     "No hay descripción disponible para esta materia."}
                 </p>
               </div>
 
               {/* Información del curso */}
-              <div className="bg-surface rounded-xl shadow-soft border border-border p-6">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">
+              <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                <h3 className="text-lg font-semibold text-slate-900 mb-4">
                   Información del Curso
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  <div className="text-center p-4 bg-blue-50 rounded-lg">
-                    <div className="text-2xl font-bold text-blue-600">
+                  <div className="text-center p-4 bg-slate-50 border border-slate-200 rounded-2xl">
+                    <div className="text-2xl font-extrabold text-slate-900">
                       {units.length}
                     </div>
-                    <div className="text-sm text-gray-600">Unidades</div>
+                    <div className="text-sm text-slate-600">Unidades</div>
                   </div>
-                  <div className="text-center p-4 bg-green-50 rounded-lg">
-                    <div className="text-2xl font-bold text-green-600">
+                  <div className="text-center p-4 bg-slate-50 border border-slate-200 rounded-2xl">
+                    <div className="text-2xl font-extrabold text-slate-900">
                       {content.length}
                     </div>
-                    <div className="text-sm text-gray-600">Publicaciones</div>
+                    <div className="text-sm text-slate-600">Publicaciones</div>
                   </div>
-                  <div className="text-center p-4 bg-purple-50 rounded-lg">
-                    <div className="text-2xl font-bold text-purple-600">
+                  <div className="text-center p-4 bg-slate-50 border border-slate-200 rounded-2xl">
+                    <div className="text-2xl font-extrabold text-slate-900">
                       {units.reduce(
                         (acc, unit) => acc + (unit.documents?.length || 0),
                         0
                       )}
                     </div>
-                    <div className="text-sm text-gray-600">Documentos</div>
+                    <div className="text-sm text-slate-600">Documentos</div>
                   </div>
-                  <div className="text-center p-4 bg-yellow-50 rounded-lg">
-                    <div className="text-2xl font-bold text-yellow-600">
+                  <div className="text-center p-4 bg-yellow-50 border border-yellow-100 rounded-2xl">
+                    <div className="text-2xl font-extrabold text-yellow-800">
                       {assignments.length}
                     </div>
-                    <div className="text-sm text-gray-600">Tareas</div>
-                  </div>
-                  <div className="text-center p-4 bg-blue-50 rounded-lg">
-                    <div className="text-2xl font-bold text-blue-600">
-                      {units.length}
-                    </div>
-                    <div className="text-sm text-gray-600">Unidades</div>
+                    <div className="text-sm text-slate-600">Tareas</div>
                   </div>
                 </div>
               </div>
@@ -601,18 +599,18 @@ export default function SubjectDetailPage() {
                   onUploadDocument={handleUploadDocument}
                 />
               ) : (
-                <div className="text-center py-12 bg-surface rounded-xl shadow-soft border border-border">
-                  <FiFolder className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                <div className="text-center py-12 bg-white rounded-2xl shadow-sm border border-slate-200">
+                  <FiFolder className="w-12 h-12 mx-auto text-slate-400 mb-4" />
+                  <h3 className="text-lg font-semibold text-slate-900 mb-2">
                     No hay unidades
                   </h3>
-                  <p className="text-gray-600 mb-4">
+                  <p className="text-slate-600 mb-4">
                     Comienza creando la primera unidad de la materia.
                   </p>
                   {canEdit && (
                     <button
                       onClick={handleCreateUnit}
-                      className="bg-primary text-white px-4 py-2 rounded-md text-sm font-medium hover:brightness-110"
+                      className="bg-yellow-600 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-yellow-700 transition"
                     >
                       Crear Primera Unidad
                     </button>
@@ -625,14 +623,14 @@ export default function SubjectDetailPage() {
           {activeTab === "content" && (
             <div className="space-y-4">
               {content.map((item) => (
-                <div key={item.id} className="bg-surface rounded-xl shadow-soft border border-border p-6">
+                <div key={item.id} className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center">
                         <span className="text-lg mr-2">
                           {getContentTypeIcon(item.content_type)}
                         </span>
-                        <h3 className="text-lg font-medium text-gray-900">
+                        <h3 className="text-lg font-semibold text-slate-900">
                           {item.title}
                         </h3>
                         {item.is_pinned && (
@@ -640,9 +638,9 @@ export default function SubjectDetailPage() {
                         )}
                       </div>
                       {item.content && (
-                        <p className="text-gray-700 mt-2">{item.content}</p>
+                        <p className="text-slate-700 mt-2">{item.content}</p>
                       )}
-                      <div className="flex items-center text-sm text-gray-500 mt-3">
+                      <div className="flex items-center text-sm text-slate-500 mt-3">
                         <span>Por {item.creator?.name}</span>
                         <span className="mx-2">•</span>
                         <span>
@@ -664,7 +662,7 @@ export default function SubjectDetailPage() {
                     </div>
                     {canEdit && (
                       <div className="flex space-x-2 ml-4">
-                        <button className="text-gray-600 hover:text-gray-800">
+                        <button className="text-slate-600 hover:text-slate-800">
                           <FiEdit className="w-4 h-4" />
                         </button>
                         <button className="text-red-600 hover:text-red-800">
@@ -677,18 +675,18 @@ export default function SubjectDetailPage() {
               ))}
 
               {content.length === 0 && (
-                <div className="text-center py-12 bg-surface rounded-xl shadow-soft border border-border">
-                  <FiFile className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                <div className="text-center py-12 bg-white rounded-2xl shadow-sm border border-slate-200">
+                  <FiFile className="w-12 h-12 mx-auto text-slate-400 mb-4" />
+                  <h3 className="text-lg font-semibold text-slate-900 mb-2">
                     No hay contenido
                   </h3>
-                  <p className="text-gray-600 mb-4">
+                  <p className="text-slate-600 mb-4">
                     Comienza creando el primer contenido de la materia.
                   </p>
                   {canEdit && (
                     <button
                       onClick={handleCreateContent}
-                      className="bg-primary text-white px-4 py-2 rounded-md text-sm font-medium hover:brightness-110"
+                      className="bg-yellow-600 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-yellow-700 transition"
                     >
                       Crear Primer Contenido
                     </button>
@@ -703,21 +701,21 @@ export default function SubjectDetailPage() {
               {assignments.map((assignment) => (
                 <div
                   key={assignment.id}
-                  className="bg-surface rounded-xl shadow-soft border border-border p-6"
+                  className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6"
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center">
                         <FiClipboard className="w-5 h-5 mr-2 text-yellow-700" />
-                        <h3 className="text-lg font-medium text-gray-900">
+                        <h3 className="text-lg font-semibold text-slate-900">
                           {assignment.title}
                         </h3>
                       </div>
-                      <p className="text-gray-700 mt-2">
+                      <p className="text-slate-700 mt-2">
                         {assignment.description}
                       </p>
                       {assignment.instructions && (
-                        <div className="mt-3 p-3 bg-yellow-50 rounded-md border border-yellow-100">
+                        <div className="mt-3 p-3 bg-yellow-50 rounded-xl border border-yellow-100">
                           <h4 className="text-sm font-medium text-yellow-900 mb-1">
                             Instrucciones:
                           </h4>
@@ -726,7 +724,7 @@ export default function SubjectDetailPage() {
                           </p>
                         </div>
                       )}
-                      <div className="flex items-center text-sm text-gray-500 mt-3 flex-wrap gap-4">
+                      <div className="flex items-center text-sm text-slate-500 mt-3 flex-wrap gap-4">
                         <span className="flex items-center">
                           <FiCalendar className="w-4 h-4 mr-1" />
                           Vence:{" "}
@@ -745,7 +743,7 @@ export default function SubjectDetailPage() {
                       <div className="flex space-x-2 ml-4">
                         <button
                           onClick={() => handleEditAssignment(assignment)}
-                          className="text-gray-600 hover:text-gray-800"
+                          className="text-slate-600 hover:text-slate-800"
                         >
                           <FiEdit className="w-4 h-4" />
                         </button>
@@ -759,18 +757,18 @@ export default function SubjectDetailPage() {
               ))}
 
               {assignments.length === 0 && (
-                <div className="text-center py-12 bg-surface rounded-xl shadow-soft border border-border">
-                  <FiClipboard className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                <div className="text-center py-12 bg-white rounded-2xl shadow-sm border border-slate-200">
+                  <FiClipboard className="w-12 h-12 mx-auto text-slate-400 mb-4" />
+                  <h3 className="text-lg font-semibold text-slate-900 mb-2">
                     No hay tareas
                   </h3>
-                  <p className="text-gray-600 mb-4">
+                  <p className="text-slate-600 mb-4">
                     Comienza creando la primera tarea de la materia.
                   </p>
                   {canEdit && (
                     <button
                       onClick={handleCreateAssignment}
-                      className="bg-primary text-white px-4 py-2 rounded-md text-sm font-medium hover:brightness-110"
+                      className="bg-yellow-600 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-yellow-700 transition"
                     >
                       Crear Primera Tarea
                     </button>

@@ -2,6 +2,29 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { supabaseAdmin } from '@/app/lib/supabaseClient';
 import { isValidDivisionForYear, yearHasDivisions } from '@/app/lib/utils/divisions';
+import { randomUUID } from 'crypto';
+
+function parseDataImage(input: string): { mime: string; buffer: Buffer } | null {
+  const match = input.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,(.*)$/);
+  if (!match) return null;
+  const mime = match[1];
+  const base64 = match[2];
+  try {
+    const buffer = Buffer.from(base64, 'base64');
+    return { mime, buffer };
+  } catch {
+    return null;
+  }
+}
+
+function extensionFromMime(mime: string): string {
+  const m = mime.toLowerCase();
+  if (m === 'image/jpeg' || m === 'image/jpg') return 'jpg';
+  if (m === 'image/png') return 'png';
+  if (m === 'image/webp') return 'webp';
+  if (m === 'image/gif') return 'gif';
+  return 'bin';
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -99,7 +122,33 @@ export async function POST(request: NextRequest) {
 
     // Si hay una imagen de perfil, intentar guardarla en avatar_url
     if (profile_image) {
-      (basicUpdate as any).avatar_url = profile_image;
+      const parsed = typeof profile_image === 'string' ? parseDataImage(profile_image) : null;
+      if (parsed) {
+        const ext = extensionFromMime(parsed.mime);
+        const objectPath = `avatars/${session.user.id}/${Date.now()}-${randomUUID()}.${ext}`;
+
+        const { error: uploadError } = await supabaseAdmin.storage
+          .from('avatars')
+          .upload(objectPath, parsed.buffer, {
+            contentType: parsed.mime,
+            upsert: true,
+          });
+
+        if (uploadError) {
+          return NextResponse.json(
+            { error: 'Error al subir la imagen de perfil: ' + uploadError.message },
+            { status: 500 }
+          );
+        }
+
+        const { data: publicUrlData } = supabaseAdmin.storage
+          .from('avatars')
+          .getPublicUrl(objectPath);
+
+        (basicUpdate as any).avatar_url = publicUrlData.publicUrl;
+      } else {
+        (basicUpdate as any).avatar_url = profile_image;
+      }
     }
 
     if (nextYear !== null) {

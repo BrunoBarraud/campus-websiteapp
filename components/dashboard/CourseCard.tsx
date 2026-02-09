@@ -4,6 +4,7 @@ import React, { useState, memo, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
+import { MoreHorizontal } from "lucide-react";
 
 interface Course {
   id?: string;
@@ -24,6 +25,32 @@ const CourseCard: React.FC<CourseCardProps> = memo(({ course, delay }) => {
   const [imageError, setImageError] = useState(false);
   const { data: session } = useSession();
   const fallbackImage = "/images/ipdvs-logo.png";
+
+  const gradients = [
+    "from-indigo-500 to-purple-600",
+    "from-emerald-500 to-teal-600",
+    "from-rose-500 to-pink-600",
+    "from-amber-500 to-orange-600",
+  ];
+
+  const getGradientIndex = () => {
+    const key = String(course.id ?? course.title);
+    let hash = 0;
+    for (let i = 0; i < key.length; i += 1) hash = (hash * 31 + key.charCodeAt(i)) % 2147483647;
+    return Math.abs(hash) % gradients.length;
+  };
+
+  const courseMeta = course.code
+    ? course.year && course.division
+      ? `${course.code} • ${course.year}° ${course.division}`
+      : course.year
+        ? `${course.code} • ${course.year}°`
+        : course.code
+    : course.year && course.division
+      ? `${course.year}° ${course.division}`
+      : course.year
+        ? `${course.year}°`
+        : "";
 
   // Memoized error handler
   const handleImageError = useCallback(() => {
@@ -47,54 +74,53 @@ const CourseCard: React.FC<CourseCardProps> = memo(({ course, delay }) => {
 
   return (
     <div className="block group relative">
-      <div className={`bg-surface/90 backdrop-blur-sm rounded-xl overflow-hidden shadow-lg border border-border transition-all duration-300 card-hover fade-in delay-${delay} hover:shadow-2xl hover:border-[color:var(--accent)] cursor-pointer transform hover:scale-105`}>
-        <div className="overflow-hidden relative aspect-video">
-          <Image 
-            src={imageError ? fallbackImage : course.image} 
-            alt={course.title} 
+      <div
+        className={`course-card bg-white rounded-2xl border border-slate-200 overflow-hidden transition-all duration-300 fade-in delay-${delay} hover:shadow-lg hover:border-yellow-200`}
+      >
+        <div className={`relative h-32 bg-gradient-to-br ${gradients[getGradientIndex()]}`}>
+          <Image
+            src={imageError ? fallbackImage : course.image}
+            alt={course.title}
             fill
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105 subject-image" 
-            priority={delay <= 4} // Solo priorizar las primeras 4 imágenes
+            className="w-full h-full object-cover opacity-30 mix-blend-overlay"
+            priority={delay <= 4}
             onError={handleImageError}
-            loading={delay <= 4 ? "eager" : "lazy"} // Lazy loading para las imágenes que no están en el fold
+            loading={delay <= 4 ? "eager" : "lazy"}
           />
-          {/* (Editor removed from card image; editor remains available on subject/admin pages) */}
-        </div>
-        <div className="p-3 sm:p-5 flex flex-col justify-between min-h-[150px] sm:min-h-[170px]">
-          <div>
-            <div className="flex justify-between items-start mb-2">
-              <h3 className="text-base sm:text-xl font-bold text-gray-800 transition-colors duration-200 line-clamp-2">
-                {course.title}
-              </h3>
-              <span className="bg-[color:var(--muted)] text-[color:var(--foreground)] text-xs px-2 py-1 rounded-full ml-2 flex-shrink-0 border border-[color:var(--border)]">
-                {course.year && course.division 
-                  ? `${course.year}° ${course.division}` 
-                  : course.code || course.year 
-                    ? `${course.code || ''} ${course.year ? `${course.year}°` : ''}`.trim() 
-                    : 'Curso'
-                }
-              </span>
-            </div>
-            <p className="text-gray-600 mb-3 text-sm sm:text-base line-clamp-2">
-              Ver contenido de la materia.
+
+          <div className="absolute top-3 right-3">
+            <span className="px-3 py-1 bg-white/20 backdrop-blur-sm text-white text-xs font-medium rounded-full">
+              En curso
+            </span>
+          </div>
+
+          <div className="absolute bottom-3 left-3 right-3">
+            <h4 className="text-white font-semibold text-lg leading-tight line-clamp-1">{course.title}</h4>
+            <p className="text-white/80 text-sm line-clamp-1">
+              {courseMeta ? `${courseMeta} • ${course.teacher}` : course.teacher}
             </p>
           </div>
-          <div className="mt-1 flex items-center min-w-0">
-            <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-gradient-to-r from-[color:var(--primary)]/15 to-[color:var(--accent)]/15 flex items-center justify-center mr-2">
-              <i className="fas fa-chalkboard-teacher text-[color:var(--primary)] text-xs sm:text-sm"></i>
-            </div>
-            <span className="teacher-chip bg-gradient-to-r from-gray-100 to-gray-200 text-gray-800 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm truncate border border-gray-200 max-w-full">
-              {course.teacher}
-            </span>
+        </div>
+
+        <div className="p-4">
+          <div className="mt-4 flex items-center gap-2">
+            <Link
+              href={getSubjectUrl()}
+              className="relative z-20 flex-1 py-2.5 bg-yellow-600 hover:bg-yellow-700 text-white text-sm font-semibold rounded-xl transition-colors text-center"
+            >
+              Continuar
+            </Link>
+            <button
+              type="button"
+              className="relative z-20 p-2.5 border border-slate-200 rounded-xl hover:bg-slate-50 text-slate-400"
+              aria-label="Más opciones"
+            >
+              <MoreHorizontal className="w-5 h-5" />
+            </button>
           </div>
         </div>
       </div>
-
-      {/* Full area link placed after content; sits below editor (z-10) so editor clicks don't navigate */}
-      <Link href={getSubjectUrl()} className="absolute inset-0 z-10" aria-hidden>
-        <span className="sr-only">Ver materia</span>
-      </Link>
     </div>
   );
 });
