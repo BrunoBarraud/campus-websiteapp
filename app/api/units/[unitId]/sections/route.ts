@@ -131,7 +131,13 @@ export async function POST(
       // - assignment: adjunto del enunciado (no es una entrega de alumno)
       // - document: material/subida del docente
       const bucket = content_type === "assignment" ? "assignment-files" : "documents";
-      const filePath = `subject_content/${unitId}/${uuidv4()}-${file.name}`;
+      // Sanitizar nombre de archivo: quitar acentos, reemplazar espacios y caracteres especiales
+      const sanitizedFileName = file.name
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "") // Quitar acentos
+        .replace(/\s+/g, "_") // Espacios por guiones bajos
+        .replace(/[^a-zA-Z0-9_.\-]/g, ""); // Solo caracteres seguros
+      const filePath = `subject_content/${unitId}/${uuidv4()}-${sanitizedFileName}`;
 
       const { error: uploadError } = await supabaseAdmin.storage
         .from(bucket)
