@@ -211,10 +211,17 @@ export async function POST(
       const buffer = Buffer.from(arrayBuffer);
       file_name = file.name;
 
+      // Sanitizar nombre de archivo: quitar acentos, reemplazar espacios y caracteres especiales
+      const sanitizedFileName = file.name
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "") // Quitar acentos
+        .replace(/\s+/g, "_") // Espacios por guiones bajos
+        .replace(/[^a-zA-Z0-9_.\-]/g, ""); // Solo caracteres seguros
+
       const { data: uploadData, error: uploadError } =
         await supabaseAdmin.storage
           .from("documents")
-          .upload(`${subjectId}/${unitId}/${Date.now()}_${file.name}`, buffer, {
+          .upload(`${subjectId}/${unitId}/${Date.now()}_${sanitizedFileName}`, buffer, {
             contentType: file.type,
             upsert: true,
           });
@@ -373,10 +380,17 @@ export async function PUT(
       const buffer = Buffer.from(arrayBuffer);
       file_name = file.name;
 
+      // Sanitizar nombre de archivo: quitar acentos, reemplazar espacios y caracteres especiales
+      const sanitizedFileName = file.name
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "") // Quitar acentos
+        .replace(/\s+/g, "_") // Espacios por guiones bajos
+        .replace(/[^a-zA-Z0-9_.\-]/g, ""); // Solo caracteres seguros
+
       const { data: uploadData, error: uploadError } =
         await supabaseAdmin.storage
           .from("documents")
-          .upload(`${subjectId}/${unitId}/${Date.now()}_${file.name}`, buffer, {
+          .upload(`${subjectId}/${unitId}/${Date.now()}_${sanitizedFileName}`, buffer, {
             contentType: file.type,
             upsert: true,
           });
