@@ -2,6 +2,9 @@
 
 export type UserRole = 'admin' | 'teacher' | 'student';
 
+// Estado de aprobación para estudiantes nuevos
+export type ApprovalStatus = 'pending' | 'approved' | 'rejected';
+
 export interface User {
   id: string;
   email: string;
@@ -13,6 +16,9 @@ export interface User {
   bio?: string;
   avatar_url?: string;
   is_active: boolean;
+  approval_status?: ApprovalStatus; // Estado de aprobación (solo estudiantes)
+  approved_by?: string; // ID del admin/preceptor que aprobó
+  approved_at?: string; // Fecha de aprobación
   created_at: string;
   updated_at: string;
 }

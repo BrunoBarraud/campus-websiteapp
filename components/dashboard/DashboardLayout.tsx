@@ -10,6 +10,7 @@ import {
   LayoutDashboard,
   LogOut,
   Settings,
+  Shield,
   User as UserIcon,
 } from "lucide-react";
 
@@ -41,7 +42,10 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
 
   const settingsNavigation = [
     ...(session?.user?.role === "admin"
-      ? [{ name: "Configuración", href: "/campus/settings", icon: Settings }]
+      ? [
+          { name: "Configuración", href: "/campus/settings", icon: Settings },
+          { name: "Panel Admin", href: "/campus/admin", icon: Shield },
+        ]
       : []),
   ];
 

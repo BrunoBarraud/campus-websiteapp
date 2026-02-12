@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { calendarService } from '@/app/lib/services';
 import { CreateEventForm, EventType } from '@/app/lib/types';
 import { requireRole } from '@/app/lib/auth';
+import { canStudentAct } from '@/app/lib/auth/checkApproval';
 
 // GET - Obtener eventos según el rol del usuario
 export async function GET(request: Request) {
@@ -65,6 +66,15 @@ export async function POST(request: Request) {
 
     // Verificar permisos
     if (currentUser.role === 'student') {
+      // Verificar que el estudiante esté aprobado
+      const canAct = await canStudentAct(currentUser.id);
+      if (!canAct) {
+        return NextResponse.json(
+          { success: false, error: 'Tu cuenta está pendiente de aprobación. No podés crear eventos.' },
+          { status: 403 }
+        );
+      }
+
       const isPersonal = eventData.is_personal === true;
       const isGlobal = eventData.is_global === true;
       const hasYear = typeof eventData.year === 'number' && !Number.isNaN(eventData.year);

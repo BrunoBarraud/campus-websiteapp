@@ -148,6 +148,27 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
               </div>
             </div>
           </div>
+
+          <div
+            onClick={() => router.push("/campus/admin/students")}
+            className="bg-white p-6 rounded-lg shadow hover:shadow-md transition-shadow cursor-pointer border border-gray-200 hover:border-amber-300"
+          >
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <div className="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center">
+                  <span className="text-amber-600 text-lg">⏳</span>
+                </div>
+              </div>
+              <div className="ml-4">
+                <h3 className="text-lg font-medium text-gray-900">
+                  Estudiantes Pendientes
+                </h3>
+                <p className="text-sm text-gray-600">
+                  Aprobar o rechazar nuevos estudiantes
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Estadísticas */}

@@ -6,6 +6,7 @@ declare module "next-auth" {
     role?: string;
     division?: string;
     year?: number;
+    approval_status?: string;
   }
   interface Session {
     user?: {
@@ -13,6 +14,7 @@ declare module "next-auth" {
       role?: string;
       division?: string;
       year?: number;
+      approval_status?: string;
     } & DefaultSession["user"];
   }
 }
@@ -23,5 +25,6 @@ declare module "next-auth/jwt" {
     id?: string;
     division?: string;
     year?: number;
+    approval_status?: string;
   }
 }

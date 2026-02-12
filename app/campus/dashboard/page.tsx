@@ -130,10 +130,10 @@ const DashboardPage = () => {
               console.log('Dashboard: Fetching student subjects for year:', userData.year);
               subjectsResponse = await fetch('/api/student/subjects');
             } else {
-              // Fallback: no hay materias
-              console.log('Dashboard: No role match, setting empty subjects');
+              // Fallback: no hay materias (estudiante sin año asignado)
+              console.log('Dashboard: No role match or student without year, setting empty subjects');
               setSubjects([]);
-              return;
+              // No hacer return aquí para que setLoading(false) se ejecute en finally
             }
             
             console.log('Dashboard: Subjects API response status:', subjectsResponse?.status);
@@ -166,13 +166,21 @@ const DashboardPage = () => {
   }, [session, status, router]);
 
   // Estado bloqueado: el alumno debe completar año/división desde Perfil
-  // Verificamos tanto la sesión como el usuario cargado desde la API
-  const userYear = user?.year || session?.user?.year;
-  const userRole = user?.role || session?.user?.role;
+  // Verificamos los datos del usuario cargado desde la API (más confiable que la sesión)
+  const userYear = user?.year;
+  const userRole = user?.role;
+  const userApprovalStatus = (user as any)?.approval_status;
+  const isPendingApproval = userRole === 'student' && userApprovalStatus === 'pending';
   
+  // Solo mostrar el mensaje de "completá tu año" si:
+  // 1. La sesión ya cargó
+  // 2. El fetch de usuario ya terminó (loading = false)
+  // 3. Tenemos datos del usuario (user !== null)
+  // 4. Es estudiante sin año asignado
   if (
     status !== "loading" &&
     !loading &&
+    user !== null &&
     userRole === "student" &&
     !userYear
   ) {
@@ -279,6 +287,19 @@ const DashboardPage = () => {
 
   return (
     <div className="min-h-screen bg-slate-50">
+      {/* Banner de estudiante pendiente de aprobación */}
+      {isPendingApproval && (
+        <div className="bg-amber-50 border-b border-amber-200 px-6 py-3">
+          <div className="max-w-7xl mx-auto flex items-center gap-3">
+            <div className="w-2 h-2 bg-amber-500 rounded-full animate-pulse"></div>
+            <p className="text-amber-800 text-sm">
+              <span className="font-semibold">Tu cuenta está pendiente de aprobación.</span>{' '}
+              Podés ver el contenido del campus, pero no podrás subir tareas ni interactuar hasta que un administrador apruebe tu cuenta.
+            </p>
+          </div>
+        </div>
+      )}
+      
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <header className="glass-effect sticky top-0 z-30 border-b border-slate-200 px-6 py-4">

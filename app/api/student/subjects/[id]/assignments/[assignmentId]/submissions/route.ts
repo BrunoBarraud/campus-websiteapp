@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/app/lib/supabaseClient";
 import { requireRole } from "@/app/lib/auth";
+import { requireApprovedStudent } from "@/app/lib/auth/checkApproval";
 import { v4 as uuidv4 } from "uuid";
 
 // POST - Entregar una tarea
@@ -9,6 +10,12 @@ export async function POST(
   { params }: { params: Promise<{ id: string; assignmentId: string }> }
 ) {
   try {
+    // Verificar que el estudiante esté aprobado
+    const approvalCheck = await requireApprovedStudent();
+    if ('error' in approvalCheck) {
+      return NextResponse.json({ error: approvalCheck.error }, { status: approvalCheck.status });
+    }
+    
     const user = await requireRole(["student"]);
     const { id: subjectId, assignmentId } = await params;
 
