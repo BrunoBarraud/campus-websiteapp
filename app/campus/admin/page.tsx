@@ -87,7 +87,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
         {/* Navigation Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
           <div
-            onClick={() => router.push("/campus/settings/users")}
+            onClick={() => router.push("/campus/admin/management")}
             className="bg-white p-6 rounded-lg shadow hover:shadow-md transition-shadow cursor-pointer border border-gray-200 hover:border-blue-300"
           >
             <div className="flex items-center">
@@ -98,10 +98,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
               </div>
               <div className="ml-4">
                 <h3 className="text-lg font-medium text-gray-900">
-                  Gestión de Usuarios
+                  Gestión de Usuarios y Materias
                 </h3>
                 <p className="text-sm text-gray-600">
-                  Administrar perfiles, roles y permisos
+                  Vista unificada de usuarios y materias
                 </p>
               </div>
             </div>
@@ -109,7 +109,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
 
           <div
             onClick={() => router.push("/campus/settings/subjects")}
-            className="bg-white p-6 rounded-lg shadow hover:shadow-md transition-shadow cursor-pointer border border-gray-200 hover:border-blue-300"
+            className="bg-white p-6 rounded-lg shadow hover:shadow-md transition-shadow cursor-pointer border border-gray-200 hover:border-green-300"
           >
             <div className="flex items-center">
               <div className="flex-shrink-0">
@@ -119,10 +119,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
               </div>
               <div className="ml-4">
                 <h3 className="text-lg font-medium text-gray-900">
-                  Gestión de Materias
+                  Gestión Avanzada de Materias
                 </h3>
                 <p className="text-sm text-gray-600">
-                  Administrar materias y profesores
+                  Crear, editar y asignar profesores
                 </p>
               </div>
             </div>
