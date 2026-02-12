@@ -180,33 +180,33 @@ export default function TeacherForumDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-gray-50 p-3 sm:p-4 md:p-6">
       <div className="max-w-7xl mx-auto">
         {error ? (
-          <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+          <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
             {error}
           </div>
         ) : null}
         {/* Header */}
-        <div className="mb-8">
+        <div className="mb-6 sm:mb-8">
           <button
             onClick={() => router.back()}
-            className="text-gray-600 hover:text-gray-900 mb-4 flex items-center gap-2"
+            className="text-gray-600 hover:text-gray-900 mb-4 flex items-center gap-2 text-sm"
           >
             ← Volver a foros
           </button>
 
-          <div className="bg-white rounded-xl shadow-sm p-6">
-            <div className="flex items-start justify-between">
+          <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm p-4 sm:p-6">
+            <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
               <div className="flex-1">
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
                   {forum.title}
                 </h1>
                 {forum.description && (
-                  <p className="text-gray-600">{forum.description}</p>
+                  <p className="text-gray-600 text-sm sm:text-base">{forum.description}</p>
                 )}
                 
-                <div className="flex items-center gap-4 mt-4 text-sm">
+                <div className="flex flex-wrap items-center gap-3 sm:gap-4 mt-4 text-xs sm:text-sm">
                   <span className="text-gray-600">
                     {forum.questions_count} pregunta{forum.questions_count !== 1 ? 's' : ''}
                   </span>
@@ -224,21 +224,21 @@ export default function TeacherForumDetailPage() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-shrink-0">
                 <button
                   type="button"
                   onClick={() => setIsAskModalOpen(true)}
                   disabled={forum.is_locked}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg transition-colors bg-yellow-500 text-white hover:bg-yellow-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg transition-colors bg-yellow-500 text-white hover:bg-yellow-600 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
                 >
                   <Plus className="w-4 h-4" />
-                  Hacer pregunta
+                  <span className="hidden sm:inline">Hacer pregunta</span><span className="sm:hidden">Preguntar</span>
                 </button>
 
                 <button
                   type="button"
                   onClick={handleToggleLock}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+                  className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg transition-colors text-sm ${
                     forum.is_locked
                       ? "bg-green-100 text-green-700 hover:bg-green-200"
                       : "bg-red-100 text-red-700 hover:bg-red-200"
@@ -247,12 +247,12 @@ export default function TeacherForumDetailPage() {
                   {forum.is_locked ? (
                     <>
                       <Unlock className="w-4 h-4" />
-                      Abrir Foro
+                      <span className="hidden sm:inline">Abrir Foro</span><span className="sm:hidden">Abrir</span>
                     </>
                   ) : (
                     <>
                       <Lock className="w-4 h-4" />
-                      Cerrar Foro
+                      <span className="hidden sm:inline">Cerrar Foro</span><span className="sm:hidden">Cerrar</span>
                     </>
                   )}
                 </button>
@@ -262,7 +262,7 @@ export default function TeacherForumDetailPage() {
         </div>
 
         {/* Filters */}
-        <div className="flex gap-2 mb-6">
+        <div className="flex flex-wrap gap-2 mb-6">
           {[
             { value: "all", label: "Todas" },
             { value: "pending", label: "Pendientes" },
@@ -272,7 +272,7 @@ export default function TeacherForumDetailPage() {
             <button
               key={f.value}
               onClick={() => setFilter(f.value as any)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors ${
                 filter === f.value
                   ? "bg-yellow-500 text-white"
                   : "bg-white text-gray-700 hover:bg-gray-50"
@@ -285,8 +285,8 @@ export default function TeacherForumDetailPage() {
 
         {/* Questions List */}
         {filteredQuestions.length === 0 ? (
-          <div className="bg-white rounded-xl shadow-sm p-12 text-center">
-            <p className="text-gray-600">No hay preguntas en esta categoría</p>
+          <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm p-6 sm:p-12 text-center">
+            <p className="text-gray-600 text-sm sm:text-base">No hay preguntas en esta categoría</p>
           </div>
         ) : (
           <div className="space-y-4">

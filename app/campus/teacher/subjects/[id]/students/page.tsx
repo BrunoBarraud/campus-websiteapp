@@ -84,7 +84,7 @@ export default function TeacherStudentsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-gray-50 p-3 sm:p-4 md:p-6">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-6">
@@ -96,7 +96,7 @@ export default function TeacherStudentsPage() {
             Volver a la materia
           </Link>
           
-          <h1 className="text-2xl font-bold text-gray-900">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
             Estudiantes Inscriptos
           </h1>
           {subject && (
@@ -107,7 +107,7 @@ export default function TeacherStudentsPage() {
         </div>
 
         {/* Stats */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6 mb-6">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
               <Users className="w-6 h-6 text-blue-600" />
@@ -127,7 +127,9 @@ export default function TeacherStudentsPage() {
             <p className="text-gray-500">Todavía no hay estudiantes inscriptos en esta materia.</p>
           </div>
         ) : (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <>
+          {/* Desktop table */}
+          <div className="hidden md:block bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-gray-50 border-b border-gray-100">
@@ -187,6 +189,43 @@ export default function TeacherStudentsPage() {
               </table>
             </div>
           </div>
+
+          {/* Mobile card list */}
+          <div className="md:hidden space-y-3">
+            {students.map((student) => (
+              <div key={student.id} className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+                <div className="flex items-center gap-3 mb-3">
+                  {student.avatar_url ? (
+                    <img
+                      src={student.avatar_url}
+                      alt={student.name}
+                      className="w-10 h-10 rounded-full object-cover flex-shrink-0"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 rounded-full bg-yellow-100 flex items-center justify-center flex-shrink-0">
+                      <span className="text-yellow-700 font-semibold">
+                        {student.name?.charAt(0)?.toUpperCase() || '?'}
+                      </span>
+                    </div>
+                  )}
+                  <div className="min-w-0">
+                    <p className="font-medium text-gray-900 truncate">{student.name}</p>
+                    <p className="text-xs text-gray-500 truncate">{student.email}</p>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-700">
+                    {student.year}° Año {student.division ? `"${student.division}"` : ''}
+                  </span>
+                  <span className="text-gray-500 flex items-center gap-1 text-xs">
+                    <Calendar className="w-3 h-3" />
+                    {formatDate(student.enrolled_at)}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+          </>
         )}
       </div>
     </div>

@@ -172,14 +172,14 @@ const UnitAccordionStudent: React.FC<UnitAccordionProps> = ({
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center py-12">
+      <div className="flex justify-center items-center py-6 sm:py-12">
         <span className="text-gray-500">Cargando unidades...</span>
       </div>
     );
   }
 
   return (
-    <div className="space-y-5 pb-20">
+    <div className="space-y-4 sm:space-y-8 pb-24 lg:pb-0">
       {/* Mensaje de error */}
       {error && (
         <div className="bg-red-100 text-red-700 px-4 py-2 rounded mb-4 text-center">
@@ -188,31 +188,31 @@ const UnitAccordionStudent: React.FC<UnitAccordionProps> = ({
       )}
 
       {/* Unidades */}
-      <div className="space-y-3">
+      <div className="space-y-4 sm:space-y-6">
         {units.length === 0 && (
-          <div className="text-center py-8 text-gray-500">
-            <i className="fas fa-book-open text-2xl mb-2"></i>
-            <p>No hay unidades disponibles aún.</p>
+          <div className="text-center py-8 sm:py-12 text-gray-500">
+            <i className="fas fa-book-open text-2xl sm:text-3xl mb-2"></i>
+            <p className="text-sm sm:text-base">No hay unidades disponibles aún.</p>
           </div>
         )}
         {units.map((unit) => (
           <div
             key={unit.id}
-            className={`bg-white rounded-xl border transition-all duration-300 overflow-hidden ${
+            className={`bg-white rounded-xl sm:rounded-2xl border transition-all duration-300 overflow-hidden ${
               expandedUnit === unit.id
                 ? "shadow-lg border-indigo-200 ring-1 ring-indigo-50"
                 : "shadow-sm border-slate-200 hover:border-slate-300"
             }`}
           >
             <button
-              className="w-full flex items-center justify-between p-6 text-left bg-white hover:bg-slate-50/80 transition-colors group"
+              className="w-full flex items-center justify-between p-4 sm:p-6 text-left bg-white hover:bg-slate-50/80 transition-colors group"
               onClick={() => handleExpand(unit.id)}
               aria-expanded={expandedUnit === unit.id}
               aria-controls={`unit-panel-${unit.id}`}
               id={`unit-header-${unit.id}`}
               role="button"
             >
-              <div className="flex items-start gap-4">
+              <div className="flex items-start gap-3 sm:gap-4">
                 <div
                   className={`p-2 rounded-lg transition-colors ${
                     expandedUnit === unit.id
@@ -220,29 +220,29 @@ const UnitAccordionStudent: React.FC<UnitAccordionProps> = ({
                       : "bg-slate-100 text-slate-500 group-hover:bg-slate-200"
                   }`}
                 >
-                  <BookOpen className="w-6 h-6" />
+                  <BookOpen className="w-5 h-5 sm:w-6 sm:h-6" />
                 </div>
-                <div>
+                <div className="min-w-0 flex-1">
                   <h3
-                    className={`text-lg font-bold transition-colors ${
+                    className={`text-base sm:text-lg font-bold transition-colors ${
                       expandedUnit === unit.id ? "text-indigo-900" : "text-slate-700"
                     }`}
                   >
                     {unit.title}
                   </h3>
-                  <p className="text-sm text-slate-500 mt-1 font-medium">
+                  <p className="text-xs sm:text-sm text-slate-500 mt-1 font-medium">
                     {unit.description || `Unidad ${unit.unit_number}`}
                   </p>
                 </div>
               </div>
               <div
-                className={`transform transition-transform duration-300 p-1 rounded-full ${
+                className={`transform transition-transform duration-300 p-1 rounded-full flex-shrink-0 ${
                   expandedUnit === unit.id
                     ? "rotate-180 bg-indigo-50 text-indigo-600"
                     : "text-slate-400"
                 }`}
               >
-                <ChevronDown className="w-6 h-6" />
+                <ChevronDown className="w-5 h-5 sm:w-6 sm:h-6" />
               </div>
             </button>
             <div
@@ -252,7 +252,7 @@ const UnitAccordionStudent: React.FC<UnitAccordionProps> = ({
                   : "max-h-0 opacity-0"
               } transition-all duration-300 overflow-hidden`}
             >
-              <div className="border-t border-slate-100 bg-slate-50/50 p-4 space-y-3">
+              <div className="border-t border-slate-100 bg-slate-50/50 p-4 sm:p-6 space-y-4 sm:space-y-6">
                 {Array.isArray(sections[unit.id]) &&
                 sections[unit.id].length > 0 ? (
                   sections[unit.id]
@@ -264,14 +264,14 @@ const UnitAccordionStudent: React.FC<UnitAccordionProps> = ({
                     .map((section) => (
                       <div
                         key={section.id}
-                        className="flex flex-col md:flex-row items-start md:items-center justify-between bg-white p-4 rounded-xl border border-slate-200 hover:border-indigo-300 hover:shadow-md hover:shadow-indigo-100/50 transition-all duration-200 group/item"
+                        className="flex flex-col md:flex-row items-start md:items-center justify-between bg-white p-4 sm:p-5 rounded-xl border border-slate-200 hover:border-indigo-300 hover:shadow-md hover:shadow-indigo-100/50 transition-all duration-200 group/item"
                       >
-                        <div className="flex items-center gap-4 mb-3 md:mb-0 w-full md:w-auto">
-                          <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-100 group-hover/item:bg-indigo-50 group-hover/item:border-indigo-100 transition-colors">
+                        <div className="flex items-center gap-3 sm:gap-4 mb-3 md:mb-0 w-full md:w-auto">
+                          <div className="p-2 sm:p-2.5 bg-slate-50 rounded-xl border border-slate-100 group-hover/item:bg-indigo-50 group-hover/item:border-indigo-100 transition-colors flex-shrink-0">
                             {getSectionIcon(section)}
                           </div>
-                          <div className="min-w-0">
-                            <p className="font-semibold text-slate-700 group-hover/item:text-indigo-700 transition-colors truncate">
+                          <div className="min-w-0 flex-1">
+                            <p className="font-semibold text-slate-700 group-hover/item:text-indigo-700 transition-colors truncate text-sm sm:text-base">
                               {section.title}
                             </p>
                             <p className="text-xs text-slate-400 font-medium mt-0.5 flex items-center gap-2">

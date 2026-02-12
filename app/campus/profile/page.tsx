@@ -162,17 +162,17 @@ const ProfilePage = () => {
       <div className="bg-slate-50 min-h-screen">
         {/* Profile Header */}
         <div className="bg-white border border-slate-200 shadow-sm rounded-2xl overflow-hidden">
-          <div className="bg-yellow-50 border-b border-yellow-100 h-24 w-full"></div>
-          <div className="px-6 py-6">
-            <div className="flex items-start gap-6 flex-wrap">
+          <div className="bg-yellow-50 border-b border-yellow-100 h-16 sm:h-24 w-full"></div>
+          <div className="px-4 sm:px-6 py-4 sm:py-6">
+            <div className="flex flex-col sm:flex-row sm:items-start gap-4 sm:gap-6">
               {/* Profile Image */}
-              <div className="flex-shrink-0">
-                <div className="h-24 w-24 rounded-full border-4 border-white bg-white shadow-md overflow-hidden -mt-12">
+              <div className="flex-shrink-0 self-center sm:self-auto">
+                <div className="h-20 w-20 sm:h-24 sm:w-24 rounded-full border-4 border-white bg-white shadow-md overflow-hidden -mt-10 sm:-mt-12">
                   {profileImage ? (
                     <img src={profileImage} alt="Profile" className="h-full w-full object-cover" />
                   ) : (
                     <div className="h-full w-full bg-gradient-to-r from-yellow-400 to-amber-400 flex items-center justify-center">
-                      <span className="text-2xl font-bold text-white">
+                      <span className="text-xl sm:text-2xl font-bold text-white">
                         {getInitials(formData.name || session?.user?.name || 'U')}
                       </span>
                     </div>
@@ -181,18 +181,19 @@ const ProfilePage = () => {
               </div>
               
               {/* Profile Info */}
-              <div className="flex-1 min-w-0">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h2 className="text-2xl font-bold text-slate-900">{formData.name || session?.user?.name}</h2>
+              <div className="flex-1 min-w-0 text-center sm:text-left">
+                <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-3">
+                  <div className="min-w-0">
+                    <h2 className="text-xl sm:text-2xl font-bold text-slate-900 break-words">{formData.name || session?.user?.name}</h2>
                     <p className="text-slate-600 mt-1">{session?.user?.role === 'teacher' ? 'Profesor' : session?.user?.role === 'admin' ? 'Administrador' : 'Estudiante'}</p>
                   </div>
                   <button 
                     onClick={() => setIsEditing(true)}
-                    className="px-4 py-2 bg-yellow-600 text-white rounded-xl hover:bg-yellow-700 transition flex items-center gap-2"
+                    className="px-3 sm:px-4 py-2.5 bg-yellow-600 text-white rounded-xl hover:bg-yellow-700 transition flex items-center justify-center gap-2 text-sm w-full sm:w-auto md:w-auto"
                   >
                     <i className="fas fa-edit"></i>
-                    Editar perfil
+                    <span className="hidden sm:inline">Editar perfil</span>
+                    <span className="sm:hidden">Editar</span>
                   </button>
                 </div>
                 
@@ -225,88 +226,92 @@ const ProfilePage = () => {
             <nav className="flex -mb-px whitespace-nowrap">
               <button 
                 onClick={() => setActiveTab('informacion')}
-                className={`py-4 px-6 text-center border-b-2 font-medium text-sm flex items-center gap-2 ${
+                className={`py-4 px-3 sm:px-6 text-center border-b-2 font-medium text-sm flex items-center gap-2 whitespace-nowrap ${
                   activeTab === 'informacion' 
                     ? 'border-yellow-500 text-yellow-600' 
                     : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
                 }`}
               >
                 <i className="fas fa-user"></i>
-                Información
+                <span className="hidden sm:inline">Información</span>
+                <span className="sm:hidden">Info</span>
               </button>
               <button 
                 onClick={() => setActiveTab('materias')}
-                className={`py-4 px-6 text-center border-b-2 font-medium text-sm flex items-center gap-2 ${
+                className={`py-4 px-3 sm:px-6 text-center border-b-2 font-medium text-sm flex items-center gap-2 whitespace-nowrap ${
                   activeTab === 'materias' 
                     ? 'border-yellow-500 text-yellow-600' 
                     : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
                 }`}
               >
                 <i className="fas fa-book"></i>
-                Materias
+                <span className="hidden sm:inline">Materias</span>
+                <span className="sm:hidden">Mat</span>
               </button>
               <button 
                 onClick={() => setActiveTab('logros')}
-                className={`py-4 px-6 text-center border-b-2 font-medium text-sm flex items-center gap-2 ${
+                className={`py-4 px-3 sm:px-6 text-center border-b-2 font-medium text-sm flex items-center gap-2 whitespace-nowrap ${
                   activeTab === 'logros' 
                     ? 'border-yellow-500 text-yellow-600' 
                     : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
                 }`}
               >
                 <i className="fas fa-trophy"></i>
-                Logros
+                <span className="hidden sm:inline">Logros</span>
+                <span className="sm:hidden">Log</span>
               </button>
               <button 
                 onClick={() => setActiveTab('estadisticas')}
-                className={`py-4 px-6 text-center border-b-2 font-medium text-sm flex items-center gap-2 ${
+                className={`py-4 px-3 sm:px-6 text-center border-b-2 font-medium text-sm flex items-center gap-2 whitespace-nowrap ${
                   activeTab === 'estadisticas' 
                     ? 'border-yellow-500 text-yellow-600' 
                     : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
                 }`}
               >
                 <i className="fas fa-chart-line"></i>
-                Estadísticas
+                <span className="hidden sm:inline">Estadísticas</span>
+                <span className="sm:hidden">Est</span>
               </button>
             </nav>
           </div>
           
-          <div className="p-6">
+          <div className="p-4 sm:p-6">
             {activeTab === 'informacion' && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                 <div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">Información personal</h3>
-                  <div className="space-y-4">
+                  <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-3 sm:mb-4">Información personal</h3>
+                  <div className="space-y-3 sm:space-y-4">
                     <div>
-                      <p className="text-sm text-gray-500">Nombre completo</p>
-                      <p className="text-gray-800">{formData.name}</p>
+                      <p className="text-xs sm:text-sm text-gray-500">Nombre completo</p>
+                      <p className="text-sm sm:text-base text-gray-800 truncate">{formData.name}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-500">Correo electrónico</p>
-                      <p className="text-gray-800">{formData.email}</p>
+                      <p className="text-xs sm:text-sm text-gray-500">Correo electrónico</p>
+                      <p className="text-sm sm:text-base text-gray-800 truncate">{formData.email}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-500">Teléfono</p>
-                      <p className="text-gray-800">{formData.phone || 'No especificado'}</p>
+                      <p className="text-xs sm:text-sm text-gray-500">Teléfono</p>
+                      <p className="text-sm sm:text-base text-gray-800">{formData.phone || 'No especificado'}</p>
                     </div>
                   </div>
                 </div>
                 <div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">Información académica</h3>
-                  <div className="space-y-4">
+                  <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-3 sm:mb-4">Información académica</h3>
+                  <div className="space-y-3 sm:space-y-4">
                     {session?.user?.role === 'student' && (
                       <>
                         <div>
-                          <p className="text-sm text-gray-500">Año</p>
-                          <p className="text-gray-800">{formData.year ? `${formData.year}°` : 'Sin asignar'}</p>
+                          <p className="text-xs sm:text-sm text-gray-500">Año</p>
+                          <p className="text-sm sm:text-base text-gray-800">{formData.year ? `${formData.year}°` : 'Sin asignar'}</p>
                         </div>
                         <div>
-                          <p className="text-sm text-gray-500">División</p>
-                          <p className="text-gray-800">{formData.division || 'Sin asignar'}</p>
+                          <p className="text-xs sm:text-sm text-gray-500">División</p>
+                          <p className="text-sm sm:text-base text-gray-800">{formData.division || 'Sin asignar'}</p>
                         </div>
                       </>
                     )}
                     <div>
-                      <p className="text-sm text-gray-500">Estado académico</p>
+                      <p className="text-xs sm:text-sm text-gray-500">Estado académico</p>
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                         Activo
                       </span>
@@ -314,9 +319,9 @@ const ProfilePage = () => {
                   </div>
                 </div>
                 {formData.bio && (
-                  <div className="md:col-span-2 mt-8">
-                    <h3 className="text-lg font-medium text-gray-900 mb-4">Biografía</h3>
-                    <p className="text-gray-700">{formData.bio}</p>
+                  <div className="md:col-span-2 mt-6 sm:mt-8">
+                    <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-3 sm:mb-4">Biografía</h3>
+                    <p className="text-sm sm:text-base text-gray-700">{formData.bio}</p>
                   </div>
                 )}
               </div>
@@ -352,11 +357,11 @@ const ProfilePage = () => {
   return (
     <div className="bg-slate-50 min-h-screen">
       <div className="bg-white border border-slate-200 shadow-sm rounded-2xl overflow-hidden">
-        <div className="px-6 py-4 border-b border-slate-200">
-          <h2 className="text-xl font-bold text-slate-900">Editar perfil</h2>
+        <div className="px-4 sm:px-6 py-4 border-b border-slate-200">
+          <h2 className="text-lg sm:text-xl font-bold text-slate-900">Editar perfil</h2>
         </div>
-        <form onSubmit={handleSave} className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <form onSubmit={handleSave} className="p-4 sm:p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
             <div>
               <h3 className="text-lg font-medium text-slate-900 mb-4">Información básica</h3>
               
@@ -508,17 +513,17 @@ const ProfilePage = () => {
             </div>
           </div>
           
-          <div className="mt-6 flex justify-end space-x-3">
+          <div className="mt-6 flex flex-col-reverse sm:flex-row justify-end gap-3 sm:space-x-3">
             <button 
               type="button" 
               onClick={handleCancel}
-              className="px-4 py-2 border border-slate-200 rounded-xl shadow-sm text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-300"
+              className="px-4 py-2.5 border border-slate-200 rounded-xl shadow-sm text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-300 w-full sm:w-auto"
             >
               Cancelar
             </button>
             <button 
               type="submit" 
-              className="px-4 py-2 border border-transparent rounded-xl shadow-sm text-sm font-medium text-white bg-yellow-600 hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-300"
+              className="px-4 py-2.5 border border-transparent rounded-xl shadow-sm text-sm font-medium text-white bg-yellow-600 hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-300 w-full sm:w-auto"
             >
               Guardar cambios
             </button>

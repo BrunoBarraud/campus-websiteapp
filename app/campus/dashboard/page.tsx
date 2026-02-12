@@ -311,11 +311,11 @@ const DashboardPage = () => {
       
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <header className="glass-effect sticky top-0 z-30 border-b border-slate-200 px-6 py-4">
+        <header className="glass-effect sticky top-0 z-30 border-b border-slate-200 px-4 sm:px-6 py-3 sm:py-4">
           <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-2xl font-bold text-slate-800">Dashboard</h2>
-              <p className="text-sm text-slate-500">
+            <div className="min-w-0">
+              <h2 className="text-xl sm:text-2xl font-bold text-slate-800">Dashboard</h2>
+              <p className="text-xs sm:text-sm text-slate-500 truncate">
                 {user?.role === 'student'
                   ? `¡Bienvenido/a! Acá tenés tus cursos, tareas y eventos.`
                   : getSubjectCountMessage()}
@@ -323,7 +323,7 @@ const DashboardPage = () => {
             </div>
 
             <div className="flex items-center gap-4">
-              {/* Search */}
+              {/* Search - desktop */}
               <div className="hidden sm:flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-4 py-2.5 focus-within:ring-2 focus-within:ring-yellow-300 focus-within:border-yellow-300 transition-all">
                 <Search className="w-5 h-5 text-slate-400" />
                 <input
@@ -336,10 +336,21 @@ const DashboardPage = () => {
               </div>
             </div>
           </div>
+          {/* Search - mobile */}
+          <div className="sm:hidden mt-3 flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3 py-2 focus-within:ring-2 focus-within:ring-yellow-300 focus-within:border-yellow-300 transition-all">
+            <Search className="w-4 h-4 text-slate-400 flex-shrink-0" />
+            <input
+              type="text"
+              placeholder="Buscar materias..."
+              className="bg-transparent border-none outline-none focus:outline-none focus:ring-0 text-sm w-full text-slate-800 placeholder-slate-400"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
         </header>
 
         {/* Dashboard Content */}
-        <div className="p-6 space-y-6">
+        <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
           {/* Stats Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
@@ -642,7 +653,7 @@ const DashboardPage = () => {
 
         {/* Recent Activity & Announcements - Solo para estudiantes */}
         {user?.role === 'student' && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
             <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-semibold text-slate-900">Actividad reciente</h3>

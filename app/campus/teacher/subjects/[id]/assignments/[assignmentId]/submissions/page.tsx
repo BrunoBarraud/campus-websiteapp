@@ -242,8 +242,8 @@ export default function AssignmentSubmissionsPage({
   });
 
   return (
-    <div className="min-h-screen bg-slate-100 p-4 md:p-8">
-      <div className="max-w-5xl mx-auto space-y-6">
+    <div className="min-h-screen bg-slate-100 p-3 sm:p-4 md:p-8">
+      <div className="max-w-5xl mx-auto space-y-4 sm:space-y-6">
         <button
           className="text-sm text-slate-500 hover:text-indigo-600 flex items-center gap-1"
           type="button"
@@ -252,17 +252,17 @@ export default function AssignmentSubmissionsPage({
           <ChevronLeft className="w-4 h-4" /> Volver a Tareas
         </button>
 
-        <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm relative overflow-hidden">
+        <div className="bg-white rounded-2xl p-4 sm:p-6 border border-slate-200 shadow-sm relative overflow-hidden">
           <div className="absolute top-0 right-0 w-32 h-32 bg-orange-100 rounded-full -mr-10 -mt-10 opacity-50 blur-2xl" />
           <div className="relative z-10">
             <div className="flex justify-between items-start mb-4">
               <div className="min-w-0">
-                <h1 className="text-3xl font-bold text-slate-900 mb-2 truncate">{assignment.title}</h1>
-                <p className="text-slate-500 max-w-2xl">{assignment.description}</p>
+                <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-slate-900 mb-2 truncate">{assignment.title}</h1>
+                <p className="text-slate-500 max-w-2xl text-sm sm:text-base">{assignment.description}</p>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mt-4 sm:mt-6">
               <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
                 <p className="text-xs text-slate-500 uppercase font-bold mb-1">Fecha Límite</p>
                 <div className="flex items-center gap-2 text-slate-800 font-semibold">
@@ -292,10 +292,10 @@ export default function AssignmentSubmissionsPage({
         </div>
 
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-          <div className="p-5 border-b border-slate-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-3 bg-slate-50/50">
-            <h3 className="font-bold text-slate-800 flex items-center gap-2">
+          <div className="p-4 sm:p-5 border-b border-slate-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-3 bg-slate-50/50">
+            <h3 className="font-bold text-slate-800 flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 text-sm sm:text-base">
               Entregas de Estudiantes
-              <span className="text-slate-400 text-sm font-normal">({pendingCorrections} pendientes de corrección)</span>
+              <span className="text-slate-400 text-xs sm:text-sm font-normal">({pendingCorrections} pendientes)</span>
             </h3>
             <div className="flex gap-2 w-full md:w-auto">
               <div className="relative flex-1 md:flex-none">
@@ -335,7 +335,7 @@ export default function AssignmentSubmissionsPage({
           ) : (
             <div className="divide-y divide-slate-100">
               {filteredSubmissions.map((submission) => (
-                <div key={submission.id} className="p-5">
+                <div key={submission.id} className="p-4 sm:p-5">
                   <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                     <div className="flex items-start gap-4 min-w-0">
                       <div className="flex-shrink-0">

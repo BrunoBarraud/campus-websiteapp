@@ -10,10 +10,12 @@ interface EventModalProps {
   setEventForm: (form: CreateEventForm) => void;
   handleCreateEvent: () => void;
   handleEditEvent: () => void;
+  handleDeleteEvent?: () => void;
   resetEventForm: () => void;
   userSubjects: Subject[];
   currentUser: User | null;
   personalOnly?: boolean;
+  canDelete?: boolean;
 }
 
 const EventModal: React.FC<EventModalProps> = ({
@@ -25,10 +27,12 @@ const EventModal: React.FC<EventModalProps> = ({
   setEventForm,
   handleCreateEvent,
   handleEditEvent,
+  handleDeleteEvent,
   resetEventForm,
   userSubjects,
   currentUser,
-  personalOnly = false
+  personalOnly = false,
+  canDelete = false
 }) => {
   if (!showEventModal) return null;
   return (
@@ -258,7 +262,7 @@ const EventModal: React.FC<EventModalProps> = ({
               />
             </div>
             {/* Acciones */}
-            <div className="flex justify-end space-x-3 pt-4">
+            <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 sm:space-x-3 pt-4">
               <button
                 type="button"
                 onClick={() => {
@@ -270,6 +274,16 @@ const EventModal: React.FC<EventModalProps> = ({
               >
                 Cancelar
               </button>
+
+              {editingEvent && canDelete && handleDeleteEvent && (
+                <button
+                  type="button"
+                  onClick={handleDeleteEvent}
+                  className="px-4 py-2 border border-rose-200 rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-100 transition-colors font-semibold"
+                >
+                  Eliminar
+                </button>
+              )}
               <button
                 type="submit"
                 className="px-4 py-2 bg-amber-400 text-rose-950 rounded-lg hover:bg-rose-950 hover:text-amber-400 transition-colors font-semibold border-2 border-rose-950"

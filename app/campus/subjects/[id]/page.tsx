@@ -502,34 +502,37 @@ export default function SubjectDetailPage() {
         {/* Tabs */}
         <div className="bg-white border-b border-slate-200">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <nav className="-mb-px flex space-x-8">
-              {[
-                {
-                  id: "overview",
-                  name: "Información General",
-                  icon: FiBookOpen,
-                },
-                { id: "units", name: "Unidades", icon: FiFolder },
-                { id: "content", name: "Contenido", icon: FiFile },
-                { id: "assignments", name: "Tareas", icon: FiClipboard },
-              ].map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() =>
-                    setActiveTab(
-                      tab.id as "overview" | "units" | "content" | "assignments"
-                    )
-                  }
-                  className={`flex items-center py-4 px-1 border-b-2 font-medium text-sm ${
-                    activeTab === tab.id
-                      ? "border-yellow-500 text-yellow-700"
-                      : "border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300"
-                  }`}
-                >
-                  <tab.icon className="w-4 h-4 mr-2" />
-                  {tab.name}
-                </button>
-              ))}
+            <nav className="-mb-px overflow-x-auto">
+              <div className="flex space-x-6 sm:space-x-8 min-w-max">
+                {[
+                  {
+                    id: "overview",
+                    name: "Información General",
+                    icon: FiBookOpen,
+                  },
+                  { id: "units", name: "Unidades", icon: FiFolder },
+                  { id: "content", name: "Contenido", icon: FiFile },
+                  { id: "assignments", name: "Tareas", icon: FiClipboard },
+                ].map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() =>
+                      setActiveTab(
+                        tab.id as "overview" | "units" | "content" | "assignments"
+                      )
+                    }
+                    className={`flex items-center py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
+                      activeTab === tab.id
+                        ? "border-yellow-500 text-yellow-700"
+                        : "border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300"
+                    }`}
+                  >
+                    <tab.icon className="w-4 h-4 mr-2 flex-shrink-0" />
+                    <span className="hidden sm:inline">{tab.name}</span>
+                    <span className="sm:hidden">{tab.name.split(' ')[0]}</span>
+                  </button>
+                ))}
+              </div>
             </nav>
           </div>
         </div>
@@ -554,33 +557,33 @@ export default function SubjectDetailPage() {
                 <h3 className="text-lg font-semibold text-slate-900 mb-4">
                   Información del Curso
                 </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  <div className="text-center p-4 bg-slate-50 border border-slate-200 rounded-2xl">
-                    <div className="text-2xl font-extrabold text-slate-900">
+                <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                  <div className="text-center p-3 sm:p-4 bg-slate-50 border border-slate-200 rounded-xl sm:rounded-2xl">
+                    <div className="text-xl sm:text-2xl font-extrabold text-slate-900">
                       {units.length}
                     </div>
-                    <div className="text-sm text-slate-600">Unidades</div>
+                    <div className="text-xs sm:text-sm text-slate-600">Unidades</div>
                   </div>
-                  <div className="text-center p-4 bg-slate-50 border border-slate-200 rounded-2xl">
-                    <div className="text-2xl font-extrabold text-slate-900">
+                  <div className="text-center p-3 sm:p-4 bg-slate-50 border border-slate-200 rounded-xl sm:rounded-2xl">
+                    <div className="text-xl sm:text-2xl font-extrabold text-slate-900">
                       {content.length}
                     </div>
-                    <div className="text-sm text-slate-600">Publicaciones</div>
+                    <div className="text-xs sm:text-sm text-slate-600">Publicaciones</div>
                   </div>
-                  <div className="text-center p-4 bg-slate-50 border border-slate-200 rounded-2xl">
-                    <div className="text-2xl font-extrabold text-slate-900">
+                  <div className="text-center p-3 sm:p-4 bg-slate-50 border border-slate-200 rounded-xl sm:rounded-2xl">
+                    <div className="text-xl sm:text-2xl font-extrabold text-slate-900">
                       {units.reduce(
                         (acc, unit) => acc + (unit.documents?.length || 0),
                         0
                       )}
                     </div>
-                    <div className="text-sm text-slate-600">Documentos</div>
+                    <div className="text-xs sm:text-sm text-slate-600">Documentos</div>
                   </div>
-                  <div className="text-center p-4 bg-yellow-50 border border-yellow-100 rounded-2xl">
-                    <div className="text-2xl font-extrabold text-yellow-800">
+                  <div className="text-center p-3 sm:p-4 bg-yellow-50 border border-yellow-100 rounded-xl sm:rounded-2xl">
+                    <div className="text-xl sm:text-2xl font-extrabold text-yellow-800">
                       {assignments.length}
                     </div>
-                    <div className="text-sm text-slate-600">Tareas</div>
+                    <div className="text-xs sm:text-sm text-slate-600">Tareas</div>
                   </div>
                 </div>
               </div>

@@ -26,7 +26,7 @@ export default function QuestionCard({ question, onClick }: QuestionCardProps) {
   return (
     <div
       onClick={onClick}
-      className="bg-white border border-gray-200 rounded-lg p-5 hover:shadow-md transition-all cursor-pointer group"
+      className="bg-white border border-gray-200 rounded-lg p-4 sm:p-5 hover:shadow-md transition-all cursor-pointer group"
     >
       {/* Header con badges */}
       <div className="flex items-start gap-3 mb-3">
@@ -55,8 +55,8 @@ export default function QuestionCard({ question, onClick }: QuestionCardProps) {
       </p>
 
       {/* Stats y autor */}
-      <div className="flex items-center justify-between text-sm">
-        <div className="flex items-center gap-4 text-gray-500">
+      <div className="flex items-center justify-between text-xs sm:text-sm">
+        <div className="flex items-center gap-3 sm:gap-4 text-gray-500">
           <div className="flex items-center gap-1.5">
             <MessageCircle className="w-4 h-4" />
             <span>{question.answers_count}</span>

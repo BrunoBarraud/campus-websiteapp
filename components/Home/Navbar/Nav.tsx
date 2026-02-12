@@ -2,8 +2,6 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect } from "react";
-import { useSession } from "next-auth/react";
-import { usePathname } from "next/navigation";
 
 const LoadingNav = () => (
   <nav className="fixed top-0 left-0 w-full h-12 bg-white/80 backdrop-blur-sm border-b border-gray-200 z-50">
@@ -24,10 +22,8 @@ const LoadingNav = () => (
   </nav>
 );
 
-const Nav = ({ onMenuClick }: { onMenuClick?: () => void }) => {
+const Nav = () => {
   const [mounted, setMounted] = useState(false);
-  const { data: session } = useSession();
-  const pathname = usePathname();
 
   // Mount effect - SIEMPRE se ejecuta
   useEffect(() => {
@@ -66,35 +62,7 @@ const Nav = ({ onMenuClick }: { onMenuClick?: () => void }) => {
             </span>
           </div>
         </div>
-        {/* Mobile Menu Button - Solo en pantallas del campus y móviles */}
-        {pathname?.startsWith("/campus") && session && onMenuClick && (
-          <div className="lg:hidden">
-            <button
-              onClick={onMenuClick}
-              className="flex items-center space-x-2 p-2 rounded-lg hover:bg-white/20 transition-colors"
-            >
-              <div className="w-8 h-8 bg-gradient-to-r from-amber-400 to-amber-500 rounded-full flex items-center justify-center shadow-sm">
-                <span className="text-rose-950 font-semibold text-sm">
-                  {session?.user?.name?.charAt(0) || "U"}
-                </span>
               </div>
-              <svg
-                className="w-4 h-4 text-amber-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 6h16M4 12h16M4 18h16"
-                />
-              </svg>
-            </button>
-          </div>
-        )}
-      </div>
     </nav>
   );
 };

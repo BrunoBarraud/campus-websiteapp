@@ -9,7 +9,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const { id } = await params;
     const updates = await request.json();
 
-    const currentUser = await requireRole(['admin', 'teacher', 'student']);
+    const currentUser = await requireRole(['admin', 'admin_director', 'teacher', 'student']);
 
     if (currentUser.role === 'student') {
       const { data: ev, error: evErr } = await supabaseAdmin
@@ -71,7 +71,7 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
   try {
     const { id } = await params;
 
-    const currentUser = await requireRole(['admin', 'teacher', 'student']);
+    const currentUser = await requireRole(['admin', 'admin_director', 'teacher', 'student']);
 
     if (currentUser.role === 'student') {
       const { data: ev, error: evErr } = await supabaseAdmin

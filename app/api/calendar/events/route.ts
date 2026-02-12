@@ -1,6 +1,6 @@
 // 📅 API para gestión de eventos del calendario
 import { NextResponse } from 'next/server';
-import { calendarService } from '@/app/lib/services';
+import { calendarService, subjectService } from '@/app/lib/services';
 import { CreateEventForm, EventType } from '@/app/lib/types';
 import { requireRole } from '@/app/lib/auth';
 import { canStudentAct } from '@/app/lib/auth/checkApproval';
@@ -17,7 +17,7 @@ export async function GET(request: Request) {
     // Get authenticated user using role-based authentication
     let currentUser;
     try {
-      currentUser = await requireRole(['admin', 'teacher', 'student']);
+      currentUser = await requireRole(['admin', 'admin_director', 'teacher', 'student']);
     } catch (authErr: unknown) {
       console.warn('Authentication/authorization failed when getting events:', authErr);
       const msg = authErr instanceof Error ? authErr.message : 'No autenticado';
@@ -31,11 +31,19 @@ export async function GET(request: Request) {
       month: month ? parseInt(month) : undefined
     };
 
+    const subjects = await subjectService.getSubjects(
+      currentUser.role,
+      currentUser.id,
+      currentUser.year || undefined
+    );
+    const subjectIds = (subjects || []).map((s) => s.id);
+
     const events = await calendarService.getEvents(
       currentUser.role,
       currentUser.id,
       currentUser.year || undefined,
-      filter
+      filter,
+      subjectIds
     );
 
     return NextResponse.json({
@@ -62,7 +70,7 @@ export async function POST(request: Request) {
     const eventData: CreateEventForm = await request.json();
 
     // Get authenticated user using role-based authentication
-    const currentUser = await requireRole(['admin', 'teacher', 'student']);
+    const currentUser = await requireRole(['admin', 'admin_director', 'teacher', 'student']);
 
     // Verificar permisos
     if (currentUser.role === 'student') {

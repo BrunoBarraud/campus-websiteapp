@@ -229,55 +229,55 @@ export default function StudentAssignmentsPage({
   ).length;
 
   return (
-    <div className="min-h-screen bg-slate-100 p-4 md:p-8">
-      <div className="max-w-5xl mx-auto space-y-6">
+    <div className="min-h-screen bg-slate-100 p-3 sm:p-4 md:p-8">
+      <div className="max-w-5xl mx-auto space-y-4 sm:space-y-6">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
-            <h2 className="text-2xl font-bold text-slate-800">Mis Tareas</h2>
-            <p className="text-slate-500">Administra tus entregas y revisa las calificaciones</p>
+            <h2 className="text-xl sm:text-2xl font-bold text-slate-800">Mis Tareas</h2>
+            <p className="text-slate-500 text-sm sm:text-base">Administra tus entregas y revisa las calificaciones</p>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
-            <div className="p-3 rounded-xl bg-amber-50 text-amber-600">
-              <ClockIcon className="w-6 h-6" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+          <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-3 sm:gap-4 hover:shadow-md transition-shadow">
+            <div className="p-2 sm:p-3 rounded-xl bg-amber-50 text-amber-600 flex-shrink-0">
+              <ClockIcon className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
-            <div>
-              <p className="text-3xl font-bold text-slate-800">{pendingCount}</p>
-              <p className="text-sm font-medium text-slate-500">Pendientes</p>
-            </div>
-          </div>
-          <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
-            <div className="p-3 rounded-xl bg-blue-50 text-blue-600">
-              <CheckCircleIcon className="w-6 h-6" />
-            </div>
-            <div>
-              <p className="text-3xl font-bold text-slate-800">{submittedCount}</p>
-              <p className="text-sm font-medium text-slate-500">Entregadas</p>
+            <div className="min-w-0">
+              <p className="text-2xl sm:text-3xl font-bold text-slate-800">{pendingCount}</p>
+              <p className="text-xs sm:text-sm font-medium text-slate-500">Pendientes</p>
             </div>
           </div>
-          <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
-            <div className="p-3 rounded-xl bg-emerald-50 text-emerald-600">
-              <Trophy className="w-6 h-6" />
+          <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-3 sm:gap-4 hover:shadow-md transition-shadow">
+            <div className="p-2 sm:p-3 rounded-xl bg-blue-50 text-blue-600 flex-shrink-0">
+              <CheckCircleIcon className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
-            <div>
-              <p className="text-3xl font-bold text-slate-800">{gradedCount}</p>
-              <p className="text-sm font-medium text-slate-500">Calificadas</p>
+            <div className="min-w-0">
+              <p className="text-2xl sm:text-3xl font-bold text-slate-800">{submittedCount}</p>
+              <p className="text-xs sm:text-sm font-medium text-slate-500">Entregadas</p>
+            </div>
+          </div>
+          <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-3 sm:gap-4 hover:shadow-md transition-shadow">
+            <div className="p-2 sm:p-3 rounded-xl bg-emerald-50 text-emerald-600 flex-shrink-0">
+              <Trophy className="w-5 h-5 sm:w-6 sm:h-6" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-2xl sm:text-3xl font-bold text-slate-800">{gradedCount}</p>
+              <p className="text-xs sm:text-sm font-medium text-slate-500">Calificadas</p>
             </div>
           </div>
         </div>
 
         {assignments.length === 0 ? (
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-10 text-center">
-            <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mb-4 shadow-inner mx-auto">
-              <FileText className="w-10 h-10 text-slate-300" />
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-8 md:p-10 text-center">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 bg-slate-50 rounded-full flex items-center justify-center mb-4 shadow-inner mx-auto">
+              <FileText className="w-8 h-8 sm:w-10 sm:h-10 text-slate-300" />
             </div>
-            <h3 className="text-lg font-bold text-slate-700">No hay tareas disponibles</h3>
-            <p className="text-slate-500 mt-1">No hay tareas disponibles para esta materia.</p>
+            <h3 className="text-base sm:text-lg font-bold text-slate-700">No hay tareas disponibles</h3>
+            <p className="text-slate-500 mt-1 text-sm sm:text-base">No hay tareas disponibles para esta materia.</p>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-3 sm:space-y-4">
             {assignments.map((assignment) => {
               const status = getAssignmentStatus(assignment);
               const overdue = isOverdue(assignment.due_date) && !assignment.submission;
@@ -285,17 +285,17 @@ export default function StudentAssignmentsPage({
               return (
                 <div
                   key={assignment.id}
-                  className={`bg-white p-6 rounded-2xl border shadow-sm hover:shadow-md transition-shadow ${
+                  className={`bg-white p-4 sm:p-6 rounded-2xl border shadow-sm hover:shadow-md transition-shadow ${
                     overdue ? "border-red-200 bg-red-50/40" : "border-slate-200"
                   }`}
                 >
-                  <div className="flex flex-col md:flex-row justify-between items-start gap-4">
+                  <div className="flex flex-col lg:flex-row justify-between items-start gap-4">
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="text-lg font-bold text-slate-900 truncate">{assignment.title}</h3>
+                      <div className="flex items-center gap-2 flex-wrap mb-2">
+                        <h3 className="text-base sm:text-lg font-bold text-slate-900 truncate">{assignment.title}</h3>
                         {status.badge}
                       </div>
-                      <p className="text-slate-600 mt-1 line-clamp-2">{assignment.description}</p>
+                      <p className="text-slate-600 text-sm sm:text-base mt-1 line-clamp-2">{assignment.description}</p>
                       {assignment.unit?.title ? (
                         <div className="mt-3">
                           <span className="bg-purple-100 text-purple-700 text-xs font-bold px-2.5 py-1 rounded-full">
@@ -305,13 +305,13 @@ export default function StudentAssignmentsPage({
                       ) : null}
                     </div>
 
-                    <div className="text-right text-sm text-slate-700">
-                      <div className="flex items-center gap-2 mb-1 justify-end">
-                        <CalendarIcon className="h-4 w-4 text-indigo-500" />
+                    <div className="text-left lg:text-right text-sm text-slate-700">
+                      <div className="flex items-center gap-2 mb-1 lg:justify-end">
+                        <CalendarIcon className="h-4 w-4 text-indigo-500 flex-shrink-0" />
                         <span className="truncate">Vence: {formatDate(assignment.due_date)}</span>
                       </div>
-                      <div className="flex items-center gap-2 justify-end">
-                        <Trophy className="h-4 w-4 text-amber-500" />
+                      <div className="flex items-center gap-2 lg:justify-end">
+                        <Trophy className="h-4 w-4 text-amber-500 flex-shrink-0" />
                         <span>{assignment.max_score} puntos</span>
                       </div>
                     </div>

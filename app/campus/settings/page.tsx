@@ -121,19 +121,19 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-muted p-6">
+    <div className="min-h-screen bg-muted p-3 sm:p-4 md:p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="mb-8">
+        <div className="mb-6 sm:mb-8">
           <div className="flex items-center gap-3 mb-4">
-            <div className="p-2 bg-yellow-100 rounded-lg border border-yellow-200">
-              <Settings className="h-6 w-6 text-yellow-700" />
+            <div className="p-2 bg-yellow-100 rounded-lg border border-yellow-200 flex-shrink-0">
+              <Settings className="h-5 w-5 sm:h-6 sm:w-6 text-yellow-700" />
             </div>
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+            <div className="min-w-0">
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-gray-100">
                 Configuración del Sistema
               </h1>
-              <p className="text-gray-600 dark:text-gray-400">
+              <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
                 Gestiona las funcionalidades y configuraciones del campus
               </p>
             </div>

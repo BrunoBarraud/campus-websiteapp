@@ -89,8 +89,8 @@ export default function StudentForumsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-100 p-4 md:p-8">
-      <div className="max-w-5xl mx-auto space-y-6">
+    <div className="min-h-screen bg-slate-100 p-3 sm:p-4 md:p-8">
+      <div className="max-w-5xl mx-auto space-y-4 sm:space-y-6">
         <button
           onClick={() => router.back()}
           className="text-sm text-slate-500 hover:text-indigo-600 flex items-center gap-1"
@@ -101,39 +101,39 @@ export default function StudentForumsPage() {
 
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
-            <h2 className="text-2xl font-bold text-slate-800">Foros de Discusión</h2>
-            <p className="text-slate-500">
+            <h2 className="text-xl sm:text-2xl font-bold text-slate-800">Foros de Discusión</h2>
+            <p className="text-slate-500 text-sm sm:text-base">
               {subject ? `${subject.name} - ${subject.year}° Año` : "Espacio de debate e intercambio"}
             </p>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
-            <div className="p-3 rounded-xl bg-blue-50 text-blue-600">
-              <MessageSquare className="w-6 h-6" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+          <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-3 sm:gap-4 hover:shadow-md transition-shadow">
+            <div className="p-2 sm:p-3 rounded-xl bg-blue-50 text-blue-600 flex-shrink-0">
+              <MessageSquare className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
-            <div>
-              <p className="text-3xl font-bold text-slate-800">{forums.length}</p>
-              <p className="text-sm font-medium text-slate-500">Foros Activos</p>
-            </div>
-          </div>
-          <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
-            <div className="p-3 rounded-xl bg-amber-50 text-amber-600">
-              <HelpCircle className="w-6 h-6" />
-            </div>
-            <div>
-              <p className="text-3xl font-bold text-slate-800">{forums.reduce((sum, f) => sum + f.questions_count, 0)}</p>
-              <p className="text-sm font-medium text-slate-500">Preguntas Totales</p>
+            <div className="min-w-0">
+              <p className="text-2xl sm:text-3xl font-bold text-slate-800">{forums.length}</p>
+              <p className="text-xs sm:text-sm font-medium text-slate-500">Foros Activos</p>
             </div>
           </div>
-          <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
-            <div className="p-3 rounded-xl bg-emerald-50 text-emerald-600">
-              <Users className="w-6 h-6" />
+          <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-3 sm:gap-4 hover:shadow-md transition-shadow">
+            <div className="p-2 sm:p-3 rounded-xl bg-amber-50 text-amber-600 flex-shrink-0">
+              <HelpCircle className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
-            <div>
-              <p className="text-3xl font-bold text-slate-800">{forums.filter((f) => f.allow_student_answers).length}</p>
-              <p className="text-sm font-medium text-slate-500">Colaboraciones</p>
+            <div className="min-w-0">
+              <p className="text-2xl sm:text-3xl font-bold text-slate-800">{forums.reduce((sum, f) => sum + f.questions_count, 0)}</p>
+              <p className="text-xs sm:text-sm font-medium text-slate-500">Preguntas Totales</p>
+            </div>
+          </div>
+          <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-3 sm:gap-4 hover:shadow-md transition-shadow">
+            <div className="p-2 sm:p-3 rounded-xl bg-emerald-50 text-emerald-600 flex-shrink-0">
+              <Users className="w-5 h-5 sm:w-6 sm:h-6" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-2xl sm:text-3xl font-bold text-slate-800">{forums.filter((f) => f.allow_student_answers).length}</p>
+              <p className="text-xs sm:text-sm font-medium text-slate-500">Colaboraciones</p>
             </div>
           </div>
         </div>
@@ -141,17 +141,17 @@ export default function StudentForumsPage() {
         <div className="space-y-4">
           <h3 className="text-lg font-bold text-slate-700 mt-4">Debates Recientes</h3>
           {forums.length === 0 ? (
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-10 text-center">
-              <h3 className="text-lg font-bold text-slate-700">No hay foros disponibles</h3>
-              <p className="text-slate-500 mt-1">Tu profesor aún no creó foros para esta materia.</p>
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-8 md:p-10 text-center">
+              <h3 className="text-base sm:text-lg font-bold text-slate-700">No hay foros disponibles</h3>
+              <p className="text-slate-500 mt-1 text-sm sm:text-base">Tu profesor aún no creó foros para esta materia.</p>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               {forums.map((forum) => (
                 <div
                   key={forum.id}
                   onClick={() => handleForumClick(forum.id)}
-                  className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:border-indigo-300 transition-colors cursor-pointer group"
+                  className="bg-white p-4 sm:p-6 rounded-2xl border border-slate-200 shadow-sm hover:border-indigo-300 transition-colors cursor-pointer group"
                   role="button"
                   tabIndex={0}
                   onKeyDown={(e) => {
@@ -174,31 +174,31 @@ export default function StudentForumsPage() {
                         e.stopPropagation();
                       }}
                     >
-                      <MoreHorizontal className="w-5 h-5" />
+                      <MoreHorizontal className="w-4 h-4 sm:w-5 sm:h-5" />
                     </button>
                   </div>
 
-                  <h4 className="text-xl font-bold text-slate-800 mb-2 group-hover:text-indigo-600 transition-colors">
+                  <h4 className="text-lg sm:text-xl font-bold text-slate-800 mb-2 group-hover:text-indigo-600 transition-colors">
                     {forum.title}
                   </h4>
                   {forum.description ? (
-                    <p className="text-slate-600 mb-4 line-clamp-2">{forum.description}</p>
+                    <p className="text-slate-600 mb-4 text-sm sm:text-base line-clamp-2">{forum.description}</p>
                   ) : null}
 
-                  <div className="flex items-center justify-between border-t border-slate-100 pt-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-t border-slate-100 pt-4">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-xs font-bold text-slate-600">
                         {subject?.year ? String(subject.year) : "F"}
                       </div>
-                      <span className="text-sm font-medium text-slate-700">{subject?.name || "Materia"}</span>
+                      <span className="text-sm font-medium text-slate-700 truncate">{subject?.name || "Materia"}</span>
                     </div>
-                    <div className="flex items-center gap-4 text-slate-500 text-sm">
+                    <div className="flex items-center gap-3 sm:gap-4 text-slate-500 text-xs sm:text-sm">
                       <span className="flex items-center gap-1 hover:text-indigo-600">
-                        <MessageSquare className="w-4 h-4" /> {forum.questions_count} preguntas
+                        <MessageSquare className="w-3 h-3 sm:w-4 sm:h-4" /> {forum.questions_count} preguntas
                       </span>
                       {forum.allow_student_answers ? (
                         <span className="flex items-center gap-1 hover:text-emerald-600">
-                          <CheckCircle className="w-4 h-4" /> Colaborativo
+                          <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4" /> <span className="hidden sm:inline">Colaborativo</span><span className="sm:hidden">Colab</span>
                         </span>
                       ) : null}
                     </div>

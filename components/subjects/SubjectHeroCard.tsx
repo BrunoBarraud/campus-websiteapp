@@ -20,10 +20,10 @@ export default function SubjectHeroCard({
 
   return (
     <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden mb-8 transition-all hover:shadow-md">
-      <div className="bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-600 p-8 text-white">
-        <div className="flex justify-between items-start gap-4">
-          <div className="min-w-0">
-            <h1 className="text-3xl md:text-4xl font-bold mb-3 tracking-tight truncate">{title}</h1>
+      <div className="bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-600 p-6 sm:p-8 text-white">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
+          <div className="min-w-0 flex-1">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 tracking-tight truncate">{title}</h1>
             {teacher ? (
               <p className="opacity-90 flex items-center gap-2 text-indigo-100 font-medium">
                 <span className="bg-white/10 backdrop-blur-sm px-3 py-1 rounded-full text-sm border border-white/20">
@@ -33,17 +33,19 @@ export default function SubjectHeroCard({
             ) : null}
           </div>
 
-          <div className="flex items-start gap-3">
-            {rightSlot}
-            <div className="hidden md:block bg-white/10 p-3 rounded-full backdrop-blur-sm border border-white/20">
+          <div className="flex items-start gap-3 sm:gap-4 flex-shrink-0">
+            <div className="flex flex-wrap gap-2 justify-end sm:justify-start">
+              {rightSlot}
+            </div>
+            <div className="hidden sm:block bg-white/10 p-3 rounded-full backdrop-blur-sm border border-white/20">
               <BookOpen className="w-8 h-8 text-white" />
             </div>
           </div>
         </div>
       </div>
 
-      <div className="p-6 bg-white flex flex-col md:flex-row justify-between items-center gap-6">
-        <div className="w-full md:w-1/2 space-y-2">
+      <div className="p-4 sm:p-6 bg-white flex flex-col lg:flex-row justify-between items-center gap-4 lg:gap-6">
+        <div className="w-full lg:w-1/2 space-y-2">
           <div className="flex justify-between text-sm font-semibold text-slate-600">
             <span>Tu Progreso</span>
             <span className="text-indigo-600">
@@ -58,11 +60,11 @@ export default function SubjectHeroCard({
           </div>
         </div>
 
-        <div className="w-full md:w-auto flex items-center gap-3 bg-amber-50 text-amber-800 px-5 py-3 rounded-xl border border-amber-200/60 shadow-sm">
-          <Clock className="w-5 h-5 text-amber-600" />
-          <div className="text-sm">
+        <div className="w-full lg:w-auto flex items-center gap-3 bg-amber-50 text-amber-800 px-4 sm:px-5 py-3 rounded-xl border border-amber-200/60 shadow-sm">
+          <Clock className="w-5 h-5 text-amber-600 flex-shrink-0" />
+          <div className="text-sm min-w-0">
             <p className="font-bold text-amber-900">Próximo vencimiento</p>
-            <p className="opacity-90">{nextDueLabel || "Sin datos"}</p>
+            <p className="opacity-90 truncate">{nextDueLabel || "Sin datos"}</p>
           </div>
         </div>
       </div>

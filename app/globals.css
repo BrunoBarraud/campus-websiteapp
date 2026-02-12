@@ -40,6 +40,19 @@ body {
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
+html,
+body {
+  overflow-x: hidden;
+}
+
+#app-content {
+  min-height: 100dvh;
+}
+
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
 /* Estilos para inputs con soporte de tema oscuro */
 input, select, textarea {
   background-color: var(--surface);

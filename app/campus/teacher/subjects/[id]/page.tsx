@@ -206,7 +206,7 @@ export default function TeacherSubjectPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50/50 p-4 md:p-8 font-sans text-slate-800">
+    <div className="min-h-screen bg-gray-50/50 p-3 sm:p-4 md:p-8 font-sans text-slate-800">
       <SubjectHeroCard
         title={subject.name}
         teacher={session?.user?.name || null}
@@ -225,11 +225,11 @@ export default function TeacherSubjectPage() {
       />
 
       <div className="max-w-4xl mx-auto">
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8 mb-8">
-          <div className="flex flex-col md:flex-row justify-between md:items-start gap-4 mb-6">
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-6 md:p-8 mb-6 sm:mb-8">
+          <div className="flex flex-col lg:flex-row justify-between lg:items-start gap-4 mb-6">
             <div>
               <div className="flex items-center gap-2 mb-1 flex-wrap">
-                <h2 className="text-2xl md:text-3xl font-bold text-slate-900">{subject.name}</h2>
+                <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-slate-900">{subject.name}</h2>
                 <span className="bg-indigo-100 text-indigo-700 text-xs px-2 py-0.5 rounded font-bold uppercase tracking-wider">
                   {`${subject.year}°${subject.division ? ` '${subject.division}'` : ""}`}
                 </span>
@@ -237,24 +237,24 @@ export default function TeacherSubjectPage() {
               <p className="text-slate-500 text-sm">Panel de Docente</p>
             </div>
 
-            <div className="flex gap-2 flex-wrap">
+            <div className="flex gap-2 flex-wrap justify-start lg:justify-end">
               <button
-                className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors shadow-sm"
+                className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-3 sm:px-4 py-2 rounded-lg text-sm font-semibold transition-colors shadow-sm"
                 type="button"
                 onClick={() => window.dispatchEvent(new Event("teacher-open-add-unit"))}
               >
-                <Plus className="w-4 h-4" /> Nueva Unidad
+                <Plus className="w-4 h-4" /> <span className="hidden sm:inline">Nueva Unidad</span><span className="sm:hidden">Unidad</span>
               </button>
               <a
-                className="flex items-center gap-2 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
+                className="flex items-center gap-2 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 px-3 sm:px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
                 href={`/campus/teacher/subjects/${subjectId}/forums`}
               >
-                <MessageSquare className="w-4 h-4" /> Avisos
+                <MessageSquare className="w-4 h-4" /> <span className="hidden sm:inline">Avisos</span><span className="sm:hidden">Avisos</span>
               </a>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <a
               href={`/campus/teacher/subjects/${subjectId}/students`}
               className="bg-slate-50 p-4 rounded-xl border border-slate-100 flex items-center gap-4 hover:bg-blue-50 hover:border-blue-200 transition-colors cursor-pointer"
