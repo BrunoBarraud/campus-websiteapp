@@ -140,14 +140,14 @@ export default function NotificationsPage() {
   return (
     <div className="max-w-4xl mx-auto p-4 md:p-6">
       {/* Header */}
-      <header className="flex justify-between items-center mb-8">
+      <header className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 mb-6 sm:mb-8">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-800">Notificaciones</h1>
-          <p className="text-gray-500">Mantente al tanto de tu actividad</p>
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800">Notificaciones</h1>
+          <p className="text-sm sm:text-base text-gray-500">Mantente al tanto de tu actividad</p>
         </div>
-        <div className="flex items-center space-x-4">
-          <button onClick={markAllRead} className="text-blue-500 hover:text-blue-700 transition-colors">
-            <i className="fas fa-check-double mr-1"></i> Marcar todas como leídas
+        <div className="flex items-center gap-3 sm:space-x-4">
+          <button onClick={markAllRead} className="text-blue-500 hover:text-blue-700 transition-colors text-sm sm:text-base">
+            <i className="fas fa-check-double mr-1"></i> <span className="hidden sm:inline">Marcar todas como leídas</span><span className="sm:hidden">Marcar leídas</span>
           </button>
           <div className="relative">
             <button onClick={e => { e.stopPropagation(); setShowSettings(s => !s); }} className="text-gray-500 hover:text-gray-700 transition-colors">
@@ -176,8 +176,8 @@ export default function NotificationsPage() {
       </div>
       {/* Contador */}
       <div className="flex justify-between items-center mb-4">
-        <p className="text-sm text-gray-500"><span id="unread-count">{unreadCount}</span> notificaciones sin leer</p>
-        <button onClick={clearAll} className="text-sm text-red-500 hover:text-red-700">Limpiar todas</button>
+        <p className="text-xs sm:text-sm text-gray-500"><span id="unread-count">{unreadCount}</span> sin leer</p>
+        <button onClick={clearAll} className="text-xs sm:text-sm text-red-500 hover:text-red-700">Limpiar todas</button>
       </div>
       {/* Lista de notificaciones */}
       <div className="bg-white rounded-xl shadow-sm overflow-hidden">
@@ -226,9 +226,9 @@ export default function NotificationsPage() {
           ))}
         </div>
         {/* Footer */}
-        <div className="border-t border-gray-100 px-6 py-4 bg-gray-50">
-          <button onClick={loadMore} className="text-blue-500 hover:text-blue-700 font-medium flex items-center justify-center w-full">
-            <i className="fas fa-sync-alt mr-2"></i> Cargar más notificaciones
+        <div className="border-t border-gray-100 px-4 sm:px-6 py-3 sm:py-4 bg-gray-50">
+          <button onClick={loadMore} className="text-blue-500 hover:text-blue-700 font-medium flex items-center justify-center w-full text-sm sm:text-base">
+            <i className="fas fa-sync-alt mr-2"></i> Cargar más
           </button>
         </div>
       </div>

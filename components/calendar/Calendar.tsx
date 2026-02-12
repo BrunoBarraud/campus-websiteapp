@@ -31,12 +31,12 @@ type VisibilityFilter = 'all' | 'personal' | 'global' | 'year' | 'subject';
 const Calendar: React.FC<CalendarProps> = ({ events = [], canEdit: _canEdit = false, userYear, onEventCreate, onEventEdit, onEventDelete }) => {
   const canCreateEvent = () => {
     if (!currentUser) return false;
-    return currentUser.role === 'admin' || currentUser.role === 'teacher' || currentUser.role === 'student';
+    return currentUser.role === 'admin' || currentUser.role === 'admin_director' || currentUser.role === 'teacher' || currentUser.role === 'student';
   };
 
   const canEditEvent = (ev?: CalendarEvent | null) => {
     if (!currentUser || !ev) return false;
-    if (currentUser.role === 'admin' || currentUser.role === 'teacher') return true;
+    if (currentUser.role === 'admin' || currentUser.role === 'admin_director' || currentUser.role === 'teacher') return true;
     return currentUser.role === 'student' && ev.is_personal === true && ev.created_by === currentUser.id;
   };
 
@@ -392,17 +392,17 @@ const Calendar: React.FC<CalendarProps> = ({ events = [], canEdit: _canEdit = fa
         <div className="fixed inset-0 bg-slate-900/60 z-[99] pointer-events-none transition-opacity duration-300" />
       )}
 
-      <div className="flex flex-col lg:flex-row bg-slate-50 p-4 sm:p-6 gap-6 font-sans text-slate-800 rounded-2xl border border-slate-200 shadow-sm">
-        <div className="flex-1 bg-white rounded-3xl shadow-sm border border-slate-200 flex flex-col overflow-hidden min-h-[560px] sm:min-h-[740px]">
-          <div className="p-4 sm:p-6 border-b border-slate-100 flex justify-between items-center">
+      <div className="flex flex-col lg:flex-row bg-slate-50 p-3 sm:p-4 md:p-6 gap-4 lg:gap-6 font-sans text-slate-800 rounded-2xl border border-slate-200 shadow-sm">
+        <div className="flex-1 bg-white rounded-3xl shadow-sm border border-slate-200 flex flex-col overflow-hidden min-h-[400px] sm:min-h-[560px] md:min-h-[640px] lg:min-h-[740px]">
+          <div className="p-3 sm:p-4 md:p-6 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
             <div>
-              <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-                {currentMonthLabel} <CalendarIcon className="w-5 h-5 text-indigo-500" />
+              <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-slate-900 flex items-center gap-2">
+                {currentMonthLabel} <CalendarIcon className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-500" />
               </h2>
-              <p className="text-slate-500 text-sm">Organiza tus exámenes y entregas</p>
+              <p className="text-slate-500 text-xs sm:text-sm hidden sm:block">Organiza tus exámenes y entregas</p>
             </div>
 
-            <div className="flex items-center gap-2 sm:gap-3">
+            <div className="flex items-center gap-1 sm:gap-2 md:gap-3 w-full sm:w-auto">
               <div className="flex bg-slate-100 rounded-lg p-1">
                 <button
                   onClick={prevMonth}
@@ -462,7 +462,7 @@ const Calendar: React.FC<CalendarProps> = ({ events = [], canEdit: _canEdit = fa
           {showFilters && (
             <div className="px-4 sm:px-6 pb-4 sm:pb-6 border-b border-slate-100">
               <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4">
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                   <div>
                     <label className="block text-xs font-bold text-slate-600 mb-1">Tipo</label>
                     <select
@@ -530,8 +530,9 @@ const Calendar: React.FC<CalendarProps> = ({ events = [], canEdit: _canEdit = fa
 
           <div className="grid grid-cols-7 border-b border-slate-100 bg-slate-50">
             {dayNames.map((day) => (
-              <div key={day} className="py-3 text-center text-sm font-bold text-slate-500 uppercase tracking-wide">
-                {day}
+              <div key={day} className="py-2 sm:py-3 text-center text-xs sm:text-sm font-bold text-slate-500 uppercase tracking-wide">
+                <span className="hidden sm:inline">{day}</span>
+                <span className="sm:hidden">{day.charAt(0)}</span>
               </div>
             ))}
           </div>
@@ -542,7 +543,7 @@ const Calendar: React.FC<CalendarProps> = ({ events = [], canEdit: _canEdit = fa
                 return (
                   <div
                     key={idx}
-                    className="min-h-[72px] sm:min-h-[100px] border-b border-r border-slate-100 p-2 relative bg-slate-50/50"
+                    className="min-h-[50px] sm:min-h-[60px] xs:min-h-[72px] md:min-h-[80px] lg:min-h-[100px] border-b border-r border-slate-100 p-1 relative bg-slate-50/50"
                   />
                 );
               }
@@ -558,7 +559,7 @@ const Calendar: React.FC<CalendarProps> = ({ events = [], canEdit: _canEdit = fa
                   onClick={() => setSelectedDate(dateString)}
                   onDoubleClick={() => canCreateEvent() && openEventModal(dateString)}
                   className={`
-                    min-h-[72px] sm:min-h-[100px] border-b border-r border-slate-100 p-2 relative transition-all cursor-pointer group hover:bg-indigo-50/30
+                    min-h-[50px] sm:min-h-[60px] xs:min-h-[72px] md:min-h-[80px] lg:min-h-[100px] border-b border-r border-slate-100 p-1 relative transition-all cursor-pointer group hover:bg-indigo-50/30
                     bg-white
                     ${isSelected ? 'ring-2 ring-inset ring-indigo-500 bg-indigo-50/20 z-10' : ''}
                   `}
@@ -566,7 +567,7 @@ const Calendar: React.FC<CalendarProps> = ({ events = [], canEdit: _canEdit = fa
                   <div className="flex justify-between items-start mb-1">
                     <span
                       className={`
-                        text-sm font-bold w-7 h-7 flex items-center justify-center rounded-full
+                        text-xs sm:text-sm font-bold w-5 h-5 sm:w-7 sm:h-7 flex items-center justify-center rounded-full
                         ${isToday ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200' : 'text-slate-700 group-hover:text-indigo-600'}
                       `}
                     >
@@ -574,11 +575,11 @@ const Calendar: React.FC<CalendarProps> = ({ events = [], canEdit: _canEdit = fa
                     </span>
                   </div>
 
-                  <div className="space-y-1">
-                    {dayEvents.slice(0, 3).map((ev) => (
+                  <div className="space-y-0.5 sm:space-y-1">
+                    {dayEvents.slice(0, 2).map((ev) => (
                       <div
                         key={ev.id}
-                        className={`text-[10px] font-medium px-1.5 py-0.5 rounded truncate border ${getEventPillClass(ev.type)}`}
+                        className={`text-[8px] sm:text-[10px] font-medium px-1 py-0.5 rounded truncate border ${getEventPillClass(ev.type)}`}
                         title={ev.title}
                         onClick={(e) => {
                           e.stopPropagation();
@@ -586,12 +587,13 @@ const Calendar: React.FC<CalendarProps> = ({ events = [], canEdit: _canEdit = fa
                           if (canEditEvent(ev)) openEventModal(undefined, ev);
                         }}
                       >
-                        <span className="hidden sm:inline">{ev.time ? ev.time : 'Todo el día'} • </span>
-                        {ev.title}
+                        <span className="hidden md:inline">{ev.time ? ev.time : ''}</span>
+                        <span className="md:hidden">{ev.time ? '•' : ''}</span>
+                        <span className="truncate block">{ev.title}</span>
                       </div>
                     ))}
-                    {dayEvents.length > 3 && (
-                      <div className="text-[10px] text-slate-400 pl-1">+ {dayEvents.length - 3} más</div>
+                    {dayEvents.length > 2 && (
+                      <div className="text-[8px] sm:text-[10px] text-slate-400 pl-1">+{dayEvents.length - 2}</div>
                     )}
                   </div>
                 </div>
@@ -600,7 +602,7 @@ const Calendar: React.FC<CalendarProps> = ({ events = [], canEdit: _canEdit = fa
           </div>
         </div>
 
-        <div className="w-full lg:w-96 bg-white rounded-3xl shadow-sm border border-slate-200 flex flex-col overflow-hidden min-h-[560px] sm:min-h-[740px]">
+        <div className="w-full lg:w-96 bg-white rounded-3xl shadow-sm border border-slate-200 flex flex-col overflow-hidden min-h-[400px] sm:min-h-[560px] md:min-h-[640px] lg:min-h-[740px]">
           <div className="p-4 sm:p-6 bg-slate-900 text-white relative overflow-hidden">
             <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500 rounded-full blur-3xl opacity-20 -mr-10 -mt-10" />
 
@@ -738,10 +740,16 @@ const Calendar: React.FC<CalendarProps> = ({ events = [], canEdit: _canEdit = fa
             setEventForm={setEventForm}
             handleCreateEvent={handleCreateEvent}
             handleEditEvent={handleEditEvent}
+            handleDeleteEvent={
+              editingEvent && canDeleteEvent(editingEvent)
+                ? () => handleDeleteEvent(editingEvent.id)
+                : undefined
+            }
             resetEventForm={resetEventForm}
             userSubjects={userSubjects}
             currentUser={currentUser}
             personalOnly={currentUser?.role === 'student'}
+            canDelete={!!editingEvent && canDeleteEvent(editingEvent)}
           />
         )}
       </div>

@@ -31,7 +31,7 @@ export default function AnswerCard({
 }: AnswerCardProps) {
   return (
     <div
-      className={`bg-white border rounded-lg p-6 ${
+      className={`bg-white border rounded-lg p-4 sm:p-6 ${
         answer.is_accepted
           ? "border-green-300 bg-green-50"
           : answer.is_teacher_answer
@@ -40,14 +40,14 @@ export default function AnswerCard({
       }`}
     >
       {/* Header */}
-      <div className="flex items-start justify-between mb-4">
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-yellow-400 to-rose-400 rounded-full flex items-center justify-center text-white font-semibold">
+          <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-yellow-400 to-rose-400 rounded-full flex items-center justify-center text-white font-semibold text-sm sm:text-base flex-shrink-0">
             {answer.author.name.charAt(0).toUpperCase()}
           </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="font-semibold text-gray-900">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="font-semibold text-gray-900 text-sm sm:text-base">
                 {answer.author.name}
               </span>
               {answer.is_teacher_answer && (
@@ -58,11 +58,11 @@ export default function AnswerCard({
               {answer.is_accepted && (
                 <span className="flex items-center gap-1 px-2 py-0.5 bg-green-100 text-green-700 text-xs font-medium rounded">
                   <CheckCircle className="w-3 h-3" />
-                  Respuesta Aceptada
+                  <span className="hidden sm:inline">Respuesta Aceptada</span><span className="sm:hidden">Aceptada</span>
                 </span>
               )}
             </div>
-            <span className="text-sm text-gray-500">
+            <span className="text-xs sm:text-sm text-gray-500">
               {new Date(answer.created_at).toLocaleDateString("es-ES", {
                 day: "numeric",
                 month: "long",
@@ -77,10 +77,10 @@ export default function AnswerCard({
         {canAccept && !answer.is_accepted && (
           <button
             onClick={onAccept}
-            className="flex items-center gap-1 px-3 py-1.5 text-sm bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors"
+            className="flex items-center gap-1 px-3 py-1.5 text-xs sm:text-sm bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors flex-shrink-0"
           >
             <CheckCircle className="w-4 h-4" />
-            Marcar como correcta
+            <span className="hidden sm:inline">Marcar como correcta</span><span className="sm:hidden">Correcta</span>
           </button>
         )}
       </div>

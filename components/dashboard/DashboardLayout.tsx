@@ -10,6 +10,7 @@ import {
   LayoutDashboard,
   LogOut,
   MessageSquare,
+  MoreHorizontal,
   Settings,
   Shield,
   User as UserIcon,
@@ -19,6 +20,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   const { data: session } = useSession();
   const pathname = usePathname();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
 
   useEffect(() => {
     const open = () => setIsSidebarOpen(true);
@@ -222,8 +224,8 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
         </aside>
 
         {/* Main content area */}
-        <main className="flex-1">
-          <div className="max-w-7xl mx-auto px-4 md:px-6 py-6 pb-24 lg:pb-6">
+        <main className="flex-1 min-w-0">
+          <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 py-3 sm:py-4 md:py-6 pb-28 lg:pb-6">
             {children}
           </div>
         </main>
@@ -250,6 +252,16 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
           })}
 
           <button
+            onClick={() => setShowMobileMenu(!showMobileMenu)}
+            className={`flex flex-col items-center justify-center py-2 px-2 text-xs transition-colors ${
+              showMobileMenu ? "text-yellow-700" : "text-slate-500 hover:text-slate-700"
+            }`}
+            title="Más opciones"
+          >
+            <MoreHorizontal className="h-5 w-5 mb-1" />
+          </button>
+
+          <button
             onClick={handleLogout}
             className="flex flex-col items-center justify-center py-2 px-2 text-xs transition-colors text-slate-500 hover:text-red-700"
             title="Cerrar sesión"
@@ -257,6 +269,54 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
             <LogOut className="h-5 w-5 mb-1" />
           </button>
         </div>
+
+        {/* Mobile Menu Overlay */}
+        {showMobileMenu && (
+          <div className="fixed inset-0 bg-black/50 z-40 flex items-end" onClick={() => setShowMobileMenu(false)}>
+            <div className="bg-white w-full rounded-t-2xl p-4" onClick={(e) => e.stopPropagation()}>
+              <div className="w-12 h-1 bg-gray-300 rounded-full mx-auto mb-4"></div>
+              <div className="space-y-2">
+                {settingsNavigation.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = pathname === item.href;
+
+                  return (
+                    <Link
+                      key={item.name}
+                      href={item.href}
+                      onClick={() => setShowMobileMenu(false)}
+                      className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${
+                        isActive ? "bg-yellow-50 text-yellow-700 border border-yellow-100" : "text-slate-600 hover:bg-slate-50"
+                      }`}
+                    >
+                      <Icon className="h-5 w-5" />
+                      <span>{item.name}</span>
+                    </Link>
+                  );
+                })}
+                
+                {supportNavigation.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = pathname === item.href;
+
+                  return (
+                    <Link
+                      key={item.name}
+                      href={item.href}
+                      onClick={() => setShowMobileMenu(false)}
+                      className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${
+                        isActive ? "bg-yellow-50 text-yellow-700 border border-yellow-100" : "text-slate-600 hover:bg-slate-50"
+                      }`}
+                    >
+                      <Icon className="h-5 w-5" />
+                      <span>{item.name}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

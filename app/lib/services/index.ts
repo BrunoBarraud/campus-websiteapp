@@ -298,13 +298,22 @@ export const calendarService = {
         creator:users!created_by(id, name)
       `;
 
-    let query = supabase.from("calendar_events").select(baseSelect).order("date", { ascending: true });
+    let query = supabase
+      .from("calendar_events")
+      .select(baseSelect)
+      .eq("is_active", true)
+      .order("date", { ascending: true });
+
+    // Admins/Directores: ven todos los eventos activos (incluyendo personales de otros usuarios)
+    if (userRole === "admin" || userRole === "admin_director") {
+      // no additional visibility filter
+    } else
 
     // Filtrado por visibilidad
     if (userRole === "student" && userId) {
       // Eventos personales, globales, por año, por materia
       const orFilters = [
-        `is_personal.eq.true,created_by.eq.${userId}`,
+        `and(is_personal.eq.true,created_by.eq.${userId})`,
         `is_global.eq.true`,
       ];
       if (year) {
@@ -314,11 +323,11 @@ export const calendarService = {
         orFilters.push(`subject_id.in.(${subjectIds.join(",")})`);
       }
       query = query.or(orFilters.join(","));
-    } else if ((userRole === "teacher" || userRole === "admin") && userId) {
+    } else if (userRole === "teacher" && userId) {
       // Profesores y admins ven globales, por año, por materia, personales
       const orFilters = [
         `is_global.eq.true`,
-        `is_personal.eq.true,created_by.eq.${userId}`,
+        `and(is_personal.eq.true,created_by.eq.${userId})`,
       ];
       if (year) {
         orFilters.push(`year.eq.${year}`);

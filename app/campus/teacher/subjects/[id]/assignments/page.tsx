@@ -248,8 +248,8 @@ export default function TeacherAssignmentsPage({
   }, 0);
 
   return (
-    <div className="min-h-screen bg-slate-100 p-4 md:p-8">
-      <div className="max-w-5xl mx-auto space-y-6">
+    <div className="min-h-screen bg-slate-100 p-3 sm:p-4 md:p-8">
+      <div className="max-w-5xl mx-auto space-y-4 sm:space-y-6">
         <button
           onClick={() => router.back()}
           className="text-sm text-slate-500 hover:text-indigo-600 flex items-center gap-1"
@@ -260,8 +260,8 @@ export default function TeacherAssignmentsPage({
 
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
-            <h2 className="text-2xl font-bold text-slate-800">Tareas</h2>
-            <p className="text-slate-500">Creá, administrá y revisá entregas</p>
+            <h2 className="text-xl sm:text-2xl font-bold text-slate-800">Tareas</h2>
+            <p className="text-slate-500 text-sm sm:text-base">Creá, administrá y revisá entregas</p>
           </div>
 
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -278,10 +278,10 @@ export default function TeacherAssignmentsPage({
                     unit_id: null,
                   });
                 }}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl font-medium shadow-lg shadow-indigo-200 transition-all active:scale-95 inline-flex items-center gap-2"
+                className="bg-indigo-600 hover:bg-indigo-700 text-white px-3 sm:px-5 py-2.5 rounded-xl font-medium shadow-lg shadow-indigo-200 transition-all active:scale-95 inline-flex items-center gap-2 text-sm sm:text-base"
                 type="button"
               >
-                <PlusIcon className="h-5 w-5" /> Nueva Tarea
+                <PlusIcon className="h-4 w-4 sm:h-5 sm:w-5" /> <span className="hidden sm:inline">Nueva Tarea</span><span className="sm:hidden">+</span>
               </button>
             </DialogTrigger>
             <DialogContent className="max-w-2xl">
@@ -382,32 +382,32 @@ export default function TeacherAssignmentsPage({
           </Dialog>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
-            <div className="p-3 rounded-xl bg-blue-50 text-blue-600">
-              <FileTextIcon className="w-6 h-6" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+          <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-3 sm:gap-4 hover:shadow-md transition-shadow">
+            <div className="p-2 sm:p-3 rounded-xl bg-blue-50 text-blue-600 flex-shrink-0">
+              <FileTextIcon className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
-            <div>
-              <p className="text-3xl font-bold text-slate-800">{activeAssignments.length}</p>
-              <p className="text-sm font-medium text-slate-500">Tareas Activas</p>
-            </div>
-          </div>
-          <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
-            <div className="p-3 rounded-xl bg-amber-50 text-amber-600">
-              <UsersIcon className="w-6 h-6" />
-            </div>
-            <div>
-              <p className="text-3xl font-bold text-slate-800">{pendingCorrections}</p>
-              <p className="text-sm font-medium text-slate-500">Por corregir</p>
+            <div className="min-w-0">
+              <p className="text-2xl sm:text-3xl font-bold text-slate-800">{activeAssignments.length}</p>
+              <p className="text-xs sm:text-sm font-medium text-slate-500">Tareas Activas</p>
             </div>
           </div>
-          <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
-            <div className="p-3 rounded-xl bg-emerald-50 text-emerald-600">
-              <ClockIcon className="w-6 h-6" />
+          <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-3 sm:gap-4 hover:shadow-md transition-shadow">
+            <div className="p-2 sm:p-3 rounded-xl bg-amber-50 text-amber-600 flex-shrink-0">
+              <UsersIcon className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
-            <div>
-              <p className="text-3xl font-bold text-slate-800">{totalSubmissions}</p>
-              <p className="text-sm font-medium text-slate-500">Entregas Totales</p>
+            <div className="min-w-0">
+              <p className="text-2xl sm:text-3xl font-bold text-slate-800">{pendingCorrections}</p>
+              <p className="text-xs sm:text-sm font-medium text-slate-500">Por corregir</p>
+            </div>
+          </div>
+          <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-3 sm:gap-4 hover:shadow-md transition-shadow">
+            <div className="p-2 sm:p-3 rounded-xl bg-emerald-50 text-emerald-600 flex-shrink-0">
+              <ClockIcon className="w-5 h-5 sm:w-6 sm:h-6" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-2xl sm:text-3xl font-bold text-slate-800">{totalSubmissions}</p>
+              <p className="text-xs sm:text-sm font-medium text-slate-500">Entregas Totales</p>
             </div>
           </div>
         </div>
@@ -420,9 +420,9 @@ export default function TeacherAssignmentsPage({
 
           <TabsContent value="active" className="space-y-4 mt-4">
             {activeAssignments.length === 0 ? (
-              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-10 text-center">
-                <h3 className="text-lg font-bold text-slate-700">No hay tareas activas</h3>
-                <p className="text-slate-500 mt-1">Creá la primera tarea para esta materia.</p>
+              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-10 text-center">
+                <h3 className="text-base sm:text-lg font-bold text-slate-700">No hay tareas activas</h3>
+                <p className="text-slate-500 mt-1 text-sm sm:text-base">Creá la primera tarea para esta materia.</p>
               </div>
             ) : (
               <div className="space-y-4">
@@ -470,7 +470,7 @@ export default function TeacherAssignmentsPage({
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm mt-5 pt-5 border-t border-slate-100">
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 text-sm mt-4 sm:mt-5 pt-4 sm:pt-5 border-t border-slate-100">
                       <div className="flex items-center gap-2 text-slate-700">
                         <CalendarIcon className="h-4 w-4 text-indigo-500" />
                         <span className="truncate">{formatDate(assignment.due_date)}</span>
@@ -510,9 +510,9 @@ export default function TeacherAssignmentsPage({
 
           <TabsContent value="inactive" className="space-y-4 mt-4">
             {inactiveAssignments.length === 0 ? (
-              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-10 text-center">
-                <h3 className="text-lg font-bold text-slate-700">No hay tareas inactivas</h3>
-                <p className="text-slate-500 mt-1">Cuando desactives una tarea, aparecerá acá.</p>
+              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-10 text-center">
+                <h3 className="text-base sm:text-lg font-bold text-slate-700">No hay tareas inactivas</h3>
+                <p className="text-slate-500 mt-1 text-sm sm:text-base">Cuando desactives una tarea, aparecerá acá.</p>
               </div>
             ) : (
               <div className="space-y-4">

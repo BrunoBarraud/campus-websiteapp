@@ -237,7 +237,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({ onSelectConversation, selecte
                         </span>
                       )}
                     </div>
-                    <p className="text-xs text-gray-500 truncate w-40">{conv.otherParticipant?.email}</p>
+                    <p className="text-xs text-gray-500 truncate max-w-[10rem] sm:max-w-[12rem]">{conv.otherParticipant?.email}</p>
                     <p className="text-xs text-gray-400">
                       {conv.otherParticipant?.online ? (
                         'En línea'
@@ -287,7 +287,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({ onSelectConversation, selecte
                       </span>
                     )}
                   </div>
-                  <p className="text-xs text-gray-500 truncate w-40">{user.email}</p>
+                  <p className="text-xs text-gray-500 truncate max-w-[10rem] sm:max-w-[12rem]">{user.email}</p>
                   <p className="text-xs text-gray-400">
                     {user.typing ? (
                       <span className="text-blue-500 font-medium animate-pulse">Escribiendo...</span>

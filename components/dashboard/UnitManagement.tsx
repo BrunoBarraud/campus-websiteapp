@@ -280,11 +280,11 @@ export default function UnitManagement({ subjectId, onUnitSelect, selectedUnitId
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
       {/* Panel de Unidades */}
       <div className="lg:col-span-1">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold text-gray-900">Unidades</h3>
+          <h3 className="text-base sm:text-lg font-semibold text-gray-900">Unidades</h3>
           <Dialog open={showUnitDialog} onOpenChange={setShowUnitDialog}>
             <DialogTrigger asChild>
               <Button size="sm" onClick={resetUnitForm}>
@@ -441,7 +441,7 @@ export default function UnitManagement({ subjectId, onUnitSelect, selectedUnitId
                         placeholder="Instrucciones detalladas para los estudiantes..."
                       />
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <Label htmlFor="assignment_due_date">Fecha de entrega</Label>
                         <Input
@@ -502,11 +502,11 @@ export default function UnitManagement({ subjectId, onUnitSelect, selectedUnitId
             <div className="space-y-4">
               {assignments.map((assignment) => (
                 <Card key={assignment.id}>
-                  <CardContent className="p-6">
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <h4 className="font-medium text-lg">{assignment.title}</h4>
+                  <CardContent className="p-4 sm:p-6">
+                    <div className="flex flex-col md:flex-row justify-between items-start gap-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-2 flex-wrap">
+                          <h4 className="font-medium text-base sm:text-lg">{assignment.title}</h4>
                           <Badge variant={assignment.is_active ? "default" : "secondary"}>
                             {assignment.is_active ? 'Activa' : 'Inactiva'}
                           </Badge>
@@ -523,7 +523,7 @@ export default function UnitManagement({ subjectId, onUnitSelect, selectedUnitId
                             <p className="text-sm"><strong>Instrucciones:</strong> {assignment.instructions}</p>
                           </div>
                         )}
-                        <div className="flex items-center gap-4 text-sm text-gray-500">
+                        <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-gray-500">
                           <div className="flex items-center">
                             <CalendarIcon className="h-4 w-4 mr-1" />
                             Entrega: {new Date(assignment.due_date).toLocaleDateString('es-ES', {
@@ -552,11 +552,12 @@ export default function UnitManagement({ subjectId, onUnitSelect, selectedUnitId
                           </div>
                         )}
                       </div>
-                      <div className="flex gap-2 ml-4">
+                      <div className="flex gap-2 w-full md:w-auto md:ml-4">
                         <Button
                           size="sm"
                           variant={assignment.is_active ? "secondary" : "default"}
                           onClick={() => handleToggleAssignmentStatus(assignment.id, assignment.is_active)}
+                          className="flex-1 md:flex-none"
                         >
                           {assignment.is_active ? 'Desactivar' : 'Activar'}
                         </Button>
@@ -564,6 +565,7 @@ export default function UnitManagement({ subjectId, onUnitSelect, selectedUnitId
                           size="sm"
                           variant="outline"
                           onClick={() => router.push(`/campus/teacher/subjects/${subjectId}/assignments/${assignment.id}/submissions`)}
+                          className="flex-1 md:flex-none"
                         >
                           Ver Entregas
                         </Button>

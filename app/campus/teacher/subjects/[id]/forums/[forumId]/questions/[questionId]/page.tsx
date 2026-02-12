@@ -124,21 +124,21 @@ export default function TeacherQuestionDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-gray-50 p-3 sm:p-4 md:p-6">
       <div className="max-w-4xl mx-auto">
         <button
           onClick={() => router.back()}
-          className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6"
+          className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6 text-sm"
           type="button"
         >
           <ArrowLeft className="w-4 h-4" />
           Volver al foro
         </button>
 
-        <div className="bg-white rounded-xl shadow-sm p-8 mb-6">
-          <h1 className="text-3xl font-bold text-gray-900 mb-4">{question.title}</h1>
+        <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6 md:p-8 mb-6">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-4">{question.title}</h1>
 
-          <div className="flex items-center gap-4 text-sm text-gray-600 mb-6">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-gray-600 mb-6">
             <div className="flex items-center gap-1.5">
               <Eye className="w-4 h-4" />
               <span>{question.views_count} vistas</span>
@@ -147,11 +147,11 @@ export default function TeacherQuestionDetailPage() {
               <MessageCircle className="w-4 h-4" />
               <span>{question.answers_count} respuestas</span>
             </div>
-            <span>•</span>
+            <span className="hidden sm:inline">•</span>
             <span>
-              Preguntado por <strong>{question.author.name}</strong>
+              Por <strong>{question.author.name}</strong>
             </span>
-            <span>•</span>
+            <span className="hidden sm:inline">•</span>
             <span>
               {new Date(question.created_at).toLocaleDateString("es-ES", {
                 day: "numeric",
@@ -183,7 +183,7 @@ export default function TeacherQuestionDetailPage() {
         </div>
 
         {!question.is_locked ? (
-          <div className="bg-white rounded-xl shadow-sm p-6">
+          <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Tu Respuesta</h3>
 
             {error && (
@@ -206,7 +206,7 @@ export default function TeacherQuestionDetailPage() {
                 <button
                   type="submit"
                   disabled={submitting || !answerContent.trim()}
-                  className="px-6 py-3 bg-gradient-to-r from-yellow-500 to-rose-500 text-white rounded-lg hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-4 sm:px-6 py-2.5 sm:py-3 bg-gradient-to-r from-yellow-500 to-rose-500 text-white rounded-lg hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base w-full sm:w-auto"
                 >
                   {submitting ? "Enviando..." : "Publicar Respuesta"}
                 </button>

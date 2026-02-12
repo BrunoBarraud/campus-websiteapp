@@ -121,20 +121,20 @@ export default function StudentSubjectsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-muted p-6">
+    <div className="min-h-screen bg-muted p-3 sm:p-4 md:p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
             Mis Materias
           </h1>
-          <p className="text-gray-600 dark:text-gray-400">
+          <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
             Gestiona tu progreso académico y accede al contenido de tus cursos
           </p>
         </div>
 
         {/* Filtros */}
-        <div className="bg-surface rounded-xl shadow-soft border border-border p-6 mb-8">
+        <div className="bg-surface rounded-xl shadow-soft border border-border p-4 sm:p-6 mb-6 sm:mb-8">
           <div className="flex flex-col lg:flex-row gap-4">
             {/* Search */}
             <div className="flex-1">
@@ -193,7 +193,7 @@ export default function StudentSubjectsPage() {
 
         {/* Materias Grid */}
         {filteredSubjects.length === 0 ? (
-          <div className="bg-surface border border-border rounded-xl shadow-soft text-center p-12">
+          <div className="bg-surface border border-border rounded-xl shadow-soft text-center p-6 sm:p-12">
             <BookOpen className="mx-auto h-16 w-16 text-gray-400 mb-4" />
             <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
               No hay materias
@@ -239,7 +239,7 @@ export default function StudentSubjectsPage() {
                 </div>
 
                 {/* Content */}
-                <div className="p-6">
+                <div className="p-4 sm:p-6">
                   <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-3 group-hover:text-yellow-700 transition-colors">
                     {subject.name}
                   </h3>

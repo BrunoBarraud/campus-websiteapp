@@ -121,28 +121,28 @@ export default function StudentForumDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-gray-50 p-4 sm:p-6 md:p-8">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="mb-8">
+        <div className="mb-6 sm:mb-8">
           <button
             onClick={() => router.back()}
-            className="text-gray-600 hover:text-gray-900 mb-4 flex items-center gap-2"
+            className="text-gray-600 hover:text-gray-900 mb-4 flex items-center gap-2 text-sm"
           >
             ← Volver a foros
           </button>
 
-          <div className="bg-white rounded-xl shadow-sm p-6">
-            <div className="flex items-start justify-between">
+          <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm p-4 sm:p-6">
+            <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
               <div className="flex-1">
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
                   {forum.title}
                 </h1>
                 {forum.description && (
-                  <p className="text-gray-600">{forum.description}</p>
+                  <p className="text-gray-600 text-sm sm:text-base">{forum.description}</p>
                 )}
 
-                <div className="flex items-center gap-4 mt-4 text-sm">
+                <div className="flex flex-wrap items-center gap-3 sm:gap-4 mt-4 text-xs sm:text-sm">
                   <span className="text-gray-600">
                     {forum.questions_count} pregunta{forum.questions_count !== 1 ? "s" : ""}
                   </span>
@@ -160,22 +160,24 @@ export default function StudentForumDetailPage() {
                 </div>
               </div>
 
-              <div>
+              <div className="flex-shrink-0">
                 {!forum.is_locked ? (
                   <button
                     onClick={() => {
                       console.log('[Student Forum] Abriendo modal para hacer pregunta');
                       setIsModalOpen(true);
                     }}
-                    className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-yellow-500 to-rose-500 text-white rounded-lg hover:shadow-lg transition-all font-semibold"
+                    className="flex items-center gap-2 px-4 sm:px-6 py-3 bg-gradient-to-r from-yellow-500 to-rose-500 text-white rounded-lg hover:shadow-lg transition-all font-semibold text-sm sm:text-base"
                   >
-                    <Plus className="w-5 h-5" />
-                    Hacer Pregunta
+                    <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
+                    <span className="hidden sm:inline">Hacer Pregunta</span>
+                    <span className="sm:hidden">Preguntar</span>
                   </button>
                 ) : (
-                  <div className="px-6 py-3 bg-gray-100 text-gray-500 rounded-lg flex items-center gap-2">
-                    <Lock className="w-5 h-5" />
-                    Foro cerrado
+                  <div className="px-4 sm:px-6 py-3 bg-gray-100 text-gray-500 rounded-lg flex items-center gap-2 text-sm">
+                    <Lock className="w-4 h-4" />
+                    <span className="hidden sm:inline">Foro cerrado</span>
+                    <span className="sm:hidden">Cerrado</span>
                   </div>
                 )}
               </div>
@@ -184,7 +186,7 @@ export default function StudentForumDetailPage() {
         </div>
 
         {/* Filters */}
-        <div className="flex gap-2 mb-6">
+        <div className="flex flex-wrap gap-2 mb-6">
           {[
             { value: "all", label: "Todas" },
             { value: "unanswered", label: "Sin responder" },
@@ -193,7 +195,7 @@ export default function StudentForumDetailPage() {
             <button
               key={f.value}
               onClick={() => setFilter(f.value as any)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors ${
                 filter === f.value
                   ? "bg-yellow-500 text-white"
                   : "bg-white text-gray-700 hover:bg-gray-50"
@@ -206,8 +208,8 @@ export default function StudentForumDetailPage() {
 
         {/* Questions List */}
         {filteredQuestions.length === 0 ? (
-          <div className="bg-white rounded-xl shadow-sm p-12 text-center">
-            <p className="text-gray-600 mb-4">
+          <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm p-8 sm:p-12 text-center">
+            <p className="text-gray-600 mb-4 text-sm sm:text-base">
               {filter === "all"
                 ? "Aún no hay preguntas en este foro"
                 : `No hay preguntas ${filter === "answered" ? "respondidas" : "sin responder"}`}
@@ -215,15 +217,16 @@ export default function StudentForumDetailPage() {
             {!forum.is_locked && filter === "all" && (
               <button
                 onClick={() => setIsModalOpen(true)}
-                className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-yellow-500 to-rose-500 text-white rounded-lg hover:shadow-lg transition-all"
+                className="inline-flex items-center gap-2 px-4 sm:px-6 py-3 bg-gradient-to-r from-yellow-500 to-rose-500 text-white rounded-lg hover:shadow-lg transition-all text-sm sm:text-base"
               >
-                <Plus className="w-5 h-5" />
-                Hacer la Primera Pregunta
+                <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
+                <span className="hidden sm:inline">Hacer la Primera Pregunta</span>
+                <span className="sm:hidden">Preguntar</span>
               </button>
             )}
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-3 sm:space-y-4">
             {filteredQuestions.map((question) => (
               <QuestionCard
                 key={question.id}

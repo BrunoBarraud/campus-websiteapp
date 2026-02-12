@@ -28,7 +28,7 @@ export default function ForumCard({ forum, onClick, isTeacher = false }: ForumCa
   return (
     <div
       onClick={onClick}
-      className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-lg transition-all cursor-pointer group"
+      className="bg-white border border-gray-200 rounded-xl p-4 sm:p-6 hover:shadow-lg transition-all cursor-pointer group"
     >
       {/* Header */}
       <div className="flex items-start justify-between mb-3">
@@ -57,7 +57,7 @@ export default function ForumCard({ forum, onClick, isTeacher = false }: ForumCa
       )}
 
       {/* Stats */}
-      <div className="flex items-center gap-4 text-sm">
+      <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm">
         <div className="flex items-center gap-1.5 text-gray-600">
           <MessageSquare className="w-4 h-4" />
           <span>{forum.questions_count} pregunta{forum.questions_count !== 1 ? 's' : ''}</span>

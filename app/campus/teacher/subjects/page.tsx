@@ -85,20 +85,20 @@ export default function TeacherSubjectsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-muted p-6">
+    <div className="min-h-screen bg-muted p-3 sm:p-4 md:p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
             Mis Materias
           </h1>
-          <p className="text-gray-600 dark:text-gray-400">
+          <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
             Gestiona tus materias, unidades y contenidos
           </p>
         </div>
 
         {/* Filtros */}
-        <div className="bg-surface border border-border rounded-xl shadow-soft p-6 mb-6">
+        <div className="bg-surface border border-border rounded-xl shadow-soft p-4 sm:p-6 mb-6">
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex-1">
               <label
@@ -134,7 +134,7 @@ export default function TeacherSubjectsPage() {
 
         {/* Materias Grid */}
         {subjects.length === 0 ? (
-          <div className="bg-surface border border-border rounded-xl shadow-soft p-12 text-center">
+          <div className="bg-surface border border-border rounded-xl shadow-soft p-6 sm:p-12 text-center">
             <div className="text-gray-400 mb-4">
               <svg
                 className="w-16 h-16 mx-auto"
@@ -186,7 +186,7 @@ export default function TeacherSubjectsPage() {
                 </div>
 
                 {/* Subject Info */}
-                <div className="p-6">
+                <div className="p-4 sm:p-6">
                   <div className="mb-4">
                     <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
                       {subject.name}
@@ -197,32 +197,34 @@ export default function TeacherSubjectsPage() {
                   </div>
 
                   {/* Subject Details */}
-                  <div className="flex justify-between text-sm text-gray-500 dark:text-gray-400 mb-4">
-                    <span>
+                  <div className="text-sm text-gray-500 dark:text-gray-400 mb-4 space-y-3">
+                    <span className="block">
                       {subject.year}° Año • {subject.semester}° Sem
                     </span>
-                    <div className="bg-yellow-50 rounded-lg p-3 border border-yellow-100">
-                      <div className="text-2xl font-bold text-yellow-700">
-                        {subject.stats.units_count}
+                    <div className="grid grid-cols-3 gap-2">
+                      <div className="bg-yellow-50 rounded-lg p-2 sm:p-3 border border-yellow-100 text-center">
+                        <div className="text-lg sm:text-2xl font-bold text-yellow-700">
+                          {subject.stats.units_count}
+                        </div>
+                        <div className="text-[10px] sm:text-xs text-yellow-700 font-medium">
+                          Unidades
+                        </div>
                       </div>
-                      <div className="text-xs text-yellow-700 font-medium">
-                        Unidades
+                      <div className="bg-green-50 rounded-lg p-2 sm:p-3 border border-green-100 text-center">
+                        <div className="text-lg sm:text-2xl font-bold text-green-600">
+                          {subject.stats.contents_count}
+                        </div>
+                        <div className="text-[10px] sm:text-xs text-green-600 font-medium">
+                          Contenidos
+                        </div>
                       </div>
-                    </div>
-                    <div className="bg-green-50 rounded-lg p-3 border border-green-100">
-                      <div className="text-2xl font-bold text-green-600">
-                        {subject.stats.contents_count}
-                      </div>
-                      <div className="text-xs text-green-600 font-medium">
-                        Contenidos
-                      </div>
-                    </div>
-                    <div className="bg-rose-50 rounded-lg p-3 border border-rose-100">
-                      <div className="text-2xl font-bold text-rose-600">
-                        {subject.stats.documents_count}
-                      </div>
-                      <div className="text-xs text-rose-600 font-medium">
-                        Documentos
+                      <div className="bg-rose-50 rounded-lg p-2 sm:p-3 border border-rose-100 text-center">
+                        <div className="text-lg sm:text-2xl font-bold text-rose-600">
+                          {subject.stats.documents_count}
+                        </div>
+                        <div className="text-[10px] sm:text-xs text-rose-600 font-medium">
+                          Documentos
+                        </div>
                       </div>
                     </div>
                   </div>
