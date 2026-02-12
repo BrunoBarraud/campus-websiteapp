@@ -9,6 +9,7 @@ import {
   HelpCircle,
   LayoutDashboard,
   LogOut,
+  MessageSquare,
   Settings,
   Shield,
   User as UserIcon,
@@ -45,6 +46,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
       ? [
           { name: "Configuración", href: "/campus/settings", icon: Settings },
           { name: "Panel Admin", href: "/campus/admin", icon: Shield },
+          { name: "Centro de Soporte", href: "/campus/admin/support", icon: MessageSquare },
         ]
       : []),
     ...(session?.user?.role === "admin_director"
