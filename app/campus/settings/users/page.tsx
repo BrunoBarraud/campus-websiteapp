@@ -744,336 +744,218 @@ function UsersPageContent() {
         </div>
       )}
 
-    <div style={{ background: 'linear-gradient(135deg, #fef3c7, #ffffff, #fdf2f8)', minHeight: '100vh', padding: '2rem' }}>
-      <div style={{ maxWidth: '80rem', margin: '0 auto' }}>
+    <div className="min-h-screen bg-gray-50 p-6 lg:p-8">
+      <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
-        <div style={{ marginBottom: '2rem' }}>
-          <h1 style={{ fontSize: '2rem', fontWeight: 'bold', color: '#1f2937', marginBottom: '0.5rem' }}>
-            <span style={{ background: '#f59e0b', color: '#881337', padding: '0.5rem 1rem', borderRadius: '0.5rem', marginRight: '0.5rem' }}>
-              Gestión
-            </span>
-            <span style={{ background: '#881337', color: '#f59e0b', padding: '0.5rem 1rem', borderRadius: '0.5rem' }}>
-              Usuarios
-            </span>
-          </h1>
-          <p style={{ color: '#6b7280' }}>Administra profesores, estudiantes y administradores del campus</p>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Gestión de Usuarios</h1>
+            <p className="text-gray-500 text-sm mt-1">Administra profesores, estudiantes y administradores del campus</p>
+          </div>
+          <button
+            onClick={() => {
+              setEditingUser(null);
+              setIsModalOpen(true);
+            }}
+            className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors shadow-sm"
+          >
+            <FiPlus className="w-4 h-4 mr-2" />
+            Agregar Usuario
+          </button>
         </div>
 
-        {/* Quick Stats */}
-        <div style={{ 
-          display: 'grid', 
-          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
-          gap: '1rem', 
-          marginBottom: '1.5rem' 
-        }}>
-          <div style={{ 
-            background: 'rgba(255, 255, 255, 0.8)', 
-            borderRadius: '0.75rem', 
-            padding: '1rem', 
-            boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-            border: '1px solid #f59e0b'
-          }}>
-            <div style={{ color: '#f59e0b', fontWeight: 'bold', fontSize: '1.5rem' }}>
-              {users.filter(u => u.role === 'admin').length}
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-500 mb-1">Total Usuarios</p>
+                <h3 className="text-2xl font-bold text-gray-900">{pagination.totalItems}</h3>
+              </div>
+              <div className="p-3 rounded-lg bg-indigo-50">
+                <FiUsers className="w-6 h-6 text-indigo-600" />
+              </div>
             </div>
-            <div style={{ color: '#6b7280', fontSize: '0.875rem' }}>Administradores</div>
           </div>
           
-          <div style={{ 
-            background: 'rgba(255, 255, 255, 0.8)', 
-            borderRadius: '0.75rem', 
-            padding: '1rem', 
-            boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-            border: '1px solid #881337'
-          }}>
-            <div style={{ color: '#881337', fontWeight: 'bold', fontSize: '1.5rem' }}>
-              {users.filter(u => u.role === 'teacher').length}
+          <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-500 mb-1">Estudiantes</p>
+                <h3 className="text-2xl font-bold text-blue-600">{users.filter(u => u.role === 'student').length}</h3>
+              </div>
+              <div className="p-3 rounded-lg bg-blue-50">
+                <FiUsers className="w-6 h-6 text-blue-600" />
+              </div>
             </div>
-            <div style={{ color: '#6b7280', fontSize: '0.875rem' }}>Profesores</div>
           </div>
           
-          <div style={{ 
-            background: 'rgba(255, 255, 255, 0.8)', 
-            borderRadius: '0.75rem', 
-            padding: '1rem', 
-            boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-            border: '1px solid #10b981'
-          }}>
-            <div style={{ color: '#10b981', fontWeight: 'bold', fontSize: '1.5rem' }}>
-              {users.filter(u => u.role === 'student').length}
+          <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-500 mb-1">Profesores</p>
+                <h3 className="text-2xl font-bold text-emerald-600">{users.filter(u => u.role === 'teacher').length}</h3>
+              </div>
+              <div className="p-3 rounded-lg bg-emerald-50">
+                <FiUsers className="w-6 h-6 text-emerald-600" />
+              </div>
             </div>
-            <div style={{ color: '#6b7280', fontSize: '0.875rem' }}>Estudiantes</div>
           </div>
           
-          <div style={{ 
-            background: 'rgba(255, 255, 255, 0.8)', 
-            borderRadius: '0.75rem', 
-            padding: '1rem', 
-            boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-            border: '1px solid #6b7280'
-          }}>
-            <div style={{ color: '#1f2937', fontWeight: 'bold', fontSize: '1.5rem' }}>
-              {users.length}
-            </div>
-            <div style={{ color: '#6b7280', fontSize: '0.875rem' }}>
-              {searchTerm || filterRole !== 'all' ? 'En esta página' : 'Total en página'}
+          <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-500 mb-1">Administradores</p>
+                <h3 className="text-2xl font-bold text-amber-600">{users.filter(u => u.role === 'admin').length}</h3>
+              </div>
+              <div className="p-3 rounded-lg bg-amber-50">
+                <FiUsers className="w-6 h-6 text-amber-600" />
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Controls */}
-        <div style={{ 
-          background: 'rgba(255, 255, 255, 0.8)', 
-          borderRadius: '0.75rem', 
-          padding: '1.5rem', 
-          marginBottom: '1.5rem',
-          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-        }}>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flex: 1 }}>
-              <div style={{ position: 'relative', minWidth: '20rem' }}>
-                <FiSearch style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: '#6b7280' }} />
-                <input
-                  type="text"
-                  placeholder="Buscar por nombre o email..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  style={{
-                    width: '100%',
-                    paddingLeft: '2.5rem',
-                    padding: '0.5rem',
-                    border: '1px solid #d1d5db',
-                    borderRadius: '0.5rem'
-                  }}
-                />
-              </div>
-              
-              <select
-                value={filterRole}
-                onChange={(e) => setFilterRole(e.target.value)}
-                style={{
-                  padding: '0.5rem',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '0.5rem',
-                  minWidth: '8rem'
-                }}
+        {/* Filtros y Búsqueda */}
+        <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col lg:flex-row gap-4 justify-between items-center">
+          <div className="flex flex-1 gap-3 w-full lg:w-auto">
+            <div className="relative flex-1 lg:max-w-md">
+              <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Buscar por nombre o email..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+              />
+            </div>
+            
+            <select
+              value={filterRole}
+              onChange={(e) => setFilterRole(e.target.value)}
+              className="px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white text-gray-600 focus:ring-2 focus:ring-blue-500 outline-none cursor-pointer"
+            >
+              <option value="all">Todos los roles</option>
+              <option value="student">Estudiantes</option>
+              <option value="teacher">Profesores</option>
+              <option value="admin">Administradores</option>
+            </select>
+          </div>
+
+          <div className="flex gap-2 w-full lg:w-auto overflow-x-auto pb-1 lg:pb-0">
+            <button
+              onClick={() => handleExportUsers(false)}
+              disabled={isExporting}
+              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition-colors disabled:opacity-50 whitespace-nowrap"
+            >
+              <FiDownload size={16} />
+              {isExporting ? 'Exportando...' : 'Exportar Excel'}
+            </button>
+
+            <button
+              onClick={() => handleExportUsers(true)}
+              disabled={isExporting}
+              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors disabled:opacity-50 whitespace-nowrap"
+            >
+              <FiFileText size={16} />
+              {isExporting ? 'Exportando...' : 'Excel + Materias'}
+            </button>
+
+            {/* Botón de Importación */}
+            <div className="relative">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".csv"
+                onChange={(e) => setImportFile(e.target.files?.[0] || null)}
+                className="hidden"
+              />
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-amber-500 text-white hover:bg-amber-600 transition-colors whitespace-nowrap"
               >
-                <option value="all">Todos los roles</option>
-                <option value="student">Estudiantes</option>
-                <option value="teacher">Profesores</option>
-                <option value="admin">Administradores</option>
-              </select>
+                <FiUpload size={16} />
+                {importFile ? importFile.name.substring(0, 15) + '...' : 'Seleccionar CSV'}
+              </button>
             </div>
 
-            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
-              {/* Botones de Exportación */}
+            {importFile && (
               <button
-                onClick={() => handleExportUsers(false)}
-                disabled={isExporting}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  padding: '0.5rem 1rem',
-                  background: 'linear-gradient(to right, #10b981, #059669)',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '0.5rem',
-                  cursor: isExporting ? 'not-allowed' : 'pointer',
-                  fontWeight: '500',
-                  opacity: isExporting ? 0.6 : 1
-                }}
+                onClick={handleImportUsers}
+                disabled={isImporting}
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-purple-600 text-white hover:bg-purple-700 transition-colors disabled:opacity-50 whitespace-nowrap"
               >
-                <FiDownload size={16} />
-                {isExporting ? 'Exportando...' : 'Exportar Excel'}
+                <FiUpload size={16} />
+                {isImporting ? 'Importando...' : 'Importar CSV'}
               </button>
-
-              <button
-                onClick={() => handleExportUsers(true)}
-                disabled={isExporting}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  padding: '0.5rem 1rem',
-                  background: 'linear-gradient(to right, #3b82f6, #1d4ed8)',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '0.5rem',
-                  cursor: isExporting ? 'not-allowed' : 'pointer',
-                  fontWeight: '500',
-                  opacity: isExporting ? 0.6 : 1
-                }}
-              >
-                <FiFileText size={16} />
-                {isExporting ? 'Exportando...' : 'Excel + Materias'}
-              </button>
-
-              {/* Botón de Importación */}
-              <div style={{ position: 'relative' }}>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".csv"
-                  onChange={(e) => setImportFile(e.target.files?.[0] || null)}
-                  style={{ display: 'none' }}
-                />
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    padding: '0.5rem 1rem',
-                    background: 'linear-gradient(to right, #f59e0b, #d97706)',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '0.5rem',
-                    cursor: 'pointer',
-                    fontWeight: '500'
-                  }}
-                >
-                  <FiUpload size={16} />
-                  {importFile ? importFile.name.substring(0, 15) + '...' : 'Seleccionar CSV'}
-                </button>
-              </div>
-
-              {importFile && (
-                <button
-                  onClick={handleImportUsers}
-                  disabled={isImporting}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    padding: '0.5rem 1rem',
-                    background: 'linear-gradient(to right, #8b5cf6, #7c3aed)',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '0.5rem',
-                    cursor: isImporting ? 'not-allowed' : 'pointer',
-                    fontWeight: '500',
-                    opacity: isImporting ? 0.6 : 1
-                  }}
-                >
-                  <FiUpload size={16} />
-                  {isImporting ? 'Importando...' : 'Importar CSV'}
-                </button>
-              )}
-
-              <button
-                onClick={() => {
-                  setEditingUser(null);
-                  setIsModalOpen(true);
-                }}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  padding: '0.5rem 1rem',
-                  background: 'linear-gradient(to right, #f59e0b, #881337)',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '0.5rem',
-                  cursor: 'pointer',
-                  fontWeight: '500'
-                }}
-              >
-                <FiPlus size={16} />
-                Agregar Usuario
-              </button>
-            </div>
+            )}
           </div>
         </div>
 
         {/* Users Table */}
-        <div style={{ 
-          background: 'rgba(255, 255, 255, 0.8)', 
-          borderRadius: '0.75rem', 
-          overflow: 'hidden',
-          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-        }}>
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead style={{ background: '#f9fafb' }}>
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm text-left">
+              <thead className="bg-gray-50 text-gray-500 font-medium">
                 <tr>
-                  <th style={{ textAlign: 'left', padding: '0.75rem', fontWeight: '600', color: '#374151' }}>Usuario</th>
-                  <th style={{ textAlign: 'left', padding: '0.75rem', fontWeight: '600', color: '#374151' }}>Rol</th>
-                  <th style={{ textAlign: 'left', padding: '0.75rem', fontWeight: '600', color: '#374151' }}>Año</th>
-                  <th style={{ textAlign: 'left', padding: '0.75rem', fontWeight: '600', color: '#374151' }}>División</th>
-                  <th style={{ textAlign: 'left', padding: '0.75rem', fontWeight: '600', color: '#374151' }}>Estado</th>
-                  <th style={{ textAlign: 'center', padding: '0.75rem', fontWeight: '600', color: '#374151' }}>Acciones</th>
+                  <th className="px-6 py-4">Usuario</th>
+                  <th className="px-6 py-4">Rol</th>
+                  <th className="px-6 py-4">Año</th>
+                  <th className="px-6 py-4">División</th>
+                  <th className="px-6 py-4">Estado</th>
+                  <th className="px-6 py-4 text-center">Acciones</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-gray-100">
                 {users.map((user) => {
                   const roleBadge = getRoleBadge(user.role);
                   return (
-                    <tr key={user.id} style={{ borderTop: '1px solid #e5e7eb' }}>
-                      <td style={{ padding: '0.75rem' }}>
-                        <div>
-                          <div style={{ fontWeight: '500', color: '#1f2937' }}>{user.name}</div>
-                          <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>{user.email}</div>
+                    <tr key={user.id} className="hover:bg-gray-50/50 transition-colors">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 font-bold text-xs">
+                            {user.name?.charAt(0)?.toUpperCase() || '?'}
+                          </div>
+                          <div>
+                            <p className="font-medium text-gray-900">{user.name}</p>
+                            <p className="text-gray-500 text-xs">{user.email}</p>
+                          </div>
                         </div>
                       </td>
-                      <td style={{ padding: '0.75rem' }}>
-                        <span style={{ 
-                          ...roleBadge.style, 
-                          padding: '0.25rem 0.5rem', 
-                          borderRadius: '0.375rem', 
-                          fontSize: '0.75rem',
-                          fontWeight: '500'
-                        }}>
+                      <td className="px-6 py-4">
+                        <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          user.role === 'admin' ? 'bg-purple-100 text-purple-700' :
+                          user.role === 'teacher' ? 'bg-blue-100 text-blue-700' :
+                          'bg-gray-100 text-gray-700'
+                        }`}>
                           {roleBadge.label}
                         </span>
                       </td>
-                      <td style={{ padding: '0.75rem', color: '#6b7280' }}>
-                        {user.year ? `${user.year}° Año` : '-'}
+                      <td className="px-6 py-4 text-gray-600">
+                        {user.year ? `${user.year}°` : '-'}
                       </td>
-                      <td style={{ padding: '0.75rem', color: '#6b7280' }}>
+                      <td className="px-6 py-4 text-gray-600">
                         {user.role === 'student' ? (user.division || '-') : '-'}
                       </td>
-                      <td style={{ padding: '0.75rem' }}>
-                        <span style={{ 
-                          padding: '0.25rem 0.5rem', 
-                          borderRadius: '0.375rem', 
-                          fontSize: '0.75rem',
-                          fontWeight: '500',
-                          ...(user.is_active ? 
-                            { background: '#dcfce7', color: '#166534' } : 
-                            { background: '#fef2f2', color: '#dc2626' })
-                        }}>
-                          {user.is_active ? 'Activo' : 'Inactivo'}
-                        </span>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2">
+                          <span className={`w-2 h-2 rounded-full ${user.is_active ? 'bg-emerald-500' : 'bg-gray-300'}`}></span>
+                          <span className="text-gray-600">{user.is_active ? 'Activo' : 'Inactivo'}</span>
+                        </div>
                       </td>
-                      <td style={{ padding: '0.75rem', textAlign: 'center' }}>
-                        <div style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem' }}>
+                      <td className="px-6 py-4 text-center">
+                        <div className="flex justify-center gap-2">
                           <button
                             onClick={() => {
                               setEditingUser(user);
                               setIsModalOpen(true);
                             }}
-                            style={{
-                              padding: '0.25rem',
-                              background: '#f59e0b',
-                              color: 'white',
-                              border: 'none',
-                              borderRadius: '0.25rem',
-                              cursor: 'pointer'
-                            }}
+                            className="p-1.5 rounded bg-amber-500 text-white hover:bg-amber-600 transition-colors"
                           >
                             <FiEdit2 size={14} />
                           </button>
                           <button
                             onClick={() => handleDeleteUser(user.id)}
-                            style={{
-                              padding: '0.25rem',
-                              background: '#dc2626',
-                              color: 'white',
-                              border: 'none',
-                              borderRadius: '0.25rem',
-                              cursor: 'pointer'
-                            }}
+                            className="p-1.5 rounded bg-red-500 text-white hover:bg-red-600 transition-colors"
                           >
                             <FiTrash2 size={14} />
                           </button>
@@ -1087,19 +969,17 @@ function UsersPageContent() {
           </div>
 
           {users.length === 0 && !loading && (
-            <div style={{ padding: '3rem', textAlign: 'center', color: '#6b7280' }}>
-              <FiUsers size={48} style={{ margin: '0 auto 1rem', opacity: 0.5 }} />
-              <h3 style={{ fontSize: '1.125rem', fontWeight: '500', marginBottom: '0.5rem' }}>
-                No se encontraron usuarios
-              </h3>
-              <p>Intenta ajustar los filtros de búsqueda o agrega un nuevo usuario.</p>
+            <div className="text-center py-12">
+              <FiUsers className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No se encontraron usuarios</h3>
+              <p className="text-gray-500">Intenta ajustar los filtros de búsqueda o agrega un nuevo usuario.</p>
             </div>
           )}
 
           {loading && (
-            <div style={{ padding: '3rem', textAlign: 'center', color: '#6b7280' }}>
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500 mx-auto mb-4"></div>
-              <p>Cargando usuarios...</p>
+            <div className="text-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <p className="text-gray-500">Cargando usuarios...</p>
             </div>
           )}
         </div>
