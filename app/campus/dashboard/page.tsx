@@ -25,6 +25,7 @@ const DashboardPage = () => {
     dueDate: string;
   } | null>(null);
   const [upcomingAssignmentsCount, setUpcomingAssignmentsCount] = useState(0);
+  const dataLoadedRef = React.useRef(false);
 
   const formatShortDate = (iso: string) => {
     const d = new Date(iso);
@@ -97,6 +98,12 @@ const DashboardPage = () => {
       return;
     }
 
+    // Evitar recargar datos si ya se cargaron (ej: al cambiar de pestaña)
+    if (dataLoadedRef.current && user !== null) {
+      setLoading(false);
+      return;
+    }
+
     // Si es estudiante y no tiene año asignado, NO redirigir.
     // Se mostrará un estado de "perfil incompleto" en el render.
 
@@ -121,8 +128,8 @@ const DashboardPage = () => {
               // Admins ven todas las materias
               console.log('Dashboard: Fetching admin subjects');
               subjectsResponse = await fetch('/api/admin/subjects');
-            } else if (userData.role === 'teacher') {
-              // Profesores ven sus materias asignadas
+            } else if (userData.role === 'teacher' || userData.role === 'admin_director') {
+              // Profesores y admin_director ven sus materias asignadas
               console.log('Dashboard: Fetching teacher subjects');
               subjectsResponse = await fetch('/api/teacher/subjects');
             } else if (userData.role === 'student' && userData.year) {
@@ -156,6 +163,7 @@ const DashboardPage = () => {
           setSubjects([]);
         } finally {
           setLoading(false);
+          dataLoadedRef.current = true;
         }
       } else {
         setLoading(false);
@@ -163,7 +171,7 @@ const DashboardPage = () => {
     };
 
     fetchData();
-  }, [session, status, router]);
+  }, [session, status, router, user]);
 
   // Estado bloqueado: el alumno debe completar año/división desde Perfil
   // Verificamos los datos del usuario cargado desde la API (más confiable que la sesión)
@@ -315,12 +323,12 @@ const DashboardPage = () => {
 
             <div className="flex items-center gap-4">
               {/* Search */}
-              <div className="hidden sm:flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-4 py-2.5 focus-within:ring-2 focus-within:ring-yellow-300 focus-within:border-transparent">
+              <div className="hidden sm:flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-4 py-2.5 focus-within:ring-2 focus-within:ring-yellow-300 focus-within:border-yellow-300 transition-all">
                 <Search className="w-5 h-5 text-slate-400" />
                 <input
                   type="text"
                   placeholder="Buscar materias..."
-                  className="bg-transparent outline-none text-sm w-48 lg:w-64 text-slate-800 placeholder-slate-400"
+                  className="bg-transparent border-none outline-none focus:outline-none focus:ring-0 text-sm w-48 lg:w-64 text-slate-800 placeholder-slate-400"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />

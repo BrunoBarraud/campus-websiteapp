@@ -405,6 +405,14 @@ const ProfilePage = () => {
                   onChange={handleInputChange}
                   className="w-full px-3 py-2 border border-slate-200 rounded-xl shadow-sm focus:outline-none focus:ring-yellow-300 focus:border-yellow-300"
                 />
+                {session?.user?.role === 'student' && (
+                  <div className="mt-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                    <p className="text-xs text-amber-800">
+                      <span className="font-semibold">⚠️ Importante:</span> Usá tu nombre real. Los profesores tienen acceso a un listado de todos los alumnos inscriptos en cada materia y pueden ver tu nombre en las entregas de tareas. 
+                      El uso de nombres inapropiados u obscenos puede resultar en la <span className="font-semibold">suspensión temporal de tu cuenta</span> y otras consecuencias disciplinarias.
+                    </p>
+                  </div>
+                )}
               </div>
               
               <div className="mb-4">

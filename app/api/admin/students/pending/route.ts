@@ -11,8 +11,8 @@ export async function GET() {
       return NextResponse.json({ error: 'No autenticado' }, { status: 401 });
     }
 
-    // Solo admin y preceptores pueden ver estudiantes pendientes
-    if (session.user.role !== 'admin') {
+    // Solo admin y admin_director pueden ver estudiantes pendientes
+    if (session.user.role !== 'admin' && session.user.role !== 'admin_director') {
       return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
     }
 

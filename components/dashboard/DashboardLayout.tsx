@@ -47,6 +47,11 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
           { name: "Panel Admin", href: "/campus/admin", icon: Shield },
         ]
       : []),
+    ...(session?.user?.role === "admin_director"
+      ? [
+          { name: "Estudiantes Pendientes", href: "/campus/admin/students", icon: Shield },
+        ]
+      : []),
   ];
 
   const supportNavigation = [

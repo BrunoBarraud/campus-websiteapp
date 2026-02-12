@@ -15,7 +15,7 @@ export async function POST(
       return NextResponse.json({ error: 'No autenticado' }, { status: 401 });
     }
 
-    if (session.user.role !== 'admin') {
+    if (session.user.role !== 'admin' && session.user.role !== 'admin_director') {
       return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
     }
 

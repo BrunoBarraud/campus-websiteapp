@@ -255,7 +255,10 @@ export default function TeacherSubjectPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 flex items-center gap-4">
+            <a
+              href={`/campus/teacher/subjects/${subjectId}/students`}
+              className="bg-slate-50 p-4 rounded-xl border border-slate-100 flex items-center gap-4 hover:bg-blue-50 hover:border-blue-200 transition-colors cursor-pointer"
+            >
               <div className="p-3 bg-blue-100 text-blue-600 rounded-lg">
                 <Users className="w-6 h-6" />
               </div>
@@ -263,7 +266,7 @@ export default function TeacherSubjectPage() {
                 <p className="text-2xl font-bold text-slate-800">{teacherStats ? teacherStats.studentsCount : "—"}</p>
                 <p className="text-xs text-slate-500 uppercase font-bold tracking-wide">Alumnos inscriptos</p>
               </div>
-            </div>
+            </a>
 
             <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 flex items-center gap-4">
               <div className="p-3 bg-amber-100 text-amber-600 rounded-lg">

@@ -25,7 +25,7 @@ export default function AdminStudentsPage() {
   useEffect(() => {
     if (status === 'loading') return;
     
-    if (!session?.user || session.user.role !== 'admin') {
+    if (!session?.user || (session.user.role !== 'admin' && session.user.role !== 'admin_director')) {
       router.push('/campus/dashboard');
       return;
     }
