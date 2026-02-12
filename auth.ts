@@ -194,6 +194,8 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
             // Usuario no existe, crear uno nuevo
             console.log(`[Google OAuth] Creando nuevo usuario: ${emailAddr}`)
             const defaultRole = isAdminEmail ? 'admin' : 'student';
+            // Los estudiantes nuevos entran como 'pending', admins como 'approved'
+            const approvalStatus = defaultRole === 'student' ? 'pending' : 'approved';
             
             const { error: createErr } = await supabaseAdmin
               .from('users')
@@ -204,6 +206,7 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
                 is_active: true,
                 year: null, // Sin año asignado inicialmente para estudiantes
                 division: null,
+                approval_status: approvalStatus,
                 last_login: new Date().toISOString()
               })
               .select('*')
@@ -213,7 +216,7 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
               console.error('[Google OAuth] Error al crear usuario:', createErr)
               return false
             }
-            console.log(`[Google OAuth] Usuario creado exitosamente: ${emailAddr} (${defaultRole})`)
+            console.log(`[Google OAuth] Usuario creado exitosamente: ${emailAddr} (${defaultRole}, ${approvalStatus})`)
           } else {
             // Usuario existe, actualizar last_login
             console.log(`[Google OAuth] Usuario existente: ${emailAddr} (${existing.role})`)
@@ -239,6 +242,7 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
         token.id = (user as any).id;
         token.division = (user as any).division;
         token.year = (user as any).year;
+        token.approval_status = (user as any).approval_status;
       }
       
       // Actualizar desde BD si es un update trigger o si faltan campos
@@ -247,7 +251,7 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
           try {
             const { data: dbUser } = await supabaseAdmin
               .from('users')
-              .select('id, role, division, year')
+              .select('id, role, division, year, approval_status')
               .eq('email', token.email)
               .single()
             if (dbUser) {
@@ -255,6 +259,7 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
               token.role = dbUser.role
               token.division = dbUser.division
               token.year = dbUser.year
+              token.approval_status = dbUser.approval_status
             }
           } catch (error) {
             console.error('[JWT] Error refrescando datos del usuario:', error)
@@ -269,6 +274,7 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
         session.user.role = token.role as string;
         session.user.division = token.division as string;
         session.user.year = token.year as number;
+        session.user.approval_status = token.approval_status as string;
       }
       return session;
     },

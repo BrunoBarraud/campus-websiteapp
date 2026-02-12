@@ -1,6 +1,9 @@
 // 📋 Tipos TypeScript para el sistema de roles del Campus Virtual
 
-export type UserRole = 'admin' | 'teacher' | 'student';
+export type UserRole = 'admin' | 'admin_director' | 'teacher' | 'student';
+
+// Estado de aprobación para estudiantes nuevos
+export type ApprovalStatus = 'pending' | 'approved' | 'rejected';
 
 export interface User {
   id: string;
@@ -13,6 +16,9 @@ export interface User {
   bio?: string;
   avatar_url?: string;
   is_active: boolean;
+  approval_status?: ApprovalStatus; // Estado de aprobación (solo estudiantes)
+  approved_by?: string; // ID del admin/preceptor que aprobó
+  approved_at?: string; // Fecha de aprobación
   created_at: string;
   updated_at: string;
 }
@@ -283,8 +289,9 @@ export interface PaginatedResponse<T> {
 
 // 🎯 Utilidades para roles
 export const getRoleDisplayName = (role: UserRole): string => {
-  const roleNames = {
+  const roleNames: Record<UserRole, string> = {
     admin: 'Administrador',
+    admin_director: 'Director/a',
     teacher: 'Profesor',
     student: 'Estudiante'
   };
@@ -324,6 +331,16 @@ export const getUserPermissions = (role: UserRole): UserPermissions => {
         canDeleteDocuments: true,
         canViewAllYears: true,
         canAssignTeachers: true
+      };
+    case 'admin_director':
+      return {
+        canEditCalendar: true, // Para sus materias
+        canEditSubjects: false, // No puede crear/editar materias
+        canManageUsers: true, // Puede aprobar estudiantes
+        canUploadDocuments: true,
+        canDeleteDocuments: true,
+        canViewAllYears: true, // Puede ver todos los años para aprobar
+        canAssignTeachers: false // No puede asignar profesores
       };
     case 'teacher':
       return {

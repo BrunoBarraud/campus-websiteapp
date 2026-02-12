@@ -25,6 +25,7 @@ const DashboardPage = () => {
     dueDate: string;
   } | null>(null);
   const [upcomingAssignmentsCount, setUpcomingAssignmentsCount] = useState(0);
+  const dataLoadedRef = React.useRef(false);
 
   const formatShortDate = (iso: string) => {
     const d = new Date(iso);
@@ -97,6 +98,12 @@ const DashboardPage = () => {
       return;
     }
 
+    // Evitar recargar datos si ya se cargaron (ej: al cambiar de pestaña)
+    if (dataLoadedRef.current && user !== null) {
+      setLoading(false);
+      return;
+    }
+
     // Si es estudiante y no tiene año asignado, NO redirigir.
     // Se mostrará un estado de "perfil incompleto" en el render.
 
@@ -121,8 +128,8 @@ const DashboardPage = () => {
               // Admins ven todas las materias
               console.log('Dashboard: Fetching admin subjects');
               subjectsResponse = await fetch('/api/admin/subjects');
-            } else if (userData.role === 'teacher') {
-              // Profesores ven sus materias asignadas
+            } else if (userData.role === 'teacher' || userData.role === 'admin_director') {
+              // Profesores y admin_director ven sus materias asignadas
               console.log('Dashboard: Fetching teacher subjects');
               subjectsResponse = await fetch('/api/teacher/subjects');
             } else if (userData.role === 'student' && userData.year) {
@@ -130,10 +137,10 @@ const DashboardPage = () => {
               console.log('Dashboard: Fetching student subjects for year:', userData.year);
               subjectsResponse = await fetch('/api/student/subjects');
             } else {
-              // Fallback: no hay materias
-              console.log('Dashboard: No role match, setting empty subjects');
+              // Fallback: no hay materias (estudiante sin año asignado)
+              console.log('Dashboard: No role match or student without year, setting empty subjects');
               setSubjects([]);
-              return;
+              // No hacer return aquí para que setLoading(false) se ejecute en finally
             }
             
             console.log('Dashboard: Subjects API response status:', subjectsResponse?.status);
@@ -156,6 +163,7 @@ const DashboardPage = () => {
           setSubjects([]);
         } finally {
           setLoading(false);
+          dataLoadedRef.current = true;
         }
       } else {
         setLoading(false);
@@ -163,16 +171,24 @@ const DashboardPage = () => {
     };
 
     fetchData();
-  }, [session, status, router]);
+  }, [session, status, router, user]);
 
   // Estado bloqueado: el alumno debe completar año/división desde Perfil
-  // Verificamos tanto la sesión como el usuario cargado desde la API
-  const userYear = user?.year || session?.user?.year;
-  const userRole = user?.role || session?.user?.role;
+  // Verificamos los datos del usuario cargado desde la API (más confiable que la sesión)
+  const userYear = user?.year;
+  const userRole = user?.role;
+  const userApprovalStatus = (user as any)?.approval_status;
+  const isPendingApproval = userRole === 'student' && userApprovalStatus === 'pending';
   
+  // Solo mostrar el mensaje de "completá tu año" si:
+  // 1. La sesión ya cargó
+  // 2. El fetch de usuario ya terminó (loading = false)
+  // 3. Tenemos datos del usuario (user !== null)
+  // 4. Es estudiante sin año asignado
   if (
     status !== "loading" &&
     !loading &&
+    user !== null &&
     userRole === "student" &&
     !userYear
   ) {
@@ -279,6 +295,19 @@ const DashboardPage = () => {
 
   return (
     <div className="min-h-screen bg-slate-50">
+      {/* Banner de estudiante pendiente de aprobación */}
+      {isPendingApproval && (
+        <div className="bg-amber-50 border-b border-amber-200 px-6 py-3">
+          <div className="max-w-7xl mx-auto flex items-center gap-3">
+            <div className="w-2 h-2 bg-amber-500 rounded-full animate-pulse"></div>
+            <p className="text-amber-800 text-sm">
+              <span className="font-semibold">Tu cuenta está pendiente de aprobación.</span>{' '}
+              Podés ver el contenido del campus, pero no podrás subir tareas ni interactuar hasta que un administrador apruebe tu cuenta.
+            </p>
+          </div>
+        </div>
+      )}
+      
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <header className="glass-effect sticky top-0 z-30 border-b border-slate-200 px-6 py-4">
@@ -294,12 +323,12 @@ const DashboardPage = () => {
 
             <div className="flex items-center gap-4">
               {/* Search */}
-              <div className="hidden sm:flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-4 py-2.5 focus-within:ring-2 focus-within:ring-yellow-300 focus-within:border-transparent">
+              <div className="hidden sm:flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-4 py-2.5 focus-within:ring-2 focus-within:ring-yellow-300 focus-within:border-yellow-300 transition-all">
                 <Search className="w-5 h-5 text-slate-400" />
                 <input
                   type="text"
                   placeholder="Buscar materias..."
-                  className="bg-transparent outline-none text-sm w-48 lg:w-64 text-slate-800 placeholder-slate-400"
+                  className="bg-transparent border-none outline-none focus:outline-none focus:ring-0 text-sm w-48 lg:w-64 text-slate-800 placeholder-slate-400"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
