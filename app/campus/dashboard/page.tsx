@@ -166,16 +166,21 @@ const DashboardPage = () => {
   }, [session, status, router]);
 
   // Estado bloqueado: el alumno debe completar año/división desde Perfil
+  // Verificamos tanto la sesión como el usuario cargado desde la API
+  const userYear = user?.year || session?.user?.year;
+  const userRole = user?.role || session?.user?.role;
+  
   if (
     status !== "loading" &&
-    session?.user?.role === "student" &&
-    !session.user.year
+    !loading &&
+    userRole === "student" &&
+    !userYear
   ) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
         <div className="max-w-xl w-full bg-white rounded-xl shadow-sm border border-gray-100 p-8">
           <h1 className="text-2xl font-bold text-gray-900 mb-2">
-            Bienvenido/a {session.user.name || 'al Campus'}
+            Bienvenido/a {session?.user?.name || user?.name || 'al Campus'}
           </h1>
           <p className="text-gray-600 mb-6">
             Para poder continuar, andá al ícono de tu <span className="font-semibold">Perfil</span> y completá

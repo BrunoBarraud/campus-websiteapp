@@ -48,8 +48,9 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
     // Validaciones básicas (si vienen campos relevantes)
     if (updates.date) {
-      const eventDate = new Date(updates.date);
+      const eventDate = new Date(updates.date + 'T23:59:59');
       const today = new Date();
+      today.setHours(0, 0, 0, 0);
       if (eventDate < today) {
         return NextResponse.json({ success: false, error: 'No se pueden establecer fechas pasadas' }, { status: 400 });
       }

@@ -4,7 +4,7 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import EventModal from './EventModal';
 import { CalendarEvent, User, Subject, EventType, CreateEventForm } from '@/app/lib/types';
-import { calendarService, subjectService } from '@/app/lib/services';
+import { subjectService } from '@/app/lib/services';
 import { useSession } from 'next-auth/react';
 import {
   Calendar as CalendarIcon,
@@ -57,9 +57,20 @@ const Calendar: React.FC<CalendarProps> = ({ events = [], canEdit: _canEdit = fa
       safeEventForm.subject_id = undefined;
     }
     try {
-      const newEvent = await calendarService.createEvent(safeEventForm, currentUser.id);
-      if (newEvent) {
-        setCalendarEvents([...calendarEvents, newEvent]);
+      const res = await fetch('/api/calendar/events', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(safeEventForm),
+      });
+
+      const json = await res.json();
+      
+      if (!res.ok) {
+        throw new Error(json.error || 'Error al crear el evento');
+      }
+
+      if (json.success && json.data) {
+        setCalendarEvents([...calendarEvents, json.data]);
         setShowEventModal(false);
         setEventForm({
           title: '',
@@ -72,9 +83,9 @@ const Calendar: React.FC<CalendarProps> = ({ events = [], canEdit: _canEdit = fa
         });
         if (onEventCreate) onEventCreate(safeEventForm);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating event:', error);
-      alert('Error al crear el evento');
+      alert(error.message || 'Error al crear el evento');
     }
   };
   const { data: session } = useSession();
@@ -114,9 +125,21 @@ const Calendar: React.FC<CalendarProps> = ({ events = [], canEdit: _canEdit = fa
         safeEventForm.year = undefined;
         safeEventForm.subject_id = undefined;
       }
-      const updatedEvent = await calendarService.updateEvent(editingEvent.id, safeEventForm);
-      if (updatedEvent) {
-        setCalendarEvents(calendarEvents.map(event => event.id === editingEvent.id ? updatedEvent : event));
+
+      const res = await fetch(`/api/calendar/events/${editingEvent.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(safeEventForm),
+      });
+
+      const json = await res.json();
+
+      if (!res.ok) {
+        throw new Error(json.error || 'Error al actualizar el evento');
+      }
+
+      if (json.success && json.data) {
+        setCalendarEvents(calendarEvents.map(event => event.id === editingEvent.id ? json.data : event));
         setShowEventModal(false);
         setEditingEvent(null);
         setEventForm({
@@ -128,11 +151,11 @@ const Calendar: React.FC<CalendarProps> = ({ events = [], canEdit: _canEdit = fa
           subject_id: undefined,
           year: userYear
         });
-        if (onEventEdit) onEventEdit(editingEvent.id, updatedEvent);
+        if (onEventEdit) onEventEdit(editingEvent.id, json.data);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating event:', error);
-      alert('Error al actualizar el evento');
+      alert(error.message || 'Error al actualizar el evento');
     }
   };
 
@@ -141,14 +164,20 @@ const Calendar: React.FC<CalendarProps> = ({ events = [], canEdit: _canEdit = fa
     if (!currentUser || !canDeleteEvent(ev)) return;
     if (confirm('¿Estás seguro de que quieres eliminar este evento?')) {
       try {
-        const success = await calendarService.deleteEvent(eventId);
-        if (success) {
+        const res = await fetch(`/api/calendar/events/${eventId}`, { method: 'DELETE' });
+        const json = await res.json();
+
+        if (!res.ok) {
+          throw new Error(json.error || 'Error al eliminar el evento');
+        }
+
+        if (json.success) {
           setCalendarEvents(calendarEvents.filter(event => event.id !== eventId));
           if (onEventDelete) onEventDelete(eventId);
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error deleting event:', error);
-        alert('Error al eliminar el evento');
+        alert(error.message || 'Error al eliminar el evento');
       }
     }
   };
@@ -295,15 +324,13 @@ const Calendar: React.FC<CalendarProps> = ({ events = [], canEdit: _canEdit = fa
       setCurrentUser(user);
       const subjects = await subjectService.getSubjects(user.role, user.id, user.year || undefined);
       setUserSubjects(subjects);
-      const subjectIds = subjects.map(s => s.id);
-      const userEvents = await calendarService.getEvents(
-        user.role,
-        user.id,
-        user.year || undefined,
-        undefined,
-        subjectIds
-      );
-      setCalendarEvents(userEvents);
+      
+      // Cargar eventos usando la API
+      const res = await fetch('/api/calendar/events');
+      const json = await res.json();
+      if (json.success && json.data) {
+        setCalendarEvents(json.data);
+      }
     } catch (error) {
       console.error('Error loading initial data:', error);
     } finally {

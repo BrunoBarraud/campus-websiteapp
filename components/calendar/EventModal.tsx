@@ -32,9 +32,9 @@ const EventModal: React.FC<EventModalProps> = ({
 }) => {
   if (!showEventModal) return null;
   return (
-    <div className="fixed inset-0 bg-rose-950/90 flex items-center justify-center z-[100] p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md animate-fade-in border-4 border-amber-400">
-        <div className="p-6">
+    <div className="fixed inset-0 bg-rose-950/90 flex items-center justify-center z-[100] p-4 overflow-y-auto">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md animate-fade-in border-4 border-amber-400 my-4 max-h-[90vh] flex flex-col">
+        <div className="p-6 overflow-y-auto flex-1">
           <div className="flex justify-between items-center mb-4">
               <h3 className="text-xl font-bold text-rose-950 bg-amber-400 px-2 py-1 rounded-lg shadow-lg inline-block">{editingEvent ? 'Editar Evento' : 'Nuevo Evento'}</h3>
               <button
@@ -58,7 +58,7 @@ const EventModal: React.FC<EventModalProps> = ({
             } else {
               handleCreateEvent();
             }
-          }} className="space-y-4">
+          }} className="space-y-3">
             {/* Selector de visibilidad */}
             <div>
               <label className="block text-sm font-medium text-rose-950 mb-2">Visibilidad *</label>
@@ -204,10 +204,13 @@ const EventModal: React.FC<EventModalProps> = ({
                 <label className="block text-sm font-medium text-rose-950 mb-1">Hora</label>
                 <input
                   type="time"
-                  value={eventForm.time}
+                  value={eventForm.time || ''}
                   onChange={(e) => setEventForm({...eventForm, time: e.target.value})}
+                  placeholder="HH:MM"
+                  step="60"
                   className="w-full px-3 py-2 border border-amber-400 rounded-lg focus:ring-2 focus:ring-amber-400 focus:border-transparent bg-rose-50 text-rose-950"
                 />
+                <p className="text-xs text-rose-950/60 mt-1">Dejá vacío para &quot;Todo el día&quot;</p>
               </div>
             </div>
             {/* Tipo */}
@@ -250,7 +253,7 @@ const EventModal: React.FC<EventModalProps> = ({
               <textarea
                 value={eventForm.description}
                 onChange={(e) => setEventForm({...eventForm, description: e.target.value})}
-                rows={3}
+                rows={2}
                 className="w-full px-3 py-2 border border-amber-400 rounded-lg focus:ring-2 focus:ring-amber-400 focus:border-transparent bg-rose-50 text-rose-950"
               />
             </div>
