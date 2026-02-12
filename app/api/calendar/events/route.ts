@@ -89,9 +89,10 @@ export async function POST(request: Request) {
       );
     }
 
-    // Validar fecha
-    const eventDate = new Date(eventData.date);
+    // Validar fecha (permitir eventos del día actual)
+    const eventDate = new Date(eventData.date + 'T23:59:59');
     const today = new Date();
+    today.setHours(0, 0, 0, 0);
     if (eventDate < today) {
       return NextResponse.json(
         { success: false, error: 'No se pueden crear eventos en fechas pasadas' },
