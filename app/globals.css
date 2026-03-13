@@ -5,16 +5,20 @@
   --foreground: #171717;
   --color-background: #ffffff;
   --color-foreground: #171717;
-  /* Theme tokens */
-  --primary: #f59e0b; /* yellow-500 */
-  --primary-foreground: #111827;
+  /* Theme tokens — solo estas variables cambian por escuela */
+  --primary: #f59e0b;              /* color principal (amarillo Vélez) */
+  --primary-light: #fbbf24;        /* variante más clara (para gradientes) */
+  --primary-rgb: 245, 158, 11;     /* para usar en rgba(var(--primary-rgb), 0.x) */
+  --primary-surface: #fef3c7;      /* fondo muy sutil (hover, badges) */
+  --primary-text: #92400e;         /* texto sobre fondo --primary-surface */
+  --primary-foreground: #111827;   /* texto sobre fondo --primary sólido */
+  --secondary: #ef4444;            /* color secundario / acento */
+  --secondary-rgb: 239, 68, 68;    /* para rgba() */
   --surface: #ffffff;
-  --muted: #f3f4f6;   /* gray-100 */
-  --border: #e5e7eb;  /* gray-200 */
-  --ring: rgba(245, 158, 11, 0.35);
+  --muted: #f3f4f6;                /* gray-100 */
+  --border: #e5e7eb;               /* gray-200 */
+  --ring: rgba(var(--primary-rgb), 0.35);
 }
-
-/* Dark mode removed */
 
 /* Global focus-visible using theme ring */
 :where(button, a, input, select, textarea, [role="button"]):focus-visible {
@@ -22,16 +26,6 @@
   box-shadow: 0 0 0 3px var(--ring);
   border-color: var(--border);
 }
-
-/* COMENTADO: Soporte automático para tema oscuro del sistema */
-/* 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #111827;
-    --foreground: #f9fafb;
-  }
-}
-*/
 
 body {
   background: var(--background);
@@ -53,7 +47,7 @@ body {
   padding-bottom: env(safe-area-inset-bottom);
 }
 
-/* Estilos para inputs con soporte de tema oscuro */
+/* Estilos para inputs */
 input, select, textarea {
   background-color: var(--surface);
   color: var(--foreground);
@@ -64,7 +58,7 @@ input, select, textarea {
 input:focus, select:focus, textarea:focus {
   background-color: var(--surface);
   color: var(--foreground);
-  border-color: #f59e0b;
+  border-color: var(--primary);
 }
 
 /* Animaciones */
@@ -126,11 +120,9 @@ input:focus, select:focus, textarea:focus {
 /* Campus Virtual Themed Hover Effects */
 .campus-hover:hover {
   transform: translateY(-3px);
-  box-shadow: 0 20px 25px -5px rgba(245, 158, 11, 0.12), 0 10px 10px -5px rgba(15, 23, 42, 0.06);
+  box-shadow: 0 20px 25px -5px rgba(var(--primary-rgb), 0.12), 0 10px 10px -5px rgba(15, 23, 42, 0.06);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
-
-/* Dark mode removed */
 
 .campus-underline {
   position: relative;
@@ -144,7 +136,7 @@ input:focus, select:focus, textarea:focus {
   left: 0;
   width: 0;
   height: 2px;
-  background: #f59e0b;
+  background: var(--primary);
   transition: width 0.3s ease-in-out;
 }
 
@@ -156,18 +148,16 @@ input:focus, select:focus, textarea:focus {
   background: linear-gradient(
     90deg,
     transparent,
-    rgba(245, 158, 11, 0.1),
-    rgba(245, 158, 11, 0.06),
+    rgba(var(--primary-rgb), 0.1),
+    rgba(var(--primary-rgb), 0.06),
     transparent
   );
   background-size: 200% 100%;
   animation: shimmer 2s ease-in-out infinite;
 }
 
-/* Dark mode removed */
-
 .campus-gradient-text {
-  background: linear-gradient(90deg, #f59e0b, #fbbf24);
+  background: linear-gradient(90deg, var(--primary), var(--primary-light));
   background-size: 200% 100%;
   -webkit-background-clip: text;
   background-clip: text;
@@ -178,11 +168,9 @@ input:focus, select:focus, textarea:focus {
 /* Enhanced Card Hover Effects */
 .card-hover:hover {
   transform: translateY(-4px);
-  box-shadow: 0 25px 50px -12px rgba(245, 158, 11, 0.14), 0 12px 25px -8px rgba(15, 23, 42, 0.10);
+  box-shadow: 0 25px 50px -12px rgba(var(--primary-rgb), 0.14), 0 12px 25px -8px rgba(15, 23, 42, 0.10);
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
-
-/* Dark mode removed */
 
 .delay-1 { animation-delay: 0.1s; }
 .delay-2 { animation-delay: 0.2s; }
@@ -205,15 +193,15 @@ input:focus, select:focus, textarea:focus {
 }
 
 .card-hover:hover .teacher-chip {
-  background: linear-gradient(90deg, #f59e0b, #fbbf24);
+  background: linear-gradient(90deg, var(--primary), var(--primary-light));
   color: white;
   transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(245, 158, 11, 0.25);
+  box-shadow: 0 4px 8px rgba(var(--primary-rgb), 0.25);
 }
 
 /* Button Hover Effects */
 .btn-campus {
-  background: linear-gradient(135deg, #f59e0b, #fbbf24);
+  background: linear-gradient(135deg, var(--primary), var(--primary-light));
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
@@ -236,7 +224,7 @@ input:focus, select:focus, textarea:focus {
 
 .btn-campus:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(245, 158, 11, 0.3);
+  box-shadow: 0 8px 25px rgba(var(--primary-rgb), 0.3);
 }
 
 /* Navigation Hover Effects */
@@ -252,7 +240,7 @@ input:focus, select:focus, textarea:focus {
   left: 50%;
   width: 0;
   height: 2px;
-  background: linear-gradient(90deg, #f59e0b, #ef4444);
+  background: linear-gradient(90deg, var(--primary), #ef4444);
   transition: all 0.3s ease;
   transform: translateX(-50%);
 }
@@ -286,7 +274,7 @@ input:focus, select:focus, textarea:focus {
   line-clamp: 3;
 }
 
-/* Scrollbar personalizado para tema oscuro */
+/* Scrollbar personalizado */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
@@ -318,7 +306,7 @@ input:focus, select:focus, textarea:focus {
   transition-duration: 150ms;
 }
 
-/* Estilos para modales y overlays en tema oscuro */
+/* Estilos para modales y overlays */
 .modal-overlay {
   background-color: rgba(0,0,0,0.5);
   backdrop-filter: blur(4px);
@@ -339,7 +327,7 @@ input:focus, select:focus, textarea:focus {
   box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1);
 }
 
-/* Estilos para notificaciones */
+/* Estilos para notificaciones — colores semánticos, no cambian por escuela */
 .notification-success {
   background-color: #ecfdf5;
   border: 1px solid #a7f3d0;
@@ -371,7 +359,7 @@ input:focus, select:focus, textarea:focus {
   border-radius: 0.25rem;
 }
 
-/* Mejoras para formularios en tema oscuro */
+/* Mejoras para formularios */
 .form-input {
   background-color: var(--surface);
   border: 1px solid var(--border);
@@ -379,7 +367,7 @@ input:focus, select:focus, textarea:focus {
 }
 
 .form-input:focus {
-  border-color: #f59e0b;
+  border-color: var(--primary);
 }
 
 .form-label {
@@ -387,7 +375,7 @@ input:focus, select:focus, textarea:focus {
   font-weight: 500;
 }
 
-/* Estilos para tablas en tema oscuro */
+/* Estilos para tablas */
 .table-header {
   background-color: #f9fafb;
   color: #374151;
@@ -413,8 +401,8 @@ input:focus, select:focus, textarea:focus {
 }
 
 .badge-primary {
-  background-color: #fef3c7;
-  color: #92400e;
+  background-color: var(--primary-surface);
+  color: var(--primary-text);
 }
 
 .badge-secondary {
@@ -432,19 +420,19 @@ input:focus, select:focus, textarea:focus {
   color: #991b1b;
 }
 
-/* Estilos para el calendario en tema oscuro */
+/* Estilos para el calendario */
 .calendar-day {
   color: var(--foreground);
 }
 
 .calendar-day-selected {
-  background-color: #f59e0b;
+  background-color: var(--primary);
   color: #ffffff;
 }
 
 .calendar-day-today {
-  background-color: #fef3c7;
-  color: #92400e;
+  background-color: var(--primary-surface);
+  color: var(--primary-text);
   font-weight: 600;
 }
 
@@ -458,13 +446,13 @@ input:focus, select:focus, textarea:focus {
   text-overflow: ellipsis;
 }
 
-/* Estilos para el sidebar en tema oscuro */
+/* Estilos para el sidebar */
 .sidebar-item {
   color: #4b5563;
 }
 
 .sidebar-item-active {
-  background-color: #fef3c7;
-  color: #b45309;
-  border-right: 2px solid #f59e0b;
+  background-color: var(--primary-surface);
+  color: var(--primary-text);
+  border-right: 2px solid var(--primary);
 }

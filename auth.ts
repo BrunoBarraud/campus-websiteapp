@@ -39,7 +39,7 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
           // Buscar usuario en la base de datos
           const { data: user, error } = await supabaseAdmin
             .from('users')
-            .select('*')
+            .select('id, email, name, password, role, division, year, is_active, two_factor_enabled, two_factor_secret, approval_status')
             .eq('email', email)
             .single();
 
@@ -186,7 +186,7 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
           // Ensure user exists in DB and is active
           const { data: existing, error: findErr } = await supabaseAdmin
             .from('users')
-            .select('*')
+            .select('id, email, role, is_active, approval_status')
             .eq('email', emailAddr)
             .single()
           

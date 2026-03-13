@@ -5,6 +5,9 @@ import { NextAuthProvider } from "../app/components/auth/AuthProvider";
 import { ThemeProvider } from "@/app/lib/contexts/ThemeContext";
 import ConditionalNav from "@/app/ConditionalNav";
 import { ToastProvider } from "@/components/ui/toast-provider";
+import { headers } from "next/headers";
+import { getSubdomainFromHost, getSchoolTheme, getThemeCssVars } from "@/app/lib/schools";
+import { SchoolProvider } from "@/app/lib/contexts/SchoolContext";
 
 const font = Poppins({
   variable: "--font-poppins",
@@ -26,13 +29,20 @@ export const viewport = {
   initialScale: 1,
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Detectar la escuela a partir del subdominio del host
+  const headersList = await headers();
+  const host = headersList.get("host") ?? "";
+  const subdomain = getSubdomainFromHost(host);
+  const theme = getSchoolTheme(subdomain);
+  const cssVars = getThemeCssVars(theme);
+
   return (
-    <html lang="es" suppressHydrationWarning>
+    <html lang="es" suppressHydrationWarning style={cssVars}>
       <head>
         <link
           rel="stylesheet"
@@ -45,14 +55,17 @@ export default function RootLayout({
       >
         <ThemeProvider>
           <NextAuthProvider>
-            <div id="app-content">
-              <ConditionalNav />
-              {children}
-              <ToastProvider />
-            </div>
+            <SchoolProvider school={{ name: theme.name, subdomain: theme.subdomain, logo_url: theme.logo_url }}>
+              <div id="app-content">
+                <ConditionalNav />
+                {children}
+                <ToastProvider />
+              </div>
+            </SchoolProvider>
           </NextAuthProvider>
         </ThemeProvider>
       </body>
     </html>
   );
 }
+
