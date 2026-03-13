@@ -1,11 +1,10 @@
 import { auth } from "@/auth";
-import { NextRequest, NextResponse } from "next/server";
-import type { NextFetchEvent } from "next/server";
+import { NextRequest } from "next/server";
 import { csrfMiddleware } from "./lib/middleware/csrf";
 import { loginRateLimitMiddleware, apiRateLimitMiddleware } from "./lib/middleware/rate-limit";
 
 // Middleware principal que aplica seguridad y autenticación
-export default function middleware(req: NextRequest, event: NextFetchEvent) {
+export default function middleware(req: NextRequest) {
   // Excluir rutas públicas de la protección
   const isPublicRoute = (
     req.nextUrl.pathname.startsWith('/_next') ||
@@ -41,29 +40,7 @@ export default function middleware(req: NextRequest, event: NextFetchEvent) {
   return auth(req as any);
 }
 
-// Función auxiliar para verificar autorización
-async function isAuthorized(req: NextRequest) {
-  const session = await auth();
-  const { pathname } = req.nextUrl;
-  
-  // Rutas públicas del campus (auth)
-  if (pathname.startsWith('/campus/auth/')) {
-    return true;
-  }
-  
-  // Rutas protegidas del campus requieren autenticación
-  if (pathname.startsWith('/campus')) {
-    return !!session?.user;
-  }
-  
-  // Rutas admin requieren rol específico
-  if (pathname.startsWith('/admin')) {
-    return session?.user?.role === 'admin';
-  }
-  
-  // Otras rutas son públicas
-  return true;
-}
+
 
 export const config = {
   matcher: [

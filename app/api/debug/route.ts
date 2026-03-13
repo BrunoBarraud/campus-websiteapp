@@ -1,6 +1,13 @@
 import { NextResponse } from 'next/server';
+import { auth } from '@/auth';
 
 export async function GET() {
+  const session = await auth();
+
+  if (!session?.user || session.user.role !== 'admin') {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
+
   return NextResponse.json({
     nodeEnv: process.env.NODE_ENV,
     nextauthUrl: process.env.NEXTAUTH_URL ? 'configured' : 'missing',
