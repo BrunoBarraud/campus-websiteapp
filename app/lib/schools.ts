@@ -48,7 +48,15 @@ export const SCHOOLS: Record<string, SchoolConfig> = {
 
 export const DEFAULT_SCHOOL = SCHOOLS.velez;
 
-export function getSchoolByHost(host: string | null): SchoolConfig {
+export function getSchoolByHost(host: string | null, searchParams?: URLSearchParams): SchoolConfig {
+  // 1. Prioridad: Parámetro de URL (útil para testing en Vercel)
+  if (searchParams) {
+    const schoolParam = searchParams.get('school');
+    if (schoolParam && SCHOOLS[schoolParam]) {
+      return SCHOOLS[schoolParam];
+    }
+  }
+
   if (!host) return DEFAULT_SCHOOL;
   
   // Extract subdomain (handle localhost and production)
