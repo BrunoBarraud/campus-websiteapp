@@ -7,6 +7,7 @@ declare module "next-auth" {
     division?: string;
     year?: number;
     approval_status?: string;
+    school_id: string;
   }
   interface Session {
     user?: {
@@ -15,6 +16,8 @@ declare module "next-auth" {
       division?: string;
       year?: number;
       approval_status?: string;
+      school_id: string;
+      subdomain?: string;
     } & DefaultSession["user"];
   }
 }
@@ -26,5 +29,7 @@ declare module "next-auth/jwt" {
     division?: string;
     year?: number;
     approval_status?: string;
+    school_id: string;
+    subdomain?: string;
   }
 }

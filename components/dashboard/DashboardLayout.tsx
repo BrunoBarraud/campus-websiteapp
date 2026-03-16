@@ -192,13 +192,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
 
   // Si es una página de auth, renderizar solo el contenido sin layout
   if (isAuthPage) {
-    return (
-      <div className="min-h-screen w-full bg-gradient-to-br from-rose-950 to-yellow-500 flex items-center justify-center p-2 sm:p-4 lg:p-6">
-        <div className="w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl">
-          {children}
-        </div>
-      </div>
-    );
+    return <>{children}</>;
   }
 
   return (

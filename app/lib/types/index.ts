@@ -2,6 +2,17 @@
 
 export type UserRole = 'admin' | 'admin_director' | 'teacher' | 'student';
 
+export interface School {
+  id: string;
+  name: string;
+  subdomain: string;
+  primary_color: string;
+  secondary_color: string;
+  logo_url: string;
+  created_at: string;
+  updated_at: string;
+}
+
 // Estado de aprobación para estudiantes nuevos
 export type ApprovalStatus = 'pending' | 'approved' | 'rejected';
 
@@ -18,7 +29,7 @@ export interface User {
   is_active: boolean;
   approval_status?: ApprovalStatus; // Estado de aprobación (solo estudiantes)
   approved_by?: string; // ID del admin/preceptor que aprobó
-  approved_at?: string; // Fecha de aprobación
+  school_id: string;
   created_at: string;
   updated_at: string;
 }
@@ -35,6 +46,7 @@ export interface Subject {
   units?: SubjectUnit[]; // Unidades de la materia
   image_url?: string; // URL de imagen de la materia
   is_active: boolean;
+  school_id: string;
   created_at: string;
   updated_at: string;
 }
@@ -50,6 +62,7 @@ export interface SubjectUnit {
   content?: SubjectContent[]; // Contenido adicional
   is_active: boolean;
   is_visible?: boolean;
+  school_id: string;
   created_at: string;
   updated_at: string;
 }
@@ -67,6 +80,7 @@ export interface SubjectContent {
   creator?: User;
   is_pinned: boolean;
   is_active: boolean;
+  school_id: string;
   created_at: string;
   updated_at: string;
 }
@@ -86,6 +100,7 @@ export interface CalendarEvent {
   creator?: User; // Relación con creador
   year?: number; // Para filtrar por año de estudiantes
   is_active: boolean;
+  school_id: string;
   created_at: string;
   updated_at: string;
   // Visibilidad y alcance
@@ -110,6 +125,7 @@ export interface Document {
   year?: number; // Para filtrar por año
   is_public: boolean;
   is_active: boolean;
+  school_id: string;
   created_at: string;
   updated_at: string;
 }
@@ -145,6 +161,7 @@ export interface AssignmentSubmission {
   score?: number;
   feedback?: string;
   status: 'submitted' | 'graded' | 'late';
+  school_id: string;
   graded_by?: string;
   grader?: User; // Relación con quien calificó
   graded_at?: string;

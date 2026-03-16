@@ -4,293 +4,203 @@ import GoogleProvider from "next-auth/providers/google"
 import { supabaseAdmin } from "@/app/lib/supabaseClient"
 import bcrypt from "bcryptjs"
 import { sanitizeText } from "./app/lib/utils/sanitize"
+import { getSchoolByHost } from "@/app/lib/schools"
 import { isAccountLocked, recordLoginAttempt } from "./app/lib/security/brute-force-protection"
-import { notifySuspiciousLogin } from "./app/lib/services/security-notifications"
-import { UAParser } from './app/lib/utils/user-agent-parser'
-import { logAuditEvent, AuditAction } from './app/lib/services/audit-service'
 import speakeasy from 'speakeasy'
 
-export const { auth, handlers, signIn, signOut } = NextAuth({
-  providers: [
-    CredentialsProvider({
-      name: "credentials",
-      credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" },
-        twoFactorToken: { label: "2FA Token", type: "text" },
-      },
-      async authorize(credentials, req) {
-        if (!credentials?.email || !credentials?.password) {
-          throw new Error('Email y contraseña son requeridos');
-        }
+export const { auth, handlers, signIn, signOut } = NextAuth(async (req) => {
+  // 🌐 Detección dinámica de sede basada en el host de la petición
+  const host = req?.headers?.get('host') || null;
+  const school = getSchoolByHost(host);
 
-        const email = sanitizeText(credentials.email as string);
-        const password = sanitizeText(credentials.password as string);
-        const twoFactorToken = credentials?.twoFactorToken;
-        const userAgent = req?.headers?.get('user-agent') || 'unknown';
-        const ipAddress = req?.headers?.get('x-forwarded-for') || req?.headers?.get('x-real-ip') || 'unknown';
-
-        try {
-          // Verificar si la cuenta está bloqueada
-          if (await isAccountLocked(email)) {
-            throw new Error('Cuenta temporalmente bloqueada por múltiples intentos fallidos');
+  return {
+    providers: [
+      CredentialsProvider({
+        name: "credentials",
+        credentials: {
+          email: { label: "Email", type: "email" },
+          password: { label: "Password", type: "password" },
+          twoFactorToken: { label: "2FA Token", type: "text" },
+        },
+        async authorize(credentials, authReq) {
+          if (!credentials?.email || !credentials?.password) {
+            throw new Error('Email y contraseña son requeridos');
           }
 
-          // Buscar usuario en la base de datos
-          const { data: user, error } = await supabaseAdmin
-            .from('users')
-            .select('*')
-            .eq('email', email)
-            .single();
-
-          if (error || !user) {
-            await recordLoginAttempt(email, ipAddress, false);
-            throw new Error('Credenciales inválidas');
-          }
-
-          // Verificar contraseña
-          const isValidPassword = await bcrypt.compare(password, user.password);
-          if (!isValidPassword) {
-            await recordLoginAttempt(email, ipAddress, false);
-            throw new Error('Credenciales inválidas');
-          }
-
-          // Verificar 2FA si está habilitado
-          if (user.two_factor_enabled && user.two_factor_secret) {
-            if (!twoFactorToken) {
-              throw new Error('Token de autenticación de dos factores requerido');
-            }
-
-            const isValid2FA = speakeasy.totp.verify({
-              secret: user.two_factor_secret,
-              encoding: 'base32',
-              token: twoFactorToken.toString(),
-              window: 2
-            });
-
-            if (!isValid2FA) {
-              await recordLoginAttempt(email, ipAddress, false);
-              throw new Error('Token de autenticación de dos factores inválido');
-            }
-          }
-
-          // Verificar si la cuenta está activa
-          if (!user.is_active) {
-            throw new Error('Cuenta desactivada. Contacte al administrador.');
-          }
-
-          // Registrar intento exitoso
-          await recordLoginAttempt(email, ipAddress, true);
-
-          // Detectar login sospechoso
-          const parser = new UAParser(userAgent);
-          const deviceInfo = {
-            browser: parser.getBrowser().name || 'unknown',
-            os: parser.getOS().name || 'unknown',
-            device: parser.getDevice().type || 'desktop'
-          };
-
-          // Verificar si es un dispositivo/ubicación nueva
-          const { data: recentLogins } = await supabaseAdmin
-            .from('login_attempts')
-            .select('ip_address, user_agent')
-            .eq('email', email)
-            .eq('success', true)
-            .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
-            .limit(10);
-
-          const isNewDevice = !recentLogins?.some(login => 
-            login.user_agent === userAgent || login.ip_address === ipAddress
-          );
-
-          if (isNewDevice && recentLogins && recentLogins.length > 0) {
-            await notifySuspiciousLogin(user.id, ipAddress, userAgent);
-          }
-
-          // Registrar evento de auditoría
-          await logAuditEvent({
-            userId: user.id,
-            action: AuditAction.LOGIN_SUCCESS,
-            details: { message: `Login exitoso desde ${deviceInfo.browser} en ${deviceInfo.os}` },
-            ipAddress,
-            userAgent
-          });
-
-          // Actualizar último login
-          await supabaseAdmin
-            .from('users')
-            .update({ 
-              last_login: new Date().toISOString(),
-              last_ip: ipAddress
-            })
-            .eq('id', user.id);
-
-          return {
-            id: user.id,
-            email: user.email,
-            name: user.name,
-            role: user.role,
-            division: user.division,
-            year: user.year,
-          };
-        } catch (error: any) {
-          console.error('Error en autorización:', error);
-          throw new Error(error.message || 'Error de autenticación');
-        }
-      },
-    }),
-    GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID as string,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
-      authorization: {
-        params: {
-          scope: 'openid email profile',
-          hd: process.env.GOOGLE_HD,
-          prompt: 'consent'
-        }
-      }
-    }),
-  ],
-  pages: {
-    signIn: '/campus/auth/login',
-    signOut: '/campus/auth/logout',
-  },
-  session: {
-    strategy: 'jwt',
-    maxAge: 24 * 60 * 60, // 24 horas
-  },
-  callbacks: {
-    async signIn({ user, account }) {
-      if (account?.provider === 'google') {
-        const allowed = (process.env.ALLOWED_GOOGLE_DOMAINS || '')
-          .split(',')
-          .map(d => d.trim().toLowerCase())
-          .filter(Boolean)
-        const adminEmails = (process.env.ADMIN_EMAILS || '')
-          .split(',')
-          .map(e => e.trim().toLowerCase())
-          .filter(Boolean)
-        const emailAddr = (user?.email || '').toLowerCase()
-        const domain = emailAddr.split('@')[1]
-        const isAdminEmail = adminEmails.includes(emailAddr)
-        
-        // Solo validar dominio si ALLOWED_GOOGLE_DOMAINS está configurado
-        if (!isAdminEmail && allowed.length > 0) {
-          if (!domain || !allowed.includes(domain)) {
-            console.log(`[Google OAuth] Acceso denegado: dominio ${domain} no está en la lista permitida`)
-            return false
-          }
-        }
-
-        try {
-          // Ensure user exists in DB and is active
-          const { data: existing, error: findErr } = await supabaseAdmin
-            .from('users')
-            .select('*')
-            .eq('email', emailAddr)
-            .single()
+          const email = sanitizeText(credentials.email as string);
+          const password = sanitizeText(credentials.password as string);
+          const twoFactorToken = credentials?.twoFactorToken;
           
-          if (findErr || !existing) {
-            // Usuario no existe, crear uno nuevo
-            console.log(`[Google OAuth] Creando nuevo usuario: ${emailAddr}`)
-            const defaultRole = isAdminEmail ? 'admin' : 'student';
-            // Los estudiantes nuevos entran como 'pending', admins como 'approved'
-            const approvalStatus = defaultRole === 'student' ? 'pending' : 'approved';
-            
-            const { error: createErr } = await supabaseAdmin
-              .from('users')
-              .insert({
-                email: emailAddr,
-                name: user?.name || emailAddr.split('@')[0],
-                role: defaultRole,
-                is_active: true,
-                year: null, // Sin año asignado inicialmente para estudiantes
-                division: null,
-                approval_status: approvalStatus,
-                last_login: new Date().toISOString()
-              })
-              .select('*')
-              .single()
-            
-            if (createErr) {
-              console.error('[Google OAuth] Error al crear usuario:', createErr)
-              return false
-            }
-            console.log(`[Google OAuth] Usuario creado exitosamente: ${emailAddr} (${defaultRole}, ${approvalStatus})`)
-          } else {
-            // Usuario existe, actualizar last_login
-            console.log(`[Google OAuth] Usuario existente: ${emailAddr} (${existing.role})`)
-            const updates: any = { last_login: new Date().toISOString() }
-            if (isAdminEmail && existing.role !== 'admin') {
-              updates.role = 'admin'
-            }
-            await supabaseAdmin
-              .from('users')
-              .update(updates)
-              .eq('id', existing.id)
-          }
-        } catch (error) {
-          console.error('[Google OAuth] Error en signIn callback:', error)
-          return false
-        }
-      }
-      return true
-    },
-    async jwt({ token, user, trigger }) {
-      if (user) {
-        token.role = (user as any).role;
-        token.id = (user as any).id;
-        token.division = (user as any).division;
-        token.year = (user as any).year;
-        token.approval_status = (user as any).approval_status;
-      }
-      
-      // Actualizar desde BD si es un update trigger o si faltan campos
-      if (trigger === 'update' || !token.id || !token.role) {
-        if (token.email) {
+          // Usamos authReq que viene directamente del provider
+          const ipAddress = authReq?.headers?.get('x-forwarded-for') || authReq?.headers?.get('x-real-ip') || 'unknown';
+
           try {
-            const { data: dbUser } = await supabaseAdmin
+            if (await isAccountLocked(email)) {
+              throw new Error('Cuenta temporalmente bloqueada por múltiples intentos fallidos');
+            }
+
+            const { data: user, error } = await supabaseAdmin
               .from('users')
-              .select('id, role, division, year, approval_status')
-              .eq('email', token.email)
-              .single()
-            if (dbUser) {
-              token.id = dbUser.id
-              token.role = dbUser.role
-              token.division = dbUser.division
-              token.year = dbUser.year
-              token.approval_status = dbUser.approval_status
+              .select('*')
+              .eq('email', email)
+              .eq('school_id', school.id) // 🔒 Seguridad: Validar que el usuario pertenece a esta sede
+              .single();
+
+            if (error || !user) {
+              await recordLoginAttempt(email, ipAddress, false);
+              throw new Error('Credenciales inválidas para esta institución');
+            }
+
+            const isValidPassword = await bcrypt.compare(password, user.password);
+            if (!isValidPassword) {
+              await recordLoginAttempt(email, ipAddress, false);
+              throw new Error('Credenciales inválidas');
+            }
+
+            if (user.two_factor_enabled && user.two_factor_secret) {
+              if (!twoFactorToken) throw new Error('Token de 2FA requerido');
+              const isValid2FA = speakeasy.totp.verify({
+                secret: user.two_factor_secret,
+                encoding: 'base32',
+                token: twoFactorToken.toString(),
+                window: 2
+              });
+              if (!isValid2FA) {
+                await recordLoginAttempt(email, ipAddress, false);
+                throw new Error('Token de 2FA inválido');
+              }
+            }
+
+            if (!user.is_active) throw new Error('Cuenta desactivada');
+
+            await recordLoginAttempt(email, ipAddress, true);
+
+            // Actualizar último login
+            await supabaseAdmin.from('users').update({ 
+                last_login: new Date().toISOString(),
+                last_ip: ipAddress
+              }).eq('id', user.id);
+
+            return {
+              id: user.id,
+              email: user.email,
+              name: user.name,
+              role: user.role,
+              division: user.division,
+              year: user.year,
+              school_id: user.school_id,
+            };
+          } catch (error: any) {
+            console.error('Error en autorización:', error);
+            throw new Error(error.message || 'Error de autenticación');
+          }
+        },
+      }),
+      GoogleProvider({
+        clientId: process.env.GOOGLE_CLIENT_ID as string,
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
+        authorization: {
+          params: {
+            scope: 'openid email profile',
+            prompt: 'consent'
+          }
+        }
+      }),
+    ],
+    pages: {
+      signIn: '/campus/auth/login',
+      signOut: '/campus/auth/logout',
+    },
+    session: {
+      strategy: 'jwt',
+      maxAge: 24 * 60 * 60,
+    },
+    callbacks: {
+      async signIn({ user, account }) {
+        if (account?.provider === 'google') {
+          const emailAddr = (user?.email || '').toLowerCase();
+          const adminEmails = (process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim().toLowerCase());
+          const isAdminEmail = adminEmails.includes(emailAddr);
+          
+          try {
+            const { data: existing, error: findErr } = await supabaseAdmin
+              .from('users')
+              .select('*')
+              .eq('email', emailAddr)
+              .single();
+            
+            if (findErr || !existing) {
+              // 🆕 Registro Automático en la Sede Correcta
+              console.log(`[OAuth] Registrando ${emailAddr} en sede: ${school.name}`);
+              const defaultRole = isAdminEmail ? 'admin' : 'student';
+              const approvalStatus = defaultRole === 'student' ? 'pending' : 'approved';
+              
+              const { error: createErr } = await supabaseAdmin
+                .from('users')
+                .insert({
+                  email: emailAddr,
+                  name: user?.name || emailAddr.split('@')[0],
+                  role: defaultRole,
+                  school_id: school.id,
+                  is_active: true,
+                  approval_status: approvalStatus,
+                  last_login: new Date().toISOString()
+                });
+              
+              if (createErr) return false;
+            } else {
+              // 🔄 Actualización de último login y validación de sede
+              if (existing.school_id !== school.id && !isAdminEmail) {
+                console.warn(`[OAuth] Acceso denegado: Usuario ${emailAddr} pertenece a otra sede.`);
+                return false;
+              }
+              
+              await supabaseAdmin.from('users')
+                .update({ last_login: new Date().toISOString() })
+                .eq('id', existing.id);
             }
           } catch (error) {
-            console.error('[JWT] Error refrescando datos del usuario:', error)
+            console.error('[OAuth] Error en callback:', error);
+            return false;
           }
         }
-      }
-      return token;
+        return true;
+      },
+      async jwt({ token, user, trigger }) {
+        if (user) {
+          token.id = (user as any).id;
+          token.role = (user as any).role;
+          token.school_id = (user as any).school_id;
+          token.subdomain = school.subdomain;
+        }
+        
+        // Refresco de datos si es necesario (Optimizado)
+        if (trigger === 'update' || !token.school_id) {
+          if (token.email) {
+            const { data: dbUser } = await supabaseAdmin
+              .from('users')
+              .select('id, role, school_id')
+              .eq('email', token.email)
+              .single();
+            if (dbUser) {
+              token.id = dbUser.id;
+              token.role = dbUser.role;
+              token.school_id = dbUser.school_id;
+              token.subdomain = school.subdomain;
+            }
+          }
+        }
+        return token;
+      },
+      async session({ session, token }) {
+        if (token) {
+          session.user.id = token.id as string;
+          session.user.role = token.role as string;
+          session.user.school_id = token.school_id as string;
+          session.user.subdomain = token.subdomain as string;
+        }
+        return session;
+      },
     },
-    async session({ session, token }) {
-      if (token) {
-        session.user.id = token.id as string;
-        session.user.role = token.role as string;
-        session.user.division = token.division as string;
-        session.user.year = token.year as number;
-        session.user.approval_status = token.approval_status as string;
-      }
-      return session;
-    },
-  },
-  events: {
-    async signOut(message) {
-      const token = 'token' in message ? message.token : null;
-      if (token?.id) {
-        await logAuditEvent({
-          userId: token.id as string,
-          action: AuditAction.LOGOUT,
-          details: { message: 'Usuario cerró sesión' },
-          ipAddress: 'unknown',
-          userAgent: 'unknown'
-        });
-      }
-    },
-  },
+  }
 })

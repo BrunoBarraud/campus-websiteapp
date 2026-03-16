@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import "./globals.css";
 import { NextAuthProvider } from "../app/components/auth/AuthProvider";
-import { ThemeProvider } from "@/app/lib/contexts/ThemeContext";
+import { ThemeProvider } from "@/app/lib/contexts/ThemeProvider";
+import { headers } from "next/headers";
+import { getSchoolByHost } from "@/app/lib/schools";
 import ConditionalNav from "@/app/ConditionalNav";
 import { ToastProvider } from "@/components/ui/toast-provider";
 
@@ -12,25 +14,34 @@ const font = Poppins({
   weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
 });
 
-export const metadata: Metadata = {
-  title: "Campus Virtual | Instituto Privado Dalmacio Vélez Sarsfield",
-  description:
-    "Campus Virtual del Instituto Privado Dalmacio Vélez Sarsfield - Accede a tus cursos, recursos académicos y más",
-  other: {
-    "color-scheme": "light dark",
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const headersList = await headers();
+  const host = headersList.get("host");
+  const school = getSchoolByHost(host);
+
+  return {
+    title: `Campus Virtual | ${school.name}`,
+    description: `Campus Virtual de ${school.name} - Accede a tus cursos, recursos académicos y más`,
+    other: {
+      "color-scheme": "light dark",
+    },
+  };
+}
 
 export const viewport = {
   width: "device-width",
   initialScale: 1,
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const headersList = await headers();
+  const host = headersList.get("host");
+  const school = getSchoolByHost(host);
+
   return (
     <html lang="es" suppressHydrationWarning>
       <head>
@@ -43,7 +54,7 @@ export default function RootLayout({
       <body
         className={`${font.className} antialiased transition-colors duration-300`}
       >
-        <ThemeProvider>
+        <ThemeProvider school={school}>
           <NextAuthProvider>
             <div id="app-content">
               <ConditionalNav />
