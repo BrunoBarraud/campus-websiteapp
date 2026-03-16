@@ -9,9 +9,11 @@ import { isAccountLocked, recordLoginAttempt } from "./app/lib/security/brute-fo
 import speakeasy from 'speakeasy'
 
 export const { auth, handlers, signIn, signOut } = NextAuth(async (req) => {
-  // 🌐 Detección dinámica de sede basada en el host de la petición
+  // 🌐 Detección dinámica de sede
   const host = req?.headers?.get('host') || null;
-  const school = getSchoolByHost(host);
+  const url = req?.url ? new URL(req.url) : null;
+  const searchParams = url?.searchParams;
+  const school = getSchoolByHost(host, searchParams);
 
   return {
     providers: [
@@ -43,12 +45,17 @@ export const { auth, handlers, signIn, signOut } = NextAuth(async (req) => {
               .from('users')
               .select('*')
               .eq('email', email)
-              .eq('school_id', school.id) // 🔒 Seguridad: Validar que el usuario pertenece a esta sede
               .single();
 
             if (error || !user) {
               await recordLoginAttempt(email, ipAddress, false);
-              throw new Error('Credenciales inválidas para esta institución');
+              throw new Error('Credenciales inválidas');
+            }
+
+            // 🔒 Validación de Sede: Los alumnos/profes deben coincidir con la sede actual.
+            // Los Admins pueden entrar a cualquier sede.
+            if (user.role !== 'admin' && user.school_id !== school.id) {
+              throw new Error('No tienes permiso para acceder a esta institución');
             }
 
             const isValidPassword = await bcrypt.compare(password, user.password);
@@ -131,6 +138,8 @@ export const { auth, handlers, signIn, signOut } = NextAuth(async (req) => {
             
             if (findErr || !existing) {
               // 🆕 Registro Automático en la Sede Correcta
+              // IMPORTANTE: En Vercel, el host puede ser el dominio principal. 
+              // Usamos la sede detectada (que puede ser la default)
               console.log(`[OAuth] Registrando ${emailAddr} en sede: ${school.name}`);
               const defaultRole = isAdminEmail ? 'admin' : 'student';
               const approvalStatus = defaultRole === 'student' ? 'pending' : 'approved';
@@ -150,8 +159,8 @@ export const { auth, handlers, signIn, signOut } = NextAuth(async (req) => {
               if (createErr) return false;
             } else {
               // 🔄 Actualización de último login y validación de sede
-              if (existing.school_id !== school.id && !isAdminEmail) {
-                console.warn(`[OAuth] Acceso denegado: Usuario ${emailAddr} pertenece a otra sede.`);
+              if (existing.school_id !== school.id && !isAdminEmail && existing.role !== 'admin') {
+                console.warn(`[OAuth] Acceso denegado: Usuario ${emailAddr} pertenece a otra sede y no es Admin.`);
                 return false;
               }
               
