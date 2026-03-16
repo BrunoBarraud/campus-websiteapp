@@ -4,11 +4,13 @@ import GoogleProvider from "next-auth/providers/google"
 import { supabaseAdmin } from "@/app/lib/supabaseClient"
 import bcrypt from "bcryptjs"
 import { sanitizeText } from "./app/lib/utils/sanitize"
+import { getSchoolByHost } from "@/app/lib/schools"
 import { isAccountLocked, recordLoginAttempt } from "./app/lib/security/brute-force-protection"
 import { notifySuspiciousLogin } from "./app/lib/services/security-notifications"
 import { UAParser } from './app/lib/utils/user-agent-parser'
 import { logAuditEvent, AuditAction } from './app/lib/services/audit-service'
 import speakeasy from 'speakeasy'
+import { headers } from "next/headers"
 
 export const { auth, handlers, signIn, signOut } = NextAuth({
   providers: [
@@ -132,6 +134,7 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
             role: user.role,
             division: user.division,
             year: user.year,
+            school_id: user.school_id,
           };
         } catch (error: any) {
           console.error('Error en autorización:', error);
@@ -192,7 +195,10 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
           
           if (findErr || !existing) {
             // Usuario no existe, crear uno nuevo
-            console.log(`[Google OAuth] Creando nuevo usuario: ${emailAddr}`)
+            const host = (await headers()).get('host');
+            const school = getSchoolByHost(host);
+            
+            console.log(`[Google OAuth] Creando nuevo usuario: ${emailAddr} para sede: ${school.name}`)
             const defaultRole = isAdminEmail ? 'admin' : 'student';
             // Los estudiantes nuevos entran como 'pending', admins como 'approved'
             const approvalStatus = defaultRole === 'student' ? 'pending' : 'approved';
@@ -203,6 +209,7 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
                 email: emailAddr,
                 name: user?.name || emailAddr.split('@')[0],
                 role: defaultRole,
+                school_id: school.id,
                 is_active: true,
                 year: null, // Sin año asignado inicialmente para estudiantes
                 division: null,
@@ -243,6 +250,7 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
         token.division = (user as any).division;
         token.year = (user as any).year;
         token.approval_status = (user as any).approval_status;
+        token.school_id = (user as any).school_id;
       }
       
       // Actualizar desde BD si es un update trigger o si faltan campos
@@ -251,7 +259,7 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
           try {
             const { data: dbUser } = await supabaseAdmin
               .from('users')
-              .select('id, role, division, year, approval_status')
+              .select('id, role, division, year, approval_status, school_id')
               .eq('email', token.email)
               .single()
             if (dbUser) {
@@ -260,6 +268,7 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
               token.division = dbUser.division
               token.year = dbUser.year
               token.approval_status = dbUser.approval_status
+              token.school_id = dbUser.school_id
             }
           } catch (error) {
             console.error('[JWT] Error refrescando datos del usuario:', error)
@@ -275,6 +284,7 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
         session.user.division = token.division as string;
         session.user.year = token.year as number;
         session.user.approval_status = token.approval_status as string;
+        session.user.school_id = token.school_id as string;
       }
       return session;
     },

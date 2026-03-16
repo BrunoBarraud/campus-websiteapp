@@ -1,15 +1,24 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { signIn } from "next-auth/react";
+import { useSchool } from "@/app/lib/contexts/ThemeProvider";
 
-export default function AuthForm({ mode }: { mode: "login" | "register" }) {
+export default function AuthPage({ mode }: { mode: "login" | "register" }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const { school } = useSchool();
+  const [logoSrc, setLogoSrc] = useState<string | null>(school?.logoUrl || "/images/logo-velez.png");
+
+  useEffect(() => {
+    if (school) setLogoSrc(school.logoUrl || "/images/logo-velez.png");
+  }, [school]);
+
+  if (!school) return null;
 
   const toggleMode = () => {
     router.push(
@@ -89,29 +98,40 @@ export default function AuthForm({ mode }: { mode: "login" | "register" }) {
   };
 
   return (
-    <div className="bg-gradient-to-br from-rose-100 to-gray-100 min-h-screen flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-200">
+    <div className="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen flex items-center justify-center p-4">
+      <div className="w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-200 relative">
         {/* Decoración superior */}
-        <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-yellow-300 to-yellow-400"></div>
+        <div 
+          className="absolute top-0 left-0 w-full h-2"
+          style={{ backgroundColor: 'var(--primary)' }}
+        ></div>
 
         <div className="px-10 py-12">
           {/* Logo local */}
           <div className="flex justify-center mb-8">
             <Image
-              src="/images/ipdvs-logo.png"
-              alt="Logo del Campus - IPDVS"
+              src={logoSrc || "/images/logo-velez.png"}
+              alt={`Logo ${school.name}`}
               width={80}
               height={80}
-              className="rounded-full bg-yellow-300 p-2 object-contain"
+              className="rounded-full p-2 object-contain"
+              style={{ backgroundColor: 'rgba(var(--primary-rgb), 0.1)' }}
+              onError={() => setLogoSrc("/images/logo-velez.png")}
             />
           </div>
 
           {/* Título */}
           <h2 className="text-center mb-8">
-            <span className="inline-block text-3xl font-bold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-yellow-500 to-rose-500">
+            <span 
+              className="inline-block text-3xl font-bold tracking-tight text-transparent bg-clip-text"
+              style={{ backgroundImage: 'linear-gradient(to right, var(--primary), var(--secondary))' }}
+            >
               {mode === "login" ? "Iniciar sesión" : "Registrarse"}
             </span>
-            <span className="block mt-2 h-1 w-20 mx-auto bg-gradient-to-r from-yellow-300 to-rose-400 rounded-full"></span>
+            <span 
+              className="block mt-2 h-1 w-20 mx-auto rounded-full"
+              style={{ backgroundImage: 'linear-gradient(to right, var(--primary), var(--secondary))' }}
+            ></span>
           </h2>
 
           {/* Formulario */}
@@ -128,11 +148,13 @@ export default function AuthForm({ mode }: { mode: "login" | "register" }) {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder=" "
                 required
-                className="w-full px-4 py-3 rounded-md border border-gray-300 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-300 outline-none peer transition-all"
+                className="w-full px-4 py-3 rounded-md border border-gray-300 focus:border-primary focus:ring-2 outline-none peer transition-all"
+                style={{ '--tw-ring-color': 'rgba(var(--primary-rgb), 0.3)' } as any}
               />
               <label
                 htmlFor="email"
-                className="absolute left-3 top-3 text-gray-400 peer-focus:text-yellow-500 peer-focus:-translate-y-6 peer-focus:scale-90 peer-focus:bg-white peer-focus:px-2 transition-all peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100"
+                className="absolute left-3 top-3 text-gray-400 peer-focus:text-primary peer-focus:-translate-y-6 peer-focus:scale-90 peer-focus:bg-white peer-focus:px-2 transition-all peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100"
+                style={{ color: 'var(--primary)' } as any}
               >
                 Correo electrónico
               </label>
@@ -147,11 +169,13 @@ export default function AuthForm({ mode }: { mode: "login" | "register" }) {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder=" "
                 required
-                className="w-full px-4 py-3 rounded-md border border-gray-300 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-300 outline-none peer transition-all"
+                className="w-full px-4 py-3 rounded-md border border-gray-300 focus:border-primary focus:ring-2 outline-none peer transition-all"
+                style={{ '--tw-ring-color': 'rgba(var(--primary-rgb), 0.3)' } as any}
               />
               <label
                 htmlFor="password"
-                className="absolute left-3 top-3 text-gray-400 peer-focus:text-yellow-500 peer-focus:-translate-y-6 peer-focus:scale-90 peer-focus:bg-white peer-focus:px-2 transition-all peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100"
+                className="absolute left-3 top-3 text-gray-400 peer-focus:text-primary peer-focus:-translate-y-6 peer-focus:scale-90 peer-focus:bg-white peer-focus:px-2 transition-all peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100"
+                style={{ color: 'var(--primary)' } as any}
               >
                 Contraseña
               </label>
@@ -166,7 +190,11 @@ export default function AuthForm({ mode }: { mode: "login" | "register" }) {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-3 bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-white font-semibold rounded-md shadow-md transition-transform transform hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-yellow-300 disabled:opacity-70 disabled:cursor-not-allowed"
+              className="w-full py-3 text-white font-semibold rounded-md shadow-md transition-transform transform hover:scale-[1.02] focus:outline-none focus:ring-2 disabled:opacity-70 disabled:cursor-not-allowed"
+              style={{ 
+                backgroundImage: 'linear-gradient(to right, var(--primary), var(--secondary))',
+                '--tw-ring-color': 'rgba(var(--primary-rgb), 0.3)'
+              } as any}
             >
               {isLoading
                 ? mode === "login"
@@ -226,7 +254,8 @@ export default function AuthForm({ mode }: { mode: "login" | "register" }) {
                 <button
                   type="button"
                   onClick={toggleMode}
-                  className="text-yellow-500 hover:text-yellow-600 font-medium"
+                  className="font-medium"
+                  style={{ color: 'var(--primary)' }}
                 >
                   Regístrate
                 </button>
@@ -237,7 +266,8 @@ export default function AuthForm({ mode }: { mode: "login" | "register" }) {
                 <button
                   type="button"
                   onClick={toggleMode}
-                  className="text-yellow-500 hover:text-yellow-600 font-medium"
+                  className="font-medium"
+                  style={{ color: 'var(--primary)' }}
                 >
                   Inicia sesión
                 </button>
@@ -248,7 +278,7 @@ export default function AuthForm({ mode }: { mode: "login" | "register" }) {
 
         {/* Pie de formulario */}
         <div className="bg-gray-50 px-8 py-4 text-center text-xs text-gray-500">
-          © 2025 IPDVS. Todos los derechos reservados.
+          © {new Date().getFullYear()} {school.name}. Todos los derechos reservados.
         </div>
       </div>
     </div>
