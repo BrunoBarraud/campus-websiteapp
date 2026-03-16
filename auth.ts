@@ -104,8 +104,8 @@ export const { auth, handlers, signIn, signOut } = NextAuth(async (req) => {
         },
       }),
       GoogleProvider({
-        clientId: process.env.GOOGLE_CLIENT_ID as string,
-        clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
+        clientId: (process.env.AUTH_GOOGLE_ID || process.env.GOOGLE_CLIENT_ID) as string,
+        clientSecret: (process.env.AUTH_GOOGLE_SECRET || process.env.GOOGLE_CLIENT_SECRET) as string,
         authorization: {
           params: {
             scope: 'openid email profile',
