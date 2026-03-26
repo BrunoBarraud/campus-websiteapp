@@ -3,19 +3,57 @@ import CredentialsProvider from "next-auth/providers/credentials"
 import GoogleProvider from "next-auth/providers/google"
 import { supabaseAdmin } from "@/app/lib/supabaseClient"
 import bcrypt from "bcryptjs"
+import crypto from "crypto"
 import { sanitizeText } from "./app/lib/utils/sanitize"
 import { getSchoolByHost } from "@/app/lib/schools"
 import { isAccountLocked, recordLoginAttempt } from "./app/lib/security/brute-force-protection"
 import speakeasy from 'speakeasy'
 
+function isUuid(value: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+}
+
+function getCookieValue(cookieHeader: string | null, name: string): string | null {
+  if (!cookieHeader) return null;
+  const parts = cookieHeader.split(';');
+  for (const part of parts) {
+    const [k, ...v] = part.trim().split('=');
+    if (k === name) return decodeURIComponent(v.join('='));
+  }
+  return null;
+}
+
 export const { auth, handlers, signIn, signOut } = NextAuth(async (req) => {
   // 🌐 Detección dinámica de sede
-  const host = req?.headers?.get('host') || null;
+  const host = req?.headers?.get('x-forwarded-host') || req?.headers?.get('host') || null;
   const url = req?.url ? new URL(req.url) : null;
   const searchParams = url?.searchParams;
-  const school = getSchoolByHost(host, searchParams);
+
+  const schoolFromUrl = searchParams?.get('school');
+  const cookieHeader = req?.headers?.get('cookie') || null;
+  const schoolFromCookie = getCookieValue(cookieHeader, 'campus_school');
+  const effectiveParams = schoolFromUrl
+    ? searchParams
+    : (schoolFromCookie ? new URLSearchParams({ school: schoolFromCookie }) : undefined);
+  const school = getSchoolByHost(host, effectiveParams);
+
+  const schoolId = await (async () => {
+    if (isUuid(school.id)) return school.id;
+    const { data, error } = await supabaseAdmin
+      .from('schools')
+      .select('id')
+      .eq('subdomain', school.subdomain)
+      .single();
+    if (error || !data?.id) {
+      console.error('[Schools] No se pudo resolver school_id UUID para subdomain:', school.subdomain, error);
+      return school.id;
+    }
+    return data.id as string;
+  })();
 
   return {
+    secret: process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET,
+    trustHost: true,
     providers: [
       CredentialsProvider({
         name: "credentials",
@@ -54,7 +92,7 @@ export const { auth, handlers, signIn, signOut } = NextAuth(async (req) => {
 
             // 🔒 Validación de Sede: Los alumnos/profes deben coincidir con la sede actual.
             // Los Admins pueden entrar a cualquier sede.
-            if (user.role !== 'admin' && user.school_id !== school.id) {
+            if (user.role !== 'admin' && user.school_id !== schoolId) {
               throw new Error('No tienes permiso para acceder a esta institución');
             }
 
@@ -143,23 +181,29 @@ export const { auth, handlers, signIn, signOut } = NextAuth(async (req) => {
               console.log(`[OAuth] Registrando ${emailAddr} en sede: ${school.name}`);
               const defaultRole = isAdminEmail ? 'admin' : 'student';
               const approvalStatus = defaultRole === 'student' ? 'pending' : 'approved';
+              const randomPassword = crypto.randomBytes(32).toString('hex');
+              const hashedPassword = await bcrypt.hash(randomPassword, 12);
               
               const { error: createErr } = await supabaseAdmin
                 .from('users')
                 .insert({
                   email: emailAddr,
+                  password: hashedPassword,
                   name: user?.name || emailAddr.split('@')[0],
                   role: defaultRole,
-                  school_id: school.id,
+                  school_id: schoolId,
                   is_active: true,
                   approval_status: approvalStatus,
                   last_login: new Date().toISOString()
                 });
               
-              if (createErr) return false;
+              if (createErr) {
+                console.error('[OAuth] Error creando usuario en tabla users:', createErr);
+                return false;
+              }
             } else {
               // 🔄 Actualización de último login y validación de sede
-              if (existing.school_id !== school.id && !isAdminEmail && existing.role !== 'admin') {
+              if (existing.school_id !== schoolId && !isAdminEmail && existing.role !== 'admin') {
                 console.warn(`[OAuth] Acceso denegado: Usuario ${emailAddr} pertenece a otra sede y no es Admin.`);
                 return false;
               }

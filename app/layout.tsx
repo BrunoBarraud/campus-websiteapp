@@ -3,7 +3,7 @@ import { Poppins } from "next/font/google";
 import "./globals.css";
 import { NextAuthProvider } from "../app/components/auth/AuthProvider";
 import { ThemeProvider } from "@/app/lib/contexts/ThemeProvider";
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { getSchoolByHost } from "@/app/lib/schools";
 import ConditionalNav from "@/app/ConditionalNav";
 import { ToastProvider } from "@/components/ui/toast-provider";
@@ -17,7 +17,9 @@ const font = Poppins({
 export async function generateMetadata(): Promise<Metadata> {
   const headersList = await headers();
   const host = headersList.get("host");
-  const school = getSchoolByHost(host);
+  const schoolCookie = (await cookies()).get("campus_school")?.value;
+  const cookieParams = schoolCookie ? new URLSearchParams({ school: schoolCookie }) : undefined;
+  const school = getSchoolByHost(host, cookieParams);
 
   return {
     title: `Campus Virtual | ${school.name}`,
@@ -40,7 +42,9 @@ export default async function RootLayout({
 }>) {
   const headersList = await headers();
   const host = headersList.get("host");
-  const school = getSchoolByHost(host);
+  const schoolCookie = (await cookies()).get("campus_school")?.value;
+  const cookieParams = schoolCookie ? new URLSearchParams({ school: schoolCookie }) : undefined;
+  const school = getSchoolByHost(host, cookieParams);
 
   return (
     <html lang="es" suppressHydrationWarning>
