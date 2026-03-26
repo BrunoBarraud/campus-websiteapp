@@ -24,7 +24,7 @@ ON public.schools FOR SELECT TO authenticated USING (true);
 INSERT INTO public.schools (name, subdomain, primary_color, secondary_color, logo_url)
 VALUES 
 ('Instituto Privado Dalmacio Vélez Sarsfield', 'velez', '#f59e0b', '#fbbf24', '/images/logo-velez.png'),
-('Instituto Privado San José', 'sanjose', '#0056b3', '#ffcc00', '/images/logo-sanjose.jpg'),
+('Instituto Privado San José', 'sanjose', '#0056b3', '#ffcc00', '/images/logo-sanjose.png'),
 ('Instituto Privado Virgen Niña', 'virgennina', '#4f46e5', '#818cf8', '/images/logo-virgennina.png')
 ON CONFLICT (subdomain) DO NOTHING;
 

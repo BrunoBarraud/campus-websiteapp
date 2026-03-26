@@ -15,16 +15,6 @@ export default function Page() {
 
   return (
     <div className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden bg-slate-50/50 selection:bg-indigo-100">
-      
-      {/* Círculos de luz decorativos de fondo */}
-      <div 
-        className="absolute -top-24 -left-24 w-96 h-96 blur-[120px] rounded-full opacity-30 animate-pulse"
-        style={{ backgroundColor: primarySolid }}
-      />
-      <div 
-        className="absolute -bottom-24 -right-24 w-96 h-96 blur-[120px] rounded-full opacity-20"
-        style={{ backgroundColor: secondarySolid }}
-      />
 
       <main className="relative z-10 w-full max-w-6xl px-6 py-12 flex flex-col items-center">
         

@@ -31,7 +31,7 @@ export const SCHOOLS: Record<string, SchoolConfig> = {
     primaryForeground: "#ffffff",
     navBg: "#ffffff",
     navText: "#1f2937",
-    logoUrl: "/images/logo-sanjose.jpg",
+    logoUrl: "/images/logo-sanjose.png",
   },
   virgennina: {
     id: "virgennina",
@@ -58,19 +58,31 @@ export function getSchoolByHost(host: string | null, searchParams?: URLSearchPar
   }
 
   if (!host) return DEFAULT_SCHOOL;
+
+  const normalizedHost = host.toLowerCase().split(':')[0];
+  const vercelPreviewPrefix = normalizedHost.split('---')[0];
+  if (vercelPreviewPrefix && SCHOOLS[vercelPreviewPrefix]) {
+    return SCHOOLS[vercelPreviewPrefix];
+  }
   
   // Extract subdomain (handle localhost and production)
   // Example: velez.localhost:3000 -> velez
   // Example: velez.tuaulavirtual.com.ar -> velez
-  const parts = host.split('.');
+  const parts = normalizedHost.split('.');
   
   // Simple subdomain extraction for localhost: subdomain.localhost:port
-  if (host.includes('localhost')) {
+  if (normalizedHost.includes('localhost')) {
     if (parts.length > 1 && parts[0] !== 'localhost' && parts[0] !== 'www') {
       return SCHOOLS[parts[0]] || DEFAULT_SCHOOL;
     }
   } else {
     // Production extraction: subdomain.domain.com
+    if (normalizedHost.endsWith('.vercel.app')) {
+      if (parts.length >= 4) {
+        return SCHOOLS[parts[0]] || DEFAULT_SCHOOL;
+      }
+    }
+
     if (parts.length >= 3) {
       return SCHOOLS[parts[0]] || DEFAULT_SCHOOL;
     }
