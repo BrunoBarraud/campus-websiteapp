@@ -1,4 +1,5 @@
 "use client";
+
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
@@ -14,7 +15,15 @@ import {
   Settings,
   Shield,
   User as UserIcon,
+  X,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+type NavItem = {
+  name: string;
+  href: string;
+  icon: React.ComponentType<{ className?: string }>;
+};
 
 const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   const { data: session } = useSession();
@@ -30,20 +39,24 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
     };
   }, []);
 
-  // No mostrar dashboard en páginas de autenticación
+  useEffect(() => {
+    setIsSidebarOpen(false);
+    setShowMobileMenu(false);
+  }, [pathname]);
+
   const isAuthPage = pathname?.includes("/auth/");
 
-  const mainNavigation = [
+  const mainNavigation: NavItem[] = [
     { name: "Cursos", href: "/campus/dashboard", icon: LayoutDashboard },
     { name: "Calendario", href: "/campus/calendar", icon: Calendar },
   ];
 
-  const accountNavigation = [
+  const accountNavigation: NavItem[] = [
     { name: "Perfil", href: "/campus/profile", icon: UserIcon },
     { name: "Notificaciones", href: "/campus/notifications", icon: Bell },
   ];
 
-  const settingsNavigation = [
+  const settingsNavigation: NavItem[] = [
     ...(session?.user?.role === "admin"
       ? [
           { name: "Configuración", href: "/campus/settings", icon: Settings },
@@ -52,182 +65,144 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
         ]
       : []),
     ...(session?.user?.role === "admin_director"
-      ? [
-          { name: "Estudiantes Pendientes", href: "/campus/admin/students", icon: Shield },
-        ]
+      ? [{ name: "Estudiantes Pendientes", href: "/campus/admin/students", icon: Shield }]
       : []),
   ];
 
-  const supportNavigation = [
-    { name: "Soporte", href: "/campus/support", icon: HelpCircle },
-  ];
+  const supportNavigation: NavItem[] = [{ name: "Soporte", href: "/campus/support", icon: HelpCircle }];
 
   const handleLogout = async () => {
     await signOut({ callbackUrl: "/" });
   };
 
-  // Sidebar Component
+  const NavSection = ({
+    title,
+    items,
+    onNavigate,
+  }: {
+    title: string;
+    items: NavItem[];
+    onNavigate?: () => void;
+  }) => (
+    <section className="space-y-2">
+      <p className="px-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+        {title}
+      </p>
+      <div className="space-y-1">
+        {items.map((item) => {
+          const Icon = item.icon;
+          const active = pathname === item.href;
+
+          return (
+            <Link
+              key={item.name}
+              href={item.href}
+              onClick={onNavigate}
+              className={cn(
+                "group flex items-center gap-3 rounded-2xl border px-3.5 py-3 text-sm font-medium transition-all duration-200",
+                active
+                  ? "border-yellow-200 bg-yellow-50 text-slate-900 shadow-[0_10px_24px_-18px_rgba(245,158,11,0.85)]"
+                  : "border-transparent text-slate-600 hover:border-slate-200 hover:bg-slate-50 hover:text-slate-900"
+              )}
+            >
+              <span
+                className={cn(
+                  "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border transition-colors",
+                  active
+                    ? "border-yellow-200 bg-white text-yellow-700"
+                    : "border-slate-200 bg-slate-50 text-slate-400 group-hover:border-slate-300 group-hover:bg-white group-hover:text-slate-600"
+                )}
+              >
+                <Icon className="h-[18px] w-[18px]" />
+              </span>
+              <span className="truncate">{item.name}</span>
+            </Link>
+          );
+        })}
+      </div>
+    </section>
+  );
+
   const Sidebar = ({ onNavigate }: { onNavigate?: () => void }) => (
-    <div className="h-full bg-white border-r border-slate-200 flex flex-col">
-      <nav className="flex-1 overflow-y-auto p-4 pt-6 space-y-6">
-        <div>
-          <p className="px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Menú</p>
-          <div className="space-y-1">
-            {mainNavigation.map((item) => {
-              const Icon = item.icon;
-              const active = pathname === item.href;
-
-              return (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  onClick={onNavigate}
-                  className={`sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
-                    active
-                      ? "bg-yellow-50 text-slate-900 border border-yellow-100"
-                      : "text-slate-600 hover:text-slate-900 hover:bg-yellow-50/60"
-                  }`}
-                >
-                  <Icon className={`h-5 w-5 ${active ? "text-yellow-700" : "text-slate-400"}`} />
-                  <span className="truncate">{item.name}</span>
-                </Link>
-              );
-            })}
-          </div>
+    <div className="h-full overflow-hidden bg-white">
+      <div className="flex h-full flex-col">
+        <div className="border-b border-slate-200 px-5 py-5">
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">Campus</p>
+          <h1 className="mt-2 text-lg font-semibold text-slate-900">Panel principal</h1>
+          <p className="mt-1 text-sm text-slate-500">Accesos, navegación y herramientas del campus.</p>
         </div>
 
-        <div>
-          <p className="px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Cuenta</p>
-          <div className="space-y-1">
-            {accountNavigation.map((item) => {
-              const Icon = item.icon;
-              const active = pathname === item.href;
-
-              return (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  onClick={onNavigate}
-                  className={`sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
-                    active
-                      ? "bg-yellow-50 text-slate-900 border border-yellow-100"
-                      : "text-slate-600 hover:text-slate-900 hover:bg-yellow-50/60"
-                  }`}
-                >
-                  <Icon className={`h-5 w-5 ${active ? "text-yellow-700" : "text-slate-400"}`} />
-                  <span className="truncate">{item.name}</span>
-                </Link>
-              );
-            })}
+        <nav className="flex-1 overflow-y-auto px-4 py-5">
+          <div className="space-y-6">
+            <NavSection title="Menú" items={mainNavigation} onNavigate={onNavigate} />
+            <NavSection title="Cuenta" items={accountNavigation} onNavigate={onNavigate} />
+            {settingsNavigation.length > 0 && (
+              <NavSection title="Ajustes" items={settingsNavigation} onNavigate={onNavigate} />
+            )}
+            <NavSection title="Soporte" items={supportNavigation} onNavigate={onNavigate} />
           </div>
+        </nav>
+
+        <div className="border-t border-slate-200 p-4">
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
+            <p className="text-sm font-semibold text-slate-900">{session?.user?.name || "Usuario"}</p>
+            <p className="mt-1 text-xs uppercase tracking-[0.16em] text-slate-400">
+              {session?.user?.role || "campus"}
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="mt-3 flex w-full items-center gap-3 rounded-2xl border border-transparent px-4 py-3 text-sm font-semibold text-slate-600 transition-colors hover:border-red-100 hover:bg-red-50 hover:text-red-700"
+          >
+            <LogOut className="h-5 w-5 text-slate-400" />
+            <span>Salir</span>
+          </button>
         </div>
-
-        {settingsNavigation.length > 0 && (
-          <div>
-            <p className="px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Ajustes</p>
-            <div className="space-y-1">
-              {settingsNavigation.map((item) => {
-                const Icon = item.icon;
-                const active = pathname === item.href;
-
-                return (
-                  <Link
-                    key={item.name}
-                    href={item.href}
-                    onClick={onNavigate}
-                    className={`sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
-                      active
-                        ? "bg-yellow-50 text-slate-900 border border-yellow-100"
-                        : "text-slate-600 hover:text-slate-900 hover:bg-yellow-50/60"
-                    }`}
-                  >
-                    <Icon className={`h-5 w-5 ${active ? "text-yellow-700" : "text-slate-400"}`} />
-                    <span className="truncate">{item.name}</span>
-                  </Link>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        <div>
-          <p className="px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Soporte</p>
-          <div className="space-y-1">
-            {supportNavigation.map((item) => {
-              const Icon = item.icon;
-              const active = pathname === item.href;
-
-              return (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  onClick={onNavigate}
-                  className={`sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
-                    active
-                      ? "bg-yellow-50 text-slate-900 border border-yellow-100"
-                      : "text-slate-600 hover:text-slate-900 hover:bg-yellow-50/60"
-                  }`}
-                >
-                  <Icon className={`h-5 w-5 ${active ? "text-yellow-700" : "text-slate-400"}`} />
-                  <span className="truncate">{item.name}</span>
-                </Link>
-              );
-            })}
-          </div>
-        </div>
-      </nav>
-
-      <div className="p-4 border-t border-slate-100">
-        <button
-          type="button"
-          onClick={handleLogout}
-          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-slate-600 hover:text-red-700 hover:bg-red-50 transition-colors"
-        >
-          <LogOut className="h-5 w-5 text-slate-400" />
-          <span>Salir</span>
-        </button>
       </div>
     </div>
   );
 
-  // Si es una página de auth, renderizar solo el contenido sin layout
   if (isAuthPage) {
     return <>{children}</>;
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-slate-50">
-      {/* Sidebar Drawer (Mobile & Tablet) */}
+    <div className="dashboard-shell min-h-screen bg-slate-50">
       {isSidebarOpen && (
-        <div className="lg:hidden fixed inset-0 z-40 flex">
-          <div className="w-64">
+        <div className="fixed inset-0 z-50 flex lg:hidden">
+          <div className="relative h-full w-[88vw] max-w-80 shrink-0 bg-white shadow-2xl">
+            <button
+              type="button"
+              onClick={() => setIsSidebarOpen(false)}
+              className="absolute right-4 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm"
+              aria-label="Cerrar navegación"
+            >
+              <X className="h-5 w-5" />
+            </button>
             <Sidebar onNavigate={() => setIsSidebarOpen(false)} />
           </div>
-          <div
-            className="flex-grow bg-black bg-opacity-50"
-            onClick={() => setIsSidebarOpen(false)}
-          />
+          <div className="flex-grow bg-slate-950/45 backdrop-blur-[1px]" onClick={() => setIsSidebarOpen(false)} />
         </div>
       )}
 
-      {/* Main Content */}
-      <div className="flex flex-1">
-        {/* Static Sidebar (Desktop) */}
-        <aside className="hidden lg:block w-72 sticky top-0 h-[calc(100vh-0px)]">
-          <Sidebar />
+      <div className="mx-auto flex min-h-screen w-full max-w-[1600px]">
+        <aside className="hidden lg:block lg:w-[312px] lg:shrink-0">
+          <div className="sticky top-0 h-screen overflow-hidden border-r border-slate-200 bg-white">
+            <Sidebar />
+          </div>
         </aside>
 
-        {/* Main content area */}
-        <main className="flex-1 min-w-0">
-          <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 py-3 sm:py-4 md:py-6 pb-28 lg:pb-6">
+        <main className="dashboard-main min-w-0 flex-1">
+          <div className="min-h-screen px-3 pb-28 pt-3 sm:px-4 sm:pt-4 md:px-6 md:pt-6 lg:px-8 lg:pb-8">
             {children}
           </div>
         </main>
       </div>
 
-      {/* Bottom navigation for mobile */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-border z-50 shadow-soft shadow-[0_-4px_16px_rgba(0,0,0,0.16)] pb-safe">
-        <div className="flex items-center justify-around py-1 sm:py-2">
+      <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-slate-200 bg-white/95 shadow-[0_-10px_30px_-18px_rgba(15,23,42,0.35)] backdrop-blur-xl pb-safe lg:hidden">
+        <div className="flex items-center justify-around px-2 py-1.5 sm:py-2">
           {[...mainNavigation, ...accountNavigation].map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.href;
@@ -236,39 +211,43 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
               <Link
                 key={item.name}
                 href={item.href}
-                className={`flex flex-col items-center justify-center py-2 px-2 text-xs transition-colors ${
-                  isActive ? "text-yellow-700" : "text-slate-500 hover:text-slate-700"
-                }`}
+                className={cn(
+                  "flex min-w-0 flex-col items-center justify-center rounded-2xl px-3 py-2 text-[11px] font-medium transition-colors",
+                  isActive ? "bg-yellow-50 text-yellow-700" : "text-slate-500 hover:text-slate-700"
+                )}
               >
-                <Icon className="h-5 w-5 mb-1" />
+                <Icon className="mb-1 h-5 w-5" />
               </Link>
             );
           })}
 
           <button
             onClick={() => setShowMobileMenu(!showMobileMenu)}
-            className={`flex flex-col items-center justify-center py-2 px-2 text-xs transition-colors ${
-              showMobileMenu ? "text-yellow-700" : "text-slate-500 hover:text-slate-700"
-            }`}
+            className={cn(
+              "flex flex-col items-center justify-center rounded-2xl px-3 py-2 text-[11px] font-medium transition-colors",
+              showMobileMenu ? "bg-yellow-50 text-yellow-700" : "text-slate-500 hover:text-slate-700"
+            )}
             title="Más opciones"
           >
-            <MoreHorizontal className="h-5 w-5 mb-1" />
+            <MoreHorizontal className="mb-1 h-5 w-5" />
           </button>
 
           <button
             onClick={handleLogout}
-            className="flex flex-col items-center justify-center py-2 px-2 text-xs transition-colors text-slate-500 hover:text-red-700"
+            className="flex flex-col items-center justify-center rounded-2xl px-3 py-2 text-[11px] font-medium text-slate-500 transition-colors hover:text-red-700"
             title="Cerrar sesión"
           >
-            <LogOut className="h-5 w-5 mb-1" />
+            <LogOut className="mb-1 h-5 w-5" />
           </button>
         </div>
 
-        {/* Mobile Menu Overlay */}
         {showMobileMenu && (
-          <div className="fixed inset-0 bg-black/50 z-40 flex items-end" onClick={() => setShowMobileMenu(false)}>
-            <div className="bg-white w-full rounded-t-2xl p-4" onClick={(e) => e.stopPropagation()}>
-              <div className="w-12 h-1 bg-gray-300 rounded-full mx-auto mb-4"></div>
+          <div className="fixed inset-0 z-40 flex items-end bg-slate-950/45" onClick={() => setShowMobileMenu(false)}>
+            <div
+              className="w-full rounded-t-[28px] border-t border-slate-200 bg-white p-4 shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-slate-200"></div>
               <div className="space-y-2">
                 {settingsNavigation.map((item) => {
                   const Icon = item.icon;
@@ -279,16 +258,19 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
                       key={item.name}
                       href={item.href}
                       onClick={() => setShowMobileMenu(false)}
-                      className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${
-                        isActive ? "bg-yellow-50 text-yellow-700 border border-yellow-100" : "text-slate-600 hover:bg-slate-50"
-                      }`}
+                      className={cn(
+                        "flex items-center gap-3 rounded-2xl border px-4 py-3 transition-colors",
+                        isActive
+                          ? "border-yellow-200 bg-yellow-50 text-yellow-700"
+                          : "border-transparent text-slate-600 hover:bg-slate-50"
+                      )}
                     >
                       <Icon className="h-5 w-5" />
                       <span>{item.name}</span>
                     </Link>
                   );
                 })}
-                
+
                 {supportNavigation.map((item) => {
                   const Icon = item.icon;
                   const isActive = pathname === item.href;
@@ -298,9 +280,12 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
                       key={item.name}
                       href={item.href}
                       onClick={() => setShowMobileMenu(false)}
-                      className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${
-                        isActive ? "bg-yellow-50 text-yellow-700 border border-yellow-100" : "text-slate-600 hover:bg-slate-50"
-                      }`}
+                      className={cn(
+                        "flex items-center gap-3 rounded-2xl border px-4 py-3 transition-colors",
+                        isActive
+                          ? "border-yellow-200 bg-yellow-50 text-yellow-700"
+                          : "border-transparent text-slate-600 hover:bg-slate-50"
+                      )}
                     >
                       <Icon className="h-5 w-5" />
                       <span>{item.name}</span>
@@ -315,4 +300,5 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
     </div>
   );
 };
+
 export default DashboardLayout;

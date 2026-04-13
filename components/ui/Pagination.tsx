@@ -1,4 +1,3 @@
-// 📄 Componente de paginación reutilizable
 'use client';
 
 import React from 'react';
@@ -31,68 +30,57 @@ const Pagination: React.FC<PaginationProps> = ({
   onItemsPerPageChange,
   isLoading = false
 }) => {
-  
-  // Generar números de página a mostrar
   const getPageNumbers = () => {
     const pageNumbers: (number | string)[] = [];
     const maxVisiblePages = 5;
-    
+
     if (totalPages <= maxVisiblePages) {
-      // Si hay pocas páginas, mostrar todas
       for (let i = 1; i <= totalPages; i++) {
         pageNumbers.push(i);
       }
-    } else {
-      // Si hay muchas páginas, mostrar con elipsis
-      if (currentPage <= 3) {
-        // Cerca del inicio
-        for (let i = 1; i <= 4; i++) {
-          pageNumbers.push(i);
-        }
-        pageNumbers.push('...');
-        pageNumbers.push(totalPages);
-      } else if (currentPage >= totalPages - 2) {
-        // Cerca del final
-        pageNumbers.push(1);
-        pageNumbers.push('...');
-        for (let i = totalPages - 3; i <= totalPages; i++) {
-          pageNumbers.push(i);
-        }
-      } else {
-        // En el medio
-        pageNumbers.push(1);
-        pageNumbers.push('...');
-        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
-          pageNumbers.push(i);
-        }
-        pageNumbers.push('...');
-        pageNumbers.push(totalPages);
+    } else if (currentPage <= 3) {
+      for (let i = 1; i <= 4; i++) {
+        pageNumbers.push(i);
       }
+      pageNumbers.push('...');
+      pageNumbers.push(totalPages);
+    } else if (currentPage >= totalPages - 2) {
+      pageNumbers.push(1);
+      pageNumbers.push('...');
+      for (let i = totalPages - 3; i <= totalPages; i++) {
+        pageNumbers.push(i);
+      }
+    } else {
+      pageNumbers.push(1);
+      pageNumbers.push('...');
+      for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+        pageNumbers.push(i);
+      }
+      pageNumbers.push('...');
+      pageNumbers.push(totalPages);
     }
-    
+
     return pageNumbers;
   };
 
   const pageNumbers = getPageNumbers();
 
   return (
-    <div className="flex items-center justify-between px-4 py-3 bg-white/80 backdrop-blur-sm border-t border-gray-200/50 rounded-b-lg">
-      {/* Info de resultados */}
-      <div className="flex items-center text-sm text-gray-600">
+    <div className="flex flex-col gap-4 border-t border-slate-200 bg-slate-50/80 px-4 py-4 backdrop-blur-sm lg:flex-row lg:items-center lg:justify-between">
+      <div className="flex flex-col gap-3 text-sm text-slate-600 sm:flex-row sm:items-center">
         <span>
           Mostrando <span className="font-medium">{startItem}</span> a{' '}
           <span className="font-medium">{endItem}</span> de{' '}
           <span className="font-medium">{totalItems}</span> resultados
         </span>
-        
-        {/* Selector de elementos por página */}
-        <div className="ml-4 flex items-center">
-          <label className="text-sm text-gray-600 mr-2">Por página:</label>
+
+        <div className="flex items-center gap-2">
+          <label className="text-sm text-slate-600">Por página:</label>
           <select
             value={itemsPerPage}
             onChange={(e) => onItemsPerPageChange(Number(e.target.value))}
             disabled={isLoading}
-            className="border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent disabled:opacity-50"
+            className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-4 focus:ring-yellow-200 disabled:opacity-50"
           >
             <option value={5}>5</option>
             <option value={10}>10</option>
@@ -103,41 +91,37 @@ const Pagination: React.FC<PaginationProps> = ({
         </div>
       </div>
 
-      {/* Controles de paginación */}
-      <div className="flex items-center space-x-1">
-        {/* Ir al inicio */}
+      <div className="flex items-center justify-center gap-1 sm:gap-1.5">
         <button
           onClick={() => onPageChange(1)}
           disabled={!hasPrevPage || isLoading}
-          className="p-2 text-gray-400 hover:text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="flex h-10 w-10 items-center justify-center rounded-xl border border-transparent text-slate-400 transition-colors hover:border-slate-200 hover:bg-white hover:text-slate-600 disabled:cursor-not-allowed disabled:opacity-50"
           title="Primera página"
         >
           <FiChevronsLeft size={16} />
         </button>
 
-        {/* Página anterior */}
         <button
           onClick={() => onPageChange(currentPage - 1)}
           disabled={!hasPrevPage || isLoading}
-          className="p-2 text-gray-400 hover:text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="flex h-10 w-10 items-center justify-center rounded-xl border border-transparent text-slate-400 transition-colors hover:border-slate-200 hover:bg-white hover:text-slate-600 disabled:cursor-not-allowed disabled:opacity-50"
           title="Página anterior"
         >
           <FiChevronLeft size={16} />
         </button>
 
-        {/* Números de página */}
-        <div className="flex space-x-1">
+        <div className="flex gap-1 sm:gap-1.5">
           {pageNumbers.map((pageNum, index) => (
             <button
               key={index}
               onClick={() => typeof pageNum === 'number' ? onPageChange(pageNum) : undefined}
               disabled={pageNum === '...' || pageNum === currentPage || isLoading}
-              className={`px-3 py-1 text-sm font-medium rounded transition-colors ${
+              className={`min-w-10 rounded-xl px-3 py-2 text-sm font-semibold transition-colors ${
                 pageNum === currentPage
-                  ? 'bg-gradient-to-r from-amber-400 to-rose-500 text-white'
+                  ? 'bg-yellow-600 text-white shadow-sm'
                   : pageNum === '...'
-                  ? 'text-gray-400 cursor-default'
-                  : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900 disabled:opacity-50'
+                  ? 'cursor-default text-slate-400'
+                  : 'text-slate-600 hover:bg-white hover:text-slate-900 disabled:opacity-50'
               }`}
             >
               {pageNum}
@@ -145,30 +129,27 @@ const Pagination: React.FC<PaginationProps> = ({
           ))}
         </div>
 
-        {/* Página siguiente */}
         <button
           onClick={() => onPageChange(currentPage + 1)}
           disabled={!hasNextPage || isLoading}
-          className="p-2 text-gray-400 hover:text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="flex h-10 w-10 items-center justify-center rounded-xl border border-transparent text-slate-400 transition-colors hover:border-slate-200 hover:bg-white hover:text-slate-600 disabled:cursor-not-allowed disabled:opacity-50"
           title="Página siguiente"
         >
           <FiChevronRight size={16} />
         </button>
 
-        {/* Ir al final */}
         <button
           onClick={() => onPageChange(totalPages)}
           disabled={!hasNextPage || isLoading}
-          className="p-2 text-gray-400 hover:text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="flex h-10 w-10 items-center justify-center rounded-xl border border-transparent text-slate-400 transition-colors hover:border-slate-200 hover:bg-white hover:text-slate-600 disabled:cursor-not-allowed disabled:opacity-50"
           title="Última página"
         >
           <FiChevronsRight size={16} />
         </button>
       </div>
 
-      {/* Ir a página específica */}
-      <div className="flex items-center">
-        <span className="text-sm text-gray-600 mr-2">Ir a:</span>
+      <div className="flex items-center gap-2 self-start lg:self-auto">
+        <span className="text-sm text-slate-600">Ir a:</span>
         <input
           type="number"
           min={1}
@@ -181,9 +162,9 @@ const Pagination: React.FC<PaginationProps> = ({
             }
           }}
           disabled={isLoading}
-          className="w-16 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent disabled:opacity-50"
+          className="w-16 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-4 focus:ring-yellow-200 disabled:opacity-50"
         />
-        <span className="text-sm text-gray-600 ml-1">de {totalPages}</span>
+        <span className="text-sm text-slate-600">de {totalPages}</span>
       </div>
     </div>
   );
