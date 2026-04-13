@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/app/lib/supabaseClient";
 import { requireRole } from "@/app/lib/auth";
 import { v4 as uuidv4 } from "uuid";
+import { getUnitSections } from "@/app/lib/subjects/unitSections";
 
 export async function GET(
   request: NextRequest,
@@ -16,52 +17,7 @@ export async function GET(
       );
     }
 
-    const { data, error } = await supabaseAdmin
-      .from("subject_content")
-      .select(
-        `
-        *,
-        creator:users ( name )
-      `
-      )
-      .eq("unit_id", unitId)
-      .order("created_at", { ascending: true });
-
-    if (error) {
-      console.error("Error fetching sections:", error);
-      return NextResponse.json(
-        { error: "Error al obtener las secciones de la unidad" },
-        { status: 500 }
-      );
-    }
-
-    // Modificación: agregar assignment_id, due_date, is_active si es tarea
-    const sections = await Promise.all(
-      data.map(async (section) => {
-        const { creator, ...rest } = section;
-        let assignment_id = null;
-        let due_date = null;
-        let is_active = null;
-        if (section.content_type === "assignment") {
-          const { data: assignment } = await supabaseAdmin
-            .from("assignments")
-            .select("id, due_date, is_active")
-            .eq("subject_content_id", section.id)
-            .single();
-          assignment_id = assignment?.id || null;
-          due_date = assignment?.due_date || null;
-          is_active = assignment?.is_active ?? null;
-        }
-        return {
-          ...rest,
-          creator_name: creator ? creator.name : "Desconocido",
-          assignment_id,
-          due_date,
-          is_active,
-        };
-      })
-    );
-
+    const sections = await getUnitSections(unitId);
     return NextResponse.json(sections);
   } catch (error) {
     console.error("Error interno del servidor en GET:", error);
@@ -71,6 +27,7 @@ export async function GET(
     );
   }
 }
+
 export async function POST(
   request: NextRequest,
   context: { params: Promise<{ unitId: string }> }
@@ -86,7 +43,6 @@ export async function POST(
       );
     }
 
-    // Obtener el subject_id de la unidad
     const { data: unitData, error: unitError } = await supabaseAdmin
       .from("subject_units")
       .select("subject_id")
@@ -114,7 +70,6 @@ export async function POST(
       );
     }
 
-    // Validar tipos de contenido permitidos
     const allowedContentTypes = ["assignment", "document", "video", "link"];
     if (!allowedContentTypes.includes(content_type)) {
       return NextResponse.json(
@@ -127,16 +82,12 @@ export async function POST(
     let file_name = null;
 
     if (file) {
-      // Selecciona el bucket según el tipo de contenido
-      // - assignment: adjunto del enunciado (no es una entrega de alumno)
-      // - document: material/subida del docente
       const bucket = content_type === "assignment" ? "assignment-files" : "documents";
-      // Sanitizar nombre de archivo: quitar acentos, reemplazar espacios y caracteres especiales
       const sanitizedFileName = file.name
         .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "") // Quitar acentos
-        .replace(/\s+/g, "_") // Espacios por guiones bajos
-        .replace(/[^a-zA-Z0-9_.\-]/g, ""); // Solo caracteres seguros
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/\s+/g, "_")
+        .replace(/[^a-zA-Z0-9_.\-]/g, "");
       const filePath = `subject_content/${unitId}/${uuidv4()}-${sanitizedFileName}`;
 
       const { error: uploadError } = await supabaseAdmin.storage
@@ -158,7 +109,6 @@ export async function POST(
       file_name = file.name;
     }
 
-    // Insertar en subject_content. Despues de crear el subject_content
     const { data: newContent, error: insertError } = await supabaseAdmin
       .from("subject_content")
       .insert({
@@ -184,12 +134,10 @@ export async function POST(
       );
     }
 
-    // Si es tarea, crear también en assignments
     if (content_type === "assignment") {
       const due_date = formData.get("due_date") as string | null;
       const is_active = formData.get("is_active") === "true";
 
-      // Validar fecha de vencimiento
       if (due_date && new Date(due_date) < new Date()) {
         return NextResponse.json(
           { error: "La fecha de vencimiento no puede ser anterior a la fecha actual" },
@@ -207,14 +155,13 @@ export async function POST(
           created_by: user.id,
           is_active,
           due_date,
-          subject_content_id: newContent.id, // <--- RELACIÓN DIRECTA
+          subject_content_id: newContent.id,
         });
 
       if (assignmentError) {
         return NextResponse.json(
           {
-            error:
-              "Se creó el contenido, pero falló al crear la tarea asociada.",
+            error: "Se creó el contenido, pero falló al crear la tarea asociada.",
             detalle: assignmentError.message,
           },
           { status: 500 }
@@ -249,26 +196,17 @@ export async function DELETE(
   context: { params: Promise<{ unitId: string }> }
 ) {
   try {
-    const user = await requireRole(["teacher", "admin"]);
+    await requireRole(["teacher", "admin"]);
     const { unitId } = await context.params;
     const { searchParams } = new URL(request.url);
-    const subjectContentId = searchParams.get("assignmentId"); // Es realmente el subject_content_id
-
-    console.log("DELETE Request: unitId=", unitId, "subjectContentId=", subjectContentId);
+    const subjectContentId = searchParams.get("assignmentId");
 
     if (!unitId || !subjectContentId) {
-      console.error("DELETE Error: Missing parameters", { unitId, subjectContentId });
       return NextResponse.json(
         { error: "Faltan parámetros unitId o assignmentId" },
         { status: 400 }
       );
     }
-
-    // Verificar si el subject_content existe
-    console.log("Verificando si existe subject_content:", {
-      table: "subject_content",
-      condition: { id: subjectContentId },
-    });
 
     const { data: contentData, error: contentFetchError } = await supabaseAdmin
       .from("subject_content")
@@ -277,29 +215,19 @@ export async function DELETE(
       .single();
 
     if (contentFetchError || !contentData) {
-      console.error("DELETE Error: Contenido no encontrado", {
-        contentFetchError,
-        subjectContentId,
-      });
       return NextResponse.json(
         { error: "Contenido no encontrado" },
         { status: 404 }
       );
     }
 
-    console.log("Datos del contenido encontrado:", contentData);
-
-    // Si es una tarea, eliminar primero de assignments
     if (contentData.content_type === "assignment") {
-      console.log("Eliminando assignment relacionado");
-      
       const { error: assignmentDeleteError } = await supabaseAdmin
         .from("assignments")
         .delete()
         .eq("subject_content_id", subjectContentId);
 
       if (assignmentDeleteError) {
-        console.error("DELETE Error al eliminar assignment:", assignmentDeleteError);
         return NextResponse.json(
           { error: assignmentDeleteError.message || "Error al eliminar la tarea" },
           { status: 500 }
@@ -307,23 +235,18 @@ export async function DELETE(
       }
     }
 
-    // Luego eliminar de subject_content
-    console.log("Eliminando subject_content");
-    
     const { error: contentDeleteError } = await supabaseAdmin
       .from("subject_content")
       .delete()
       .eq("id", subjectContentId);
 
     if (contentDeleteError) {
-      console.error("DELETE Error al eliminar subject_content:", contentDeleteError);
       return NextResponse.json(
         { error: contentDeleteError.message || "Error al eliminar el contenido" },
         { status: 500 }
       );
     }
 
-    console.log("DELETE Success: Contenido eliminado exitosamente");
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("DELETE Error: Error interno del servidor", error);

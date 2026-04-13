@@ -72,6 +72,7 @@ export default function AssignmentSubmissionsPage({
   const [subjectId, setSubjectId] = useState<string>("");
   const [assignmentId, setAssignmentId] = useState<string>("");
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "graded" | "late">("pending");
 
   useEffect(() => {
     const loadParams = async () => {
@@ -234,12 +235,29 @@ export default function AssignmentSubmissionsPage({
 
   const filteredSubmissions = submissions.filter((s) => {
     const q = search.trim().toLowerCase();
-    if (!q) return true;
-    return (
+    const matchesSearch = !q || (
       s.student.name.toLowerCase().includes(q) ||
       s.student.email.toLowerCase().includes(q)
     );
+    const isGraded = s.score !== null && s.score !== undefined;
+    const isLate = new Date(s.submitted_at) > new Date(assignment?.due_date || "");
+
+    const matchesFilter =
+      statusFilter === "all"
+        ? true
+        : statusFilter === "pending"
+          ? !isGraded
+          : statusFilter === "graded"
+            ? isGraded
+            : isLate;
+
+    return matchesSearch && matchesFilter;
   });
+
+  const gradedCount = submissions.filter((s) => s.score !== null && s.score !== undefined).length;
+  const lateCount = submissions.filter(
+    (s) => new Date(s.submitted_at) > new Date(assignment?.due_date || "")
+  ).length;
 
   return (
     <div className="min-h-screen bg-slate-100 p-3 sm:p-4 md:p-8">
@@ -316,6 +334,30 @@ export default function AssignmentSubmissionsPage({
                 <Filter className="w-4 h-4" />
               </button>
             </div>
+          </div>
+
+          <div className="px-4 sm:px-5 pb-4 flex flex-wrap gap-2 border-b border-slate-100 bg-slate-50/50">
+            {[
+              { key: "pending", label: "Pendientes", count: pendingCorrections },
+              { key: "graded", label: "Calificadas", count: gradedCount },
+              { key: "late", label: "Tarde", count: lateCount },
+              { key: "all", label: "Todas", count: submissions.length },
+            ].map((filter) => (
+              <button
+                key={filter.key}
+                type="button"
+                onClick={() =>
+                  setStatusFilter(filter.key as "all" | "pending" | "graded" | "late")
+                }
+                className={`rounded-full border px-3 py-1.5 text-xs sm:text-sm font-semibold transition ${
+                  statusFilter === filter.key
+                    ? "border-indigo-200 bg-indigo-50 text-indigo-700"
+                    : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                }`}
+              >
+                {filter.label} ({filter.count})
+              </button>
+            ))}
           </div>
 
           {filteredSubmissions.length === 0 ? (

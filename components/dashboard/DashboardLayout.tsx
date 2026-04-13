@@ -84,8 +84,8 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
     items: NavItem[];
     onNavigate?: () => void;
   }) => (
-    <section className="space-y-2">
-      <p className="px-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+    <section className="space-y-2.5">
+      <p className="px-2.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400">
         {title}
       </p>
       <div className="space-y-1">
@@ -99,7 +99,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
               href={item.href}
               onClick={onNavigate}
               className={cn(
-                "group flex items-center gap-3 rounded-2xl border px-3.5 py-3 text-sm font-medium transition-all duration-200",
+                "group flex items-center gap-3 rounded-2xl border px-3 py-2.5 text-sm font-medium transition-all duration-200",
                 active
                   ? "border-yellow-200 bg-yellow-50 text-slate-900 shadow-[0_10px_24px_-18px_rgba(245,158,11,0.85)]"
                   : "border-transparent text-slate-600 hover:border-slate-200 hover:bg-slate-50 hover:text-slate-900"
@@ -107,13 +107,13 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
             >
               <span
                 className={cn(
-                  "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border transition-colors",
+                  "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border transition-colors",
                   active
                     ? "border-yellow-200 bg-white text-yellow-700"
                     : "border-slate-200 bg-slate-50 text-slate-400 group-hover:border-slate-300 group-hover:bg-white group-hover:text-slate-600"
                 )}
               >
-                <Icon className="h-[18px] w-[18px]" />
+                <Icon className="h-[17px] w-[17px]" />
               </span>
               <span className="truncate">{item.name}</span>
             </Link>
@@ -126,14 +126,14 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   const Sidebar = ({ onNavigate }: { onNavigate?: () => void }) => (
     <div className="h-full overflow-hidden bg-white">
       <div className="flex h-full flex-col">
-        <div className="border-b border-slate-200 px-5 py-5">
+        <div className="border-b border-slate-200 px-5 py-4">
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">Campus</p>
-          <h1 className="mt-2 text-lg font-semibold text-slate-900">Panel principal</h1>
+          <h1 className="mt-1.5 text-base font-semibold text-slate-900">Panel principal</h1>
           <p className="mt-1 text-sm text-slate-500">Accesos, navegación y herramientas del campus.</p>
         </div>
 
-        <nav className="flex-1 overflow-y-auto px-4 py-5">
-          <div className="space-y-6">
+        <nav className="flex-1 overflow-y-auto px-4 py-4">
+          <div className="space-y-5">
             <NavSection title="Menú" items={mainNavigation} onNavigate={onNavigate} />
             <NavSection title="Cuenta" items={accountNavigation} onNavigate={onNavigate} />
             {settingsNavigation.length > 0 && (
@@ -154,7 +154,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
           <button
             type="button"
             onClick={handleLogout}
-            className="mt-3 flex w-full items-center gap-3 rounded-2xl border border-transparent px-4 py-3 text-sm font-semibold text-slate-600 transition-colors hover:border-red-100 hover:bg-red-50 hover:text-red-700"
+            className="mt-3 flex w-full items-center gap-3 rounded-2xl border border-transparent px-4 py-2.5 text-sm font-semibold text-slate-600 transition-colors hover:border-red-100 hover:bg-red-50 hover:text-red-700"
           >
             <LogOut className="h-5 w-5 text-slate-400" />
             <span>Salir</span>
@@ -187,15 +187,15 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
         </div>
       )}
 
-      <div className="mx-auto flex min-h-screen w-full max-w-[1600px]">
-        <aside className="hidden lg:block lg:w-[312px] lg:shrink-0">
+      <div className="mx-auto flex min-h-screen w-full max-w-[1600px] items-stretch">
+        <aside className="hidden lg:block lg:w-[292px] lg:shrink-0 xl:w-[304px]">
           <div className="sticky top-0 h-screen overflow-hidden border-r border-slate-200 bg-white">
             <Sidebar />
           </div>
         </aside>
 
         <main className="dashboard-main min-w-0 flex-1">
-          <div className="min-h-screen px-3 pb-28 pt-3 sm:px-4 sm:pt-4 md:px-6 md:pt-6 lg:px-8 lg:pb-8">
+          <div className="min-h-screen px-3 pb-24 pt-3 sm:px-4 sm:pt-4 md:px-5 md:pt-5 lg:px-6 lg:pb-6 xl:px-7">
             {children}
           </div>
         </main>

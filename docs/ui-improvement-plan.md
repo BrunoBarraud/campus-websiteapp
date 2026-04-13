@@ -1,187 +1,184 @@
 # UI Improvement Plan
 
-## Resumen del análisis
+## Resumen general del análisis
 
-Se revisó la estructura del frontend con foco en el shell principal del campus, componentes UI reutilizables y una pantalla administrativa representativa.
+Se revisó el frontend del campus con foco en:
 
-Hallazgos principales:
+- shell global del campus
+- dashboard principal y cards de materias
+- vistas de materias de alumno y docente
+- componentes UI base reutilizables
+- estilos globales
+- modal administrativo representativo
 
-- El layout del campus dependía de una combinación frágil de `sticky`, `min-h-screen` y contenedores sin una jerarquía de overflow claramente separada.
-- La sidebar no tenía una estructura pensada como shell de dashboard SaaS: faltaba un contenedor estable de altura completa y scroll interno propio.
-- Había inconsistencia visual entre componentes base (`button`, `input`, `textarea`, `select`, `card`) y varias pantallas del campus.
-- En la pantalla de usuarios coexistían estilos inline y Tailwind, lo que hacía más difícil mantener consistencia visual y evolución futura.
-- La base tipográfica y de superficies era correcta pero demasiado heterogénea en radios, sombras, spacing y jerarquía visual.
+Problemas visuales detectados:
 
-## Plan de implementación por fases
+- La sidebar estaba técnicamente mejor que antes, pero el conjunto seguía viéndose largo y pesado cuando el dashboard crecía.
+- El dashboard principal tenía exceso de altura acumulada en header, métricas, cards, panel lateral y bloques secundarios.
+- Las `CourseCard` consumían demasiada altura para escenarios con muchas materias.
+- En notebooks `1366x768` la interfaz se percibía sobredimensionada: paddings altos, métricas muy grandes, paneles con demasiado aire y demasiada distancia entre bloques.
+- Había inconsistencias de densidad entre páginas: algunas estaban bastante compactas y otras seguían con layouts amplios o con estilos locales.
+- Persisten zonas con mezcla de Tailwind y estilos inline, especialmente en algunos flujos administrativos.
 
-### Fase 1: Shell global del campus
+## Patrones inconsistentes encontrados
 
-- Reforzar el layout del dashboard para comportarse como una app tipo SaaS.
-- Hacer que la sidebar ocupe toda la altura visible.
-- Mantener scroll interno en la sidebar cuando el contenido exceda la altura.
-- Separar correctamente el scroll del contenido principal del scroll lateral.
+- Inputs, selects, textareas, botones y cards no compartían exactamente la misma escala visual.
+- Algunas tablas y paginaciones tenían separación correcta en desktop grande pero demasiado aire para altura reducida.
+- Había headers y contenedores sin una regla visual global de compactación.
+- El dashboard principal usaba componentes relativamente modernos, mientras otras vistas de materias seguían con una densidad distinta.
 
-### Fase 2: Sistema visual reutilizable
+## Problemas específicos en notebooks 1366x768
 
-- Crear utilidades globales para paneles, tablas y formularios.
-- Unificar radios, bordes, sombras, foco y espaciados.
-- Mantener los colores existentes, cambiando solo presentación y consistencia.
+- Exceso de scroll vertical para llegar a cursos, agenda y bloques secundarios.
+- Cards de materias demasiado altas para listas medianas o largas.
+- Sidebar estable, pero visualmente desproporcionada frente a un contenido principal muy extenso.
+- Header y métricas ocupando más alto del necesario.
 
-### Fase 3: Validación en una pantalla real
+## Plan de implementación
 
-- Aplicar el nuevo sistema visual a una pantalla administrativa compleja.
-- Priorizar seguridad: misma lógica, mismos endpoints, mismos handlers, misma estructura funcional.
-- Confirmar que TypeScript siga compilando sin errores.
+### Fase 1: Base global del shell
 
-## Archivos revisados
+- Compactar variables globales de spacing y superficies.
+- Mantener sidebar sticky con scroll propio y main desacoplado.
+- Introducir utilidades de layout orientadas a dashboards compactos.
 
-- `app/campus/layout.tsx`
-- `components/dashboard/DashboardLayout.tsx`
-- `components/dashboard/DynamicDashboardLayout.tsx`
-- `app/globals.css`
-- `components/ui/card.tsx`
-- `components/ui/button.tsx`
-- `components/ui/input.tsx`
-- `components/ui/textarea.tsx`
-- `components/ui/select.tsx`
-- `components/ui/Pagination.tsx`
-- `app/campus/dashboard/page.tsx`
-- `app/campus/settings/users/page.tsx`
-- `app/campus/profile/page.tsx`
-- `components/dashboard/CourseCard.tsx`
-- `app/layout.tsx`
-- `package.json`
+### Fase 2: Componentes base reutilizables
+
+- Reducir altura visual de botones, inputs, selects, textareas, cards y paginación.
+- Unificar radios, sombras y focus states.
+- Mejorar la consistencia de paneles y tablas.
+
+### Fase 3: Dashboard principal
+
+- Reducir altura de header, métricas, cards y panel lateral.
+- Reequilibrar la grilla principal para que el dashboard se sienta menos largo.
+- Compactar especialmente el bloque de cursos.
+
+### Fase 4: Vistas de materias
+
+- Llevar la misma densidad visual a alumno y docente.
+- Reducir altura de cards, banners y filtros.
+- Mejorar lectura rápida y aprovechamiento del alto de pantalla.
+
+### Fase 5: Documentación y validación
+
+- Registrar hallazgos, riesgos, deuda técnica visual y recomendaciones futuras.
+- Verificar que TypeScript siga compilando.
 
 ## Archivos modificados
 
-- `components/dashboard/DashboardLayout.tsx`
 - `app/globals.css`
+- `components/dashboard/DashboardLayout.tsx`
+- `app/campus/dashboard/page.tsx`
+- `components/dashboard/CourseCard.tsx`
 - `components/ui/button.tsx`
-- `components/ui/card.tsx`
 - `components/ui/input.tsx`
 - `components/ui/textarea.tsx`
 - `components/ui/select.tsx`
+- `components/ui/card.tsx`
 - `components/ui/Pagination.tsx`
-- `app/campus/settings/users/page.tsx`
-
-Nota:
-
-- `package-lock.json` ya aparecía modificado en el worktree al momento de revisar `git status`. No fue parte de esta intervención visual.
+- `app/campus/student/subjects/page.tsx`
+- `app/campus/teacher/subjects/page.tsx`
+- `components/common/SimpleModal.tsx`
 
 ## Cambios aplicados
 
-### 1. Estructura global del dashboard
+### 1. Shell global y comportamiento general
 
-- Se rediseñó el shell del campus para que funcione como dashboard robusto.
-- La sidebar desktop ahora vive dentro de un contenedor `sticky` con `h-screen`.
-- La navegación lateral tiene `overflow-y-auto` propio.
-- El contenido principal quedó desacoplado del scroll lateral y mantiene `min-h-screen`.
-- En mobile se mejoró el drawer lateral con overlay más claro y cierre visible.
-- Se refinó la bottom navigation mobile para que sea más consistente con el resto del sistema.
+- Se reforzó la base del layout del campus con menor ancho útil de sidebar en desktop y paddings más compactos en el contenido principal.
+- Se introdujeron utilidades globales para:
+  - `dashboard-page`
+  - `dashboard-stack`
+  - `dashboard-grid`
+  - `dashboard-card-grid`
+  - `dashboard-header`
+  - `dashboard-stat`
+  - `dashboard-metric-icon`
+  - `dashboard-note`
+- Se agregó una optimización específica vía `@media (max-height: 820px)` para reducir gap, padding y tamaño percibido en pantallas bajas.
 
-### 2. Utilidades visuales globales
+### 2. Compactación del dashboard principal
 
-En `app/globals.css` se agregaron utilidades reutilizables:
+- El header del dashboard quedó más corto y más limpio.
+- Las métricas se rediseñaron para ocupar menos altura y mantener jerarquía visual.
+- La zona de cursos pasó a una grilla más densa.
+- El panel lateral se volvió más compacto en agenda, accesos rápidos, entregas y racha.
+- Se redujo la sensación de “dashboard interminable” sin cambiar endpoints ni lógica.
 
-- `.dashboard-shell`
-- `.dashboard-main`
-- `.dashboard-sidebar`
-- `.app-surface`
-- `.app-panel`
-- `.app-panel-muted`
-- `.app-input`
-- `.app-select`
-- `.app-textarea`
-- `.app-button-soft`
-- `.app-table`
+### 3. Rediseño de `CourseCard`
 
-Esto permite centralizar superficies, formularios y tablas sin duplicar estilos por pantalla.
+- Se redujo la altura del hero visual.
+- Se comprimieron badges, metadata y CTA.
+- La card conserva identidad visual, pero ahora escala mucho mejor cuando hay muchas materias.
+- Se priorizó densidad vertical y lectura rápida.
 
-### 3. Componentes UI base
+### 4. Vistas de materias de alumno y docente
 
-Se actualizaron:
+- Se rehicieron visualmente para alinearlas con el nuevo sistema del dashboard.
+- Se compactaron filtros, banners, spacing, grillas y cards.
+- Se mejoró el comportamiento general para resoluciones tipo notebook.
 
-- `button`
-- `input`
-- `textarea`
-- `select`
-- `card`
-- `Pagination`
+### 5. UI base reutilizable
 
-Mejoras aplicadas:
+- `button`, `input`, `textarea`, `select`, `card` y `Pagination` quedaron con menor altura visual y mejor consistencia.
+- Se ajustaron paddings internos, tamaño de títulos y sombras.
+- Esto mejora indirectamente varias pantallas que ya consumen estos componentes.
 
-- radios más consistentes
-- alturas uniformes
-- sombras más limpias
-- estados hover/focus más profesionales
-- mejor legibilidad y jerarquía
-- estética alineada con dashboard administrativo moderno
+### 6. Modal reusable
 
-### 4. Pantalla de usuarios
-
-Se mejoró visualmente `app/campus/settings/users/page.tsx`:
-
-- header con mejor jerarquía
-- tarjetas de métricas más consistentes
-- bloque de filtros más limpio y ordenado
-- tabla con estilo unificado y mejor legibilidad
-- modal de edición/creación convertido a una presentación más mantenible
-- resultados de importación con paneles y estados visuales más claros
-
-No se alteró:
-
-- lógica de fetch
-- endpoints
-- handlers
-- paginación
-- importación/exportación
-- estructura funcional del módulo
-
-## Problemas detectados
-
-- Hay otras pantallas del campus con estilos locales y patrones visuales propios que todavía no consumen del todo las nuevas utilidades globales.
-- Existen varios componentes/páginas con mezcla de Tailwind e inline styles.
-- Algunas vistas usan íconos Font Awesome directamente y otras usan `lucide-react` o `react-icons`, lo que produce diferencias visuales.
-- Todavía hay copy y strings con problemas de encoding en varios archivos heredados.
+- `SimpleModal` dejó de depender de estilos inline rígidos.
+- Ahora tiene overlay, contenedor, header y cierre visualmente más consistentes con el resto del sistema.
 
 ## Observaciones técnicas
 
-- La corrección crítica de sidebar se resolvió sin tocar rutas ni componentes funcionales externos al shell.
-- La solución elegida evita cambios de negocio y se apoya en composición de layout + overflow controlado.
-- `npx tsc --noEmit` se ejecutó correctamente después de los cambios.
-- No se cambiaron nombres de componentes, rutas ni contratos públicos.
+- `app/campus/settings/subjects/page.tsx` sigue siendo un archivo grande y con mucha responsabilidad.
+- Varias pantallas del campus todavía usan estilos locales y no consumen del todo las utilidades nuevas.
+- Hay vistas heredadas con clases antiguas, mezcla de librerías de íconos y problemas de encoding en textos.
+- Algunos flujos administrativos todavía merecen una segunda pasada visual para eliminar más estilos inline.
 
-## Código que convendría mejorar o refactorizar
+## Componentes o áreas que conviene refactorizar más adelante
 
-- Centralizar más formularios sobre componentes UI base en vez de repetir clases locales.
-- Llevar tablas administrativas a un patrón reusable de tabla/panel.
-- Reducir estilos inline en modales y pantallas legacy.
-- Revisar consistencia entre `react-icons`, Font Awesome y `lucide-react`.
-- Normalizar textos con encoding incorrecto.
+- `app/campus/dashboard/page.tsx`
+  Aunque quedó más ordenado visualmente, sigue concentrando bastante composición de bloques.
 
-## Funciones o componentes que podrían estar mejor programados
-
-- `components/dashboard/DashboardLayout.tsx`
-  Antes tenía bastante repetición para cada bloque de navegación; ahora quedó mejor, pero todavía podría extraerse parte del shell a componentes más pequeños.
-
-- `app/campus/settings/users/page.tsx`
-  Sigue concentrando bastante responsabilidad en un solo archivo:
-  filtros, tabla, import/export, modal, resultados y estado de paginación.
-  En una fase futura convendría dividirlo en subcomponentes visuales.
+- `app/campus/settings/subjects/page.tsx`
+  Conviene separar:
+  - toolbar de filtros
+  - tabla/listado
+  - stats header
+  - modal de edición
 
 - `app/globals.css`
-  Tiene muchos estilos globales heredados que mezclan utilidades antiguas y nuevas. Conviene ordenar por capas (`base`, `components`, `utilities`) cuando se haga una limpieza mayor.
+  Sería saludable ordenar mejor las utilidades globales por capas y limpiar estilos heredados que ya no aportan.
+
+## Riesgos detectados
+
+- No todas las páginas del campus usan todavía el nuevo sistema visual compacto.
+- Hay pantallas que podrían verse algo distintas hasta que se complete una segunda pasada global.
+- Persisten textos con encoding incorrecto en partes heredadas; no afectan funcionalidad, pero sí consistencia visual.
+- Los modales administrativos complejos todavía pueden requerir más ajuste fino si se quiere una unificación total.
 
 ## Recomendaciones futuras
 
-- Migrar gradualmente otras pantallas del campus a `app-panel`, `app-input`, `app-select`, `app-table`.
-- Revisar dashboard, perfil, calendario y settings para que compartan la misma jerarquía visual.
-- Crear wrappers reutilizables para:
+- Extender `dashboard-header`, `app-panel`, `app-input`, `app-select` y `app-table` al resto de settings, perfil, calendario y admin.
+- Extraer wrappers reutilizables para:
   - page header
-  - stats cards
-  - data table shell
-  - modal shell
+  - metric cards
   - filter toolbar
-- Unificar librería de íconos.
-- Agregar revisión visual responsive por breakpoint en las pantallas más usadas.
+  - empty state
+  - panel lateral
+- Unificar librería de íconos gradualmente.
 - Hacer una segunda pasada específica de accesibilidad visual y consistencia tipográfica.
+- Revisar visualmente las pantallas con más contenido en `1366x768`, `1440x900`, tablet y mobile.
+
+## Checklist de validación manual
+
+- `Sidebar desktop`: verificar alto completo, scroll propio y estabilidad con mucho contenido principal.
+- `Sidebar mobile`: abrir/cerrar drawer, revisar overlay y navegación.
+- `Dashboard con muchas materias`: confirmar que las `CourseCard` no vuelvan interminable la página.
+- `Notebook 1366x768`: validar compactación vertical de header, métricas, cards, paneles y gaps.
+- `Tablas`: revisar alineación, hover, padding y overflow horizontal.
+- `Formularios`: revisar spacing, labels, campos y acciones.
+- `Modales`: confirmar overlay, contenedor, cierre y scroll interno.
+- `Overflow vertical y horizontal`: revisar especialmente dashboard y vistas de materias.
+- `Jerarquía visual`: confirmar que títulos, subtítulos, badges y CTAs mantengan claridad pese a la compactación.

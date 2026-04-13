@@ -135,7 +135,7 @@ export default function SubjectImageEditor({ subjectId, currentImage, canEdit, o
 
             <div className="mb-3">
               <label className="block text-xs text-gray-600 mb-1">Pegar URL</label>
-              <input className="w-full border border-border bg-surface text-[var(--foreground)] px-2 py-1 rounded focus:outline-none focus:ring-2 focus:ring-[var(--primary)]" value={url} onChange={e => setUrl(e.target.value)} placeholder={currentImage || '/images/ipdvs-logo.png'} />
+              <input className="w-full border border-border bg-surface text-[var(--foreground)] px-2 py-1 rounded focus:outline-none focus:ring-2 focus:ring-[var(--primary)]" value={url} onChange={e => setUrl(e.target.value)} placeholder={currentImage || '/images/subjects/default.svg'} />
               <div className="flex justify-end mt-2">
                 <button disabled={loading} onClick={() => updateImage(url)} className="px-3 py-1 rounded disabled:opacity-60 bg-[var(--primary)] text-[var(--primary-foreground)] hover:opacity-90">Guardar URL</button>
               </div>

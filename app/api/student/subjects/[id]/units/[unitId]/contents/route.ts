@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/app/lib/supabaseClient";
 import { requireRole } from "@/app/lib/auth";
+import { getUnitSections } from "@/app/lib/subjects/unitSections";
 
 // GET - Obtener el contenido de una unidad específica para el estudiante autenticado
 export async function GET(
@@ -41,53 +42,9 @@ export async function GET(
       );
     }
 
-    // Trae los contenidos de la unidad
-    const { data: sections, error: sectionsError } = await supabaseAdmin
-      .from("subject_content")
-      .select(`
-        *,
-        creator:users ( name )
-      `)
-      .eq("unit_id", unitId)
-      .order("created_at", { ascending: true });
-
-    if (sectionsError) {
-      return NextResponse.json(
-        { error: sectionsError.message || "Error al obtener contenidos" },
-        { status: 500 }
-      );
-    }
-
-    // Agregar assignment_id, due_date, is_active si es tarea (igual que en el otro endpoint)
-    const sectionsWithAssignmentInfo = await Promise.all(
-      (sections || []).map(async (section) => {
-        const { creator, ...rest } = section;
-        let assignment_id = null;
-        let due_date = null;
-        let is_active = null;
-        
-        if (section.content_type === "assignment") {
-          const { data: assignment } = await supabaseAdmin
-            .from("assignments")
-            .select("id, due_date, is_active")
-            .eq("subject_content_id", section.id)
-            .single();
-          assignment_id = assignment?.id || null;
-          due_date = assignment?.due_date || null;
-          is_active = assignment?.is_active ?? null;
-        }
-        
-        return {
-          ...rest,
-          creator_name: creator ? creator.name : "Desconocido",
-          assignment_id,
-          due_date,
-          is_active,
-          file_url: section.file_url ?? null,
-          file_name: section.file_name ?? null,
-        };
-      })
-    );
+    const sectionsWithAssignmentInfo = await getUnitSections(unitId, {
+      contentActiveOnly: true,
+    });
 
     return NextResponse.json({
       ...unit,

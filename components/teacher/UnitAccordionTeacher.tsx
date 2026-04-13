@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
   AlertCircle,
   BookOpen,
@@ -50,6 +51,7 @@ const UnitAccordionTeacher: React.FC<UnitAccordionProps> = ({
   subjectId,
   subjectName: _subjectName,
 }) => {
+  const router = useRouter();
   const [units, setUnits] = useState<Unit[]>([]);
   const [expandedUnit, setExpandedUnit] = useState<string | null>(null);
   const [sections, setSections] = useState<Record<string, Section[]>>({});
@@ -65,6 +67,8 @@ const UnitAccordionTeacher: React.FC<UnitAccordionProps> = ({
     file: null as File | null,
     due_date: "",
     is_active: true,
+    allow_student_answers: true,
+    require_approval: false,
   });
   const [error, setError] = useState<string | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
@@ -84,6 +88,27 @@ const UnitAccordionTeacher: React.FC<UnitAccordionProps> = ({
     window.addEventListener("teacher-open-add-unit", onOpenAddUnit);
     return () => window.removeEventListener("teacher-open-add-unit", onOpenAddUnit);
   }, []);
+
+  const resetNewSection = () => {
+    setNewSection({
+      title: "",
+      content_type: "document",
+      content: "",
+      file: null,
+      due_date: "",
+      is_active: true,
+      allow_student_answers: true,
+      require_approval: false,
+    });
+  };
+
+  const openForum = (forumId: string) => {
+    router.push(`/campus/teacher/subjects/${subjectId}/forums/${forumId}`);
+  };
+
+  const openAssignmentSubmissions = (assignmentId: string) => {
+    router.push(`/campus/teacher/subjects/${subjectId}/assignments/${assignmentId}/submissions`);
+  };
 
   // Agregar logs más detallados en el fetchUnits
   const fetchUnits = async () => {
@@ -168,7 +193,18 @@ const UnitAccordionTeacher: React.FC<UnitAccordionProps> = ({
               console.error('Error al obtener foros para unidad', unit.id, forumError);
             }
 
-            return [unit.id, secData] as [string, Section[]];
+            const dedupedSections = Array.from(
+              new Map(
+                secData.map((section: Section) => [
+                  section.content_type === "forum"
+                    ? `forum:${section.forum_id || section.id}`
+                    : `content:${section.id}`,
+                  section,
+                ])
+              ).values()
+            );
+
+            return [unit.id, dedupedSections] as [string, Section[]];
           } catch (sectionError) {
             console.error('Error al obtener secciones para unidad', unit.id, sectionError);
             return [unit.id, []] as [string, Section[]];
@@ -418,7 +454,7 @@ const UnitAccordionTeacher: React.FC<UnitAccordionProps> = ({
     if (!newSection.title.trim()) return;
     
     // Si es un foro, redirigir a la creación de foro
-    if (newSection.content_type === "forum") {
+    if (false && newSection.content_type === "forum") {
       // Redirigir a la página de foros con el unitId
       window.location.href = `/campus/teacher/subjects/${subjectId}/forums?unit_id=${unitId}&create=true&title=${encodeURIComponent(newSection.title)}`;
       return;
@@ -446,6 +482,31 @@ const UnitAccordionTeacher: React.FC<UnitAccordionProps> = ({
     setLoading(true);
     setError(null);
     try {
+      if (newSection.content_type === "forum") {
+        const forumResponse = await fetch(`/api/forums`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            subject_id: subjectId,
+            unit_id: unitId,
+            title: newSection.title.trim(),
+            description: newSection.content.trim(),
+            allow_student_answers: newSection.allow_student_answers,
+            require_approval: newSection.require_approval,
+          }),
+        });
+
+        if (!forumResponse.ok) {
+          const errorData = await forumResponse.json().catch(() => ({}));
+          throw new Error(errorData.error || "No se pudo crear el foro.");
+        }
+
+        resetNewSection();
+        await fetchUnits();
+        setShowAddSection(null);
+        return;
+      }
+
       const formData = new FormData();
       formData.append("title", newSection.title);
       formData.append("content_type", newSection.content_type);
@@ -469,14 +530,7 @@ const UnitAccordionTeacher: React.FC<UnitAccordionProps> = ({
         throw new Error(msg);
       }
 
-      setNewSection({
-        title: "",
-        content_type: "document",
-        content: "",
-        file: null,
-        due_date: "",
-        is_active: true,
-      });
+      resetNewSection();
       await fetchUnits();
       setShowAddSection(null);
     } catch (err: any) {
@@ -526,7 +580,7 @@ const UnitAccordionTeacher: React.FC<UnitAccordionProps> = ({
         </div>
       )}
 
-      <div className="space-y-3">
+      <div className="space-y-4">
         {units.length === 0 && (
           <div className="text-center py-10 text-slate-500 bg-white rounded-2xl border border-slate-200">
             <div className="mx-auto w-12 h-12 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center mb-3">
@@ -539,16 +593,16 @@ const UnitAccordionTeacher: React.FC<UnitAccordionProps> = ({
         {units.map((unit) => (
           <div
             key={unit.id}
-            className={`bg-white rounded-xl border transition-all duration-300 overflow-hidden ${
+            className={`overflow-hidden rounded-2xl border transition-all duration-300 ${
               expandedUnit === unit.id
-                ? "shadow-lg border-indigo-200 ring-1 ring-indigo-50"
+                ? "border-indigo-200 bg-white shadow-lg ring-1 ring-indigo-50"
                 : unit.is_visible === false
-                  ? "shadow-sm border-dashed border-slate-300 opacity-90"
-                  : "shadow-sm border-slate-200 hover:border-slate-300"
+                  ? "border-dashed border-slate-300 bg-white opacity-90 shadow-sm"
+                  : "border-slate-200 bg-white shadow-sm hover:border-slate-300"
             }`}
           >
             <div
-              className="w-full flex items-center justify-between p-6 text-left bg-white hover:bg-slate-50/80 transition-colors group cursor-pointer"
+              className="group flex w-full cursor-pointer items-center justify-between bg-white px-5 py-5 text-left transition-colors hover:bg-slate-50/80"
               onClick={() => handleExpand(unit.id)}
               onKeyDown={(e) => {
                 if (e.key === "Enter" || e.key === " ") {
@@ -573,6 +627,9 @@ const UnitAccordionTeacher: React.FC<UnitAccordionProps> = ({
                   <BookOpen className="w-6 h-6" />
                 </div>
                 <div>
+                  <div className="mb-2 inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                    Unidad {unit.unit_number}
+                  </div>
                   <h3
                     className={`text-lg font-bold transition-colors ${
                       expandedUnit === unit.id ? "text-indigo-900" : "text-slate-700"
@@ -640,15 +697,15 @@ const UnitAccordionTeacher: React.FC<UnitAccordionProps> = ({
                   : "max-h-0 opacity-0"
               } transition-all duration-300 overflow-hidden`}
             >
-              <div className="border-t border-slate-100 bg-slate-50/50 p-4 space-y-3">
+              <div className="space-y-4 border-t border-slate-100 bg-slate-50/60 p-4">
                 {Array.isArray(sections[unit.id]) && sections[unit.id].length > 0 ? (
                   sections[unit.id].map((section) => (
                     <div
                       key={section.id}
-                      className="flex flex-col md:flex-row items-start md:items-center justify-between bg-white p-4 rounded-xl border border-slate-200 hover:border-indigo-300 hover:shadow-md hover:shadow-indigo-100/50 transition-all duration-200 group/item"
+                      className="group/item flex flex-col justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-4 transition-all duration-200 hover:border-indigo-300 hover:shadow-md hover:shadow-indigo-100/50 md:flex-row md:items-center"
                     >
-                      <div className="flex items-center gap-4 mb-3 md:mb-0 w-full md:w-auto">
-                        <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-100 group-hover/item:bg-indigo-50 group-hover/item:border-indigo-100 transition-colors">
+                      <div className="mb-1 flex w-full items-center gap-4 md:mb-0 md:w-auto">
+                        <div className="rounded-2xl border border-slate-100 bg-slate-50 p-2.5 transition-colors group-hover/item:border-indigo-100 group-hover/item:bg-indigo-50">
                           {section.content_type === "assignment" ? (
                             <ListChecks className="w-5 h-5 text-amber-600" />
                           ) : section.content_type === "forum" ? (
@@ -658,12 +715,13 @@ const UnitAccordionTeacher: React.FC<UnitAccordionProps> = ({
                           )}
                         </div>
                         <div className="min-w-0">
-                          <p className="font-semibold text-slate-700 group-hover/item:text-indigo-700 transition-colors truncate">
+                          <div className="mb-1 inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                            {getSectionTypeLabel(section)}
+                          </div>
+                          <p className="truncate font-semibold text-slate-700 transition-colors group-hover/item:text-indigo-700">
                             {section.title}
                           </p>
-                          <p className="text-xs text-slate-400 font-medium mt-0.5 flex items-center gap-2">
-                            {getSectionTypeLabel(section).toUpperCase()}
-                            <span className="w-1 h-1 rounded-full bg-slate-300"></span>
+                          <p className="mt-1 flex items-center gap-2 text-xs font-medium text-slate-400">
                             {section.content_type === "assignment" && section.due_date
                               ? `Entrega: ${new Date(section.due_date).toLocaleDateString("es-AR")}`
                               : section.content_type === "forum"
@@ -675,7 +733,7 @@ const UnitAccordionTeacher: React.FC<UnitAccordionProps> = ({
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-2 w-full md:w-auto justify-between md:justify-end pl-[52px] md:pl-0">
+                      <div className="flex w-full items-center justify-between gap-2 pl-[52px] md:w-auto md:justify-end md:pl-0">
                         {section.content_type === "assignment" ? (
                           <span className={`flex items-center text-xs font-medium px-2.5 py-1 rounded-full border ${section.is_active ? "text-emerald-700 bg-emerald-100 border-emerald-200" : "text-slate-600 bg-slate-100 border-slate-200"}`}>
                             {section.is_active ? (
@@ -695,7 +753,7 @@ const UnitAccordionTeacher: React.FC<UnitAccordionProps> = ({
                         {section.content_type === "forum" ? (
                           <button
                             type="button"
-                            onClick={() => (window.location.href = `/campus/teacher/subjects/${subjectId}/forums/${section.forum_id}`)}
+                            onClick={() => openForum(String(section.forum_id))}
                             className="text-slate-400 hover:text-indigo-600 px-3 py-2 rounded-lg hover:bg-indigo-50 transition-all text-sm font-semibold"
                           >
                             Ver foro
@@ -705,7 +763,7 @@ const UnitAccordionTeacher: React.FC<UnitAccordionProps> = ({
                         {section.content_type === "assignment" ? (
                           <button
                             type="button"
-                            onClick={() => (window.location.href = `/campus/teacher/subjects/${subjectId}/assignments/${section.assignment_id}/submissions`)}
+                            onClick={() => openAssignmentSubmissions(String(section.assignment_id))}
                             className="text-slate-400 hover:text-indigo-600 px-3 py-2 rounded-lg hover:bg-indigo-50 transition-all text-sm font-semibold"
                           >
                             Ver entregas
@@ -766,7 +824,7 @@ const UnitAccordionTeacher: React.FC<UnitAccordionProps> = ({
 
                 <button
                   onClick={() => setShowAddSection(unit.id)}
-                  className="w-full p-4 border-2 border-dashed border-slate-300 rounded-xl hover:border-indigo-300 hover:bg-indigo-50/30 transition-all duration-200 flex items-center justify-center gap-2 text-slate-600 font-semibold"
+                  className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-slate-300 p-4 font-semibold text-slate-600 transition-all duration-200 hover:border-indigo-300 hover:bg-indigo-50/30"
                   type="button"
                 >
                   <BookOpen className="w-5 h-5 text-indigo-600" />
@@ -890,6 +948,34 @@ const UnitAccordionTeacher: React.FC<UnitAccordionProps> = ({
                     <option value="false">Inactiva</option>
                   </select>
                 </>
+              )}
+              {newSection.content_type === "forum" && (
+                <div className="space-y-3 rounded-lg border border-slate-200 bg-slate-50 p-4">
+                  <label className="flex items-start gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={newSection.allow_student_answers}
+                      onChange={(e) => setNewSection({ ...newSection, allow_student_answers: e.target.checked })}
+                      className="mt-1 h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                    />
+                    <div>
+                      <div className="text-sm font-medium text-slate-800">Permitir respuestas entre estudiantes</div>
+                      <div className="text-xs text-slate-500">Si lo desactivas, solo el profesor podrÃ¡ responder.</div>
+                    </div>
+                  </label>
+                  <label className="flex items-start gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={newSection.require_approval}
+                      onChange={(e) => setNewSection({ ...newSection, require_approval: e.target.checked })}
+                      className="mt-1 h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                    />
+                    <div>
+                      <div className="text-sm font-medium text-slate-800">Requerir aprobaciÃ³n de preguntas</div>
+                      <div className="text-xs text-slate-500">Las preguntas nuevas quedarÃ¡n pendientes hasta que las apruebes.</div>
+                    </div>
+                  </label>
+                </div>
               )}
               {/* Archivos */}
               {newSection.content_type === "forum" ? (

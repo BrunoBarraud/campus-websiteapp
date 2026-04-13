@@ -111,7 +111,21 @@ export async function GET(request: NextRequest) {
         })()
       : null;
 
-    return NextResponse.json({ count: upcomingInWindow.length, nearest });
+    const items = upcomingInWindow.slice(0, 8).map((assignment: any) => {
+      const subj = assignment?.subject;
+      const subjName = Array.isArray(subj) ? subj?.[0]?.name : subj?.name;
+
+      return {
+        id: assignment.id as string,
+        subjectId: assignment.subject_id as string,
+        subjectName: (subjName as string) || "Materia",
+        title: assignment.title as string,
+        dueDate: assignment.due_date as string,
+        status: "pending",
+      };
+    });
+
+    return NextResponse.json({ count: upcomingInWindow.length, nearest, items });
   } catch (error: any) {
     return NextResponse.json(
       { error: error.message || "Error interno" },
