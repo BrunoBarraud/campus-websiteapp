@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Poppins } from "next/font/google";
 import "./globals.css";
 import { NextAuthProvider } from "../app/components/auth/AuthProvider";
 import { ThemeProvider } from "@/app/lib/contexts/ThemeProvider";
@@ -7,12 +6,6 @@ import { cookies, headers } from "next/headers";
 import { getSchoolByHost } from "@/app/lib/schools";
 import ConditionalNav from "@/app/ConditionalNav";
 import { ToastProvider } from "@/components/ui/toast-provider";
-
-const font = Poppins({
-  variable: "--font-poppins",
-  subsets: ["latin"],
-  weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
-});
 
 export async function generateMetadata(): Promise<Metadata> {
   const headersList = await headers();
@@ -55,9 +48,7 @@ export default async function RootLayout({
         />
         <meta name="theme-color" content="#ffffff" />
       </head>
-      <body
-        className={`${font.className} antialiased transition-colors duration-300`}
-      >
+      <body className="antialiased transition-colors duration-300">
         <ThemeProvider school={school}>
           <NextAuthProvider>
             <div id="app-content">

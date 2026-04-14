@@ -34,9 +34,9 @@ const DashboardPage = () => {
   const dataLoadedRef = useRef(false);
 
   const formatShortDate = (iso: string) => {
-    const d = new Date(iso);
-    if (Number.isNaN(d.getTime())) return "";
-    return d.toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit" });
+    const date = new Date(iso);
+    if (Number.isNaN(date.getTime())) return "";
+    return date.toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit" });
   };
 
   useEffect(() => {
@@ -75,14 +75,16 @@ const DashboardPage = () => {
           const json = await eventsRes.json();
           const events = (json?.data ?? []) as CalendarEvent[];
           const upcoming = events
-            .filter((e) => {
-              const d = e?.date ? new Date(e.date) : null;
-              return d && !Number.isNaN(d.getTime()) && d.getTime() >= now.getTime();
+            .filter((event) => {
+              const date = event?.date ? new Date(event.date) : null;
+              return date && !Number.isNaN(date.getTime()) && date.getTime() >= now.getTime();
             })
             .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
             .slice(0, 2);
 
-          if (!cancelled) setNextEvents(upcoming);
+          if (!cancelled) {
+            setNextEvents(upcoming);
+          }
         }
 
         const upcomingRes = await fetch(`/api/student/assignments/upcoming?days=7`);
@@ -136,7 +138,8 @@ const DashboardPage = () => {
           const userData = await userResponse.json();
           setUser(userData);
 
-          let subjectsResponse;
+          let subjectsResponse: Response | undefined;
+
           if (userData.role === "admin") {
             subjectsResponse = await fetch("/api/admin/subjects");
           } else if (userData.role === "teacher" || userData.role === "admin_director") {
@@ -147,7 +150,7 @@ const DashboardPage = () => {
             setSubjects([]);
           }
 
-          if (subjectsResponse && subjectsResponse.ok) {
+          if (subjectsResponse?.ok) {
             const subjectsData = await subjectsResponse.json();
             setSubjects(subjectsData);
           } else {
@@ -168,13 +171,60 @@ const DashboardPage = () => {
 
   const userYear = user?.year;
   const userRole = user?.role;
-  const userApprovalStatus = (user as any)?.approval_status;
+  const userApprovalStatus = (user as User & { approval_status?: string } | null)?.approval_status;
   const isPendingApproval = userRole === "student" && userApprovalStatus === "pending";
+
+  const getEmptyStateMessage = () => {
+    if (!user) return "No hay materias disponibles";
+    if (user.role === "student") return `No hay materias disponibles para ${user.year}° año`;
+    if (user.role === "teacher") return "No tienes materias asignadas";
+    return "No hay materias creadas en el sistema";
+  };
+
+  const getEmptyStateAction = () => {
+    if (user?.role === "admin") {
+      return {
+        text: "Crear primera materia",
+        href: "/campus/settings/subjects",
+      };
+    }
+
+    return null;
+  };
+
+  const normalizedSearch = searchTerm.trim().toLowerCase();
+  const filteredSubjects = !normalizedSearch
+    ? subjects
+    : subjects.filter((subject) => {
+        const haystack = [subject.name, subject.code, subject.teacher?.name]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+
+        return haystack.includes(normalizedSearch);
+      });
+
+  const totalPages = Math.max(1, Math.ceil(filteredSubjects.length / itemsPerPage));
+
+  useEffect(() => {
+    setCurrentPage(0);
+  }, [searchTerm, itemsPerPage]);
+
+  useEffect(() => {
+    if (currentPage > totalPages - 1) {
+      setCurrentPage(Math.max(0, totalPages - 1));
+    }
+  }, [currentPage, totalPages]);
+
+  const visibleSubjects = useMemo(() => {
+    const start = currentPage * itemsPerPage;
+    return filteredSubjects.slice(start, start + itemsPerPage);
+  }, [currentPage, filteredSubjects, itemsPerPage]);
 
   if (status !== "loading" && !loading && user !== null && userRole === "student" && !userYear) {
     return (
       <div className="flex min-h-screen items-center justify-center p-6">
-        <div className="max-w-xl w-full rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+        <div className="w-full max-w-xl rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
           <h1 className="text-2xl font-bold text-gray-900">
             Bienvenido/a {session?.user?.name || user?.name || "al Campus"}
           </h1>
@@ -202,59 +252,17 @@ const DashboardPage = () => {
     );
   }
 
-  const getEmptyStateMessage = () => {
-    if (!user) return "No hay materias disponibles";
-    if (user.role === "student") return `No hay materias disponibles para ${user.year}° año`;
-    if (user.role === "teacher") return "No tienes materias asignadas";
-    return "No hay materias creadas en el sistema";
-  };
-
-  const getEmptyStateAction = () => {
-    if (user?.role === "admin") {
-      return {
-        text: "Crear primera materia",
-        href: "/campus/settings/subjects",
-      };
-    }
-    return null;
-  };
-
-  const normalizedSearch = searchTerm.trim().toLowerCase();
-  const filteredSubjects = !normalizedSearch
-    ? subjects
-    : subjects.filter((s) => {
-        const haystack = [s.name, s.code, s.teacher?.name].filter(Boolean).join(" ").toLowerCase();
-        return haystack.includes(normalizedSearch);
-      });
-
-  const totalPages = Math.max(1, Math.ceil(filteredSubjects.length / itemsPerPage));
-
-  useEffect(() => {
-    setCurrentPage(0);
-  }, [searchTerm, itemsPerPage]);
-
-  useEffect(() => {
-    if (currentPage > totalPages - 1) {
-      setCurrentPage(Math.max(0, totalPages - 1));
-    }
-  }, [currentPage, totalPages]);
-
-  const visibleSubjects = useMemo(() => {
-    const start = currentPage * itemsPerPage;
-    return filteredSubjects.slice(start, start + itemsPerPage);
-  }, [currentPage, filteredSubjects, itemsPerPage]);
-
   if (loading) {
     return (
-      <div className="max-w-7xl mx-auto px-4 md:px-6 py-6">
+      <div className="mx-auto max-w-7xl px-4 py-6 md:px-6">
         <div className="space-y-4">
-          <div className="h-12 rounded-2xl skeleton"></div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                <div className="mb-3 h-5 w-32 skeleton"></div>
-                <div className="mb-2 h-4 w-full skeleton"></div>
-                <div className="h-4 w-2/3 skeleton"></div>
+          <div className="h-12 rounded-2xl skeleton" />
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            {[...Array(3)].map((_, index) => (
+              <div key={index} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                <div className="mb-3 h-5 w-32 skeleton" />
+                <div className="mb-2 h-4 w-full skeleton" />
+                <div className="h-4 w-2/3 skeleton" />
               </div>
             ))}
           </div>
@@ -267,13 +275,14 @@ const DashboardPage = () => {
     <div className="min-h-screen bg-slate-50">
       {isPendingApproval && (
         <div className="border-b border-amber-200 bg-amber-50 px-6 py-3">
-          <div className="max-w-7xl mx-auto text-sm text-amber-800">
-            <span className="font-semibold">Tu cuenta está pendiente de aprobación.</span> Podés ver el contenido del campus, pero no podrás interactuar hasta que un administrador apruebe tu cuenta.
+          <div className="mx-auto max-w-7xl text-sm text-amber-800">
+            <span className="font-semibold">Tu cuenta está pendiente de aprobación.</span> Podés ver el contenido
+            del campus, pero no podrás interactuar hasta que un administrador apruebe tu cuenta.
           </div>
         </div>
       )}
 
-      <div className="max-w-7xl mx-auto">
+      <div className="mx-auto max-w-7xl">
         <header className="sticky top-0 z-30 border-b border-slate-200 bg-slate-50/95 px-4 py-4 backdrop-blur-sm sm:px-6">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div className="min-w-0">
@@ -291,7 +300,7 @@ const DashboardPage = () => {
                   placeholder="Buscar materias..."
                   className="w-full min-w-0 border-none bg-transparent text-sm text-slate-800 outline-none focus:ring-0"
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={(event) => setSearchTerm(event.target.value)}
                 />
               </div>
             </div>
@@ -305,6 +314,7 @@ const DashboardPage = () => {
               <span className="font-semibold text-slate-900">{subjects.length}</span>
               <span className="text-slate-500">materias</span>
             </div>
+
             {user?.role === "student" && (
               <>
                 <div className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm">
@@ -318,22 +328,37 @@ const DashboardPage = () => {
                 </div>
               </>
             )}
+
             {(user?.role === "admin" || user?.role === "admin_director") && (
               <>
-                <Link href="/campus/admin" className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-yellow-200 hover:text-yellow-700">
+                <Link
+                  href="/campus/admin"
+                  className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-yellow-200 hover:text-yellow-700"
+                >
                   Panel admin
                 </Link>
-                <Link href="/campus/admin/support" className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-yellow-200 hover:text-yellow-700">
+                <Link
+                  href="/campus/admin/support"
+                  className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-yellow-200 hover:text-yellow-700"
+                >
                   Soporte
                 </Link>
               </>
             )}
+
             {user?.role === "teacher" && (
-              <Link href="/campus/teacher/subjects" className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-yellow-200 hover:text-yellow-700">
+              <Link
+                href="/campus/teacher/subjects"
+                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-yellow-200 hover:text-yellow-700"
+              >
                 Mis materias
               </Link>
             )}
-            <Link href="/campus/calendar" className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-yellow-200 hover:text-yellow-700">
+
+            <Link
+              href="/campus/calendar"
+              className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-yellow-200 hover:text-yellow-700"
+            >
               Calendario
             </Link>
           </section>
@@ -343,9 +368,7 @@ const DashboardPage = () => {
               <div className="mb-3 flex items-center justify-between gap-3">
                 <div>
                   <h3 className="font-semibold text-slate-900">Tareas pendientes</h3>
-                  <p className="text-sm text-slate-500">
-                    Lo mÃ¡s urgente para no perder entregas.
-                  </p>
+                  <p className="text-sm text-slate-500">Lo más urgente para no perder entregas.</p>
                 </div>
                 {upcomingAssignments[0] && (
                   <Link
@@ -366,12 +389,8 @@ const DashboardPage = () => {
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
-                        <p className="truncate text-sm font-semibold text-slate-900">
-                          {assignment.title}
-                        </p>
-                        <p className="truncate text-xs text-slate-500">
-                          {assignment.subjectName}
-                        </p>
+                        <p className="truncate text-sm font-semibold text-slate-900">{assignment.title}</p>
+                        <p className="truncate text-xs text-slate-500">{assignment.subjectName}</p>
                       </div>
                       <span className="rounded-full border border-amber-200 bg-amber-50 px-2 py-1 text-[11px] font-semibold uppercase tracking-wide text-amber-700">
                         Pendiente
@@ -414,7 +433,9 @@ const DashboardPage = () => {
                         key={index}
                         type="button"
                         onClick={() => setCurrentPage(index)}
-                        className={`h-2.5 rounded-full transition-all ${index === currentPage ? "w-6 bg-yellow-600" : "w-2.5 bg-slate-200 hover:bg-slate-300"}`}
+                        className={`h-2.5 rounded-full transition-all ${
+                          index === currentPage ? "w-6 bg-yellow-600" : "w-2.5 bg-slate-200 hover:bg-slate-300"
+                        }`}
                         aria-label={`Ir a la página ${index + 1}`}
                       />
                     ))}
@@ -461,15 +482,25 @@ const DashboardPage = () => {
               </div>
             ) : (
               <div key={`${currentPage}-${itemsPerPage}`} className="animate-fadeIn pt-5">
-                <div className={`grid gap-4 ${itemsPerPage === 1 ? "grid-cols-1" : itemsPerPage === 2 ? "grid-cols-1 md:grid-cols-2" : itemsPerPage === 3 ? "grid-cols-1 md:grid-cols-2 xl:grid-cols-3" : "grid-cols-1 md:grid-cols-2 xl:grid-cols-4"}`}>
+                <div
+                  className={`grid gap-4 ${
+                    itemsPerPage === 1
+                      ? "grid-cols-1"
+                      : itemsPerPage === 2
+                        ? "grid-cols-1 md:grid-cols-2"
+                        : itemsPerPage === 3
+                          ? "grid-cols-1 md:grid-cols-2 xl:grid-cols-3"
+                          : "grid-cols-1 md:grid-cols-2 xl:grid-cols-4"
+                  }`}
+                >
                   {visibleSubjects.map((subject, index) => (
                     <CourseCard
                       key={`${subject.id}-${currentPage}`}
                       course={{
                         id: subject.id,
                         title: subject.name,
-                        teacher: subject.teacher?.name || 'Sin profesor',
-                        image: subject.image_url || '/images/subjects/default.svg',
+                        teacher: subject.teacher?.name || "Sin profesor",
+                        image: subject.image_url || "/images/subjects/default.svg",
                         code: subject.code,
                         year: subject.year,
                         division: subject.division,
@@ -484,7 +515,8 @@ const DashboardPage = () => {
             {filteredSubjects.length > itemsPerPage && (
               <div className="mt-5 flex items-center justify-between border-t border-slate-100 pt-4 text-sm text-slate-500">
                 <span>
-                  Página <span className="font-semibold text-slate-900">{currentPage + 1}</span> de <span className="font-semibold text-slate-900">{totalPages}</span>
+                  Página <span className="font-semibold text-slate-900">{currentPage + 1}</span> de{" "}
+                  <span className="font-semibold text-slate-900">{totalPages}</span>
                 </span>
                 <span>
                   Mostrando {visibleSubjects.length} de {filteredSubjects.length}
@@ -502,14 +534,14 @@ const DashboardPage = () => {
                 </Link>
               </div>
               <div className="flex flex-col gap-2 md:flex-row">
-                {nextEvents.map((e) => (
-                  <div key={e.id} className="flex flex-1 items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
+                {nextEvents.map((event) => (
+                  <div key={event.id} className="flex flex-1 items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
                     <div className="rounded-lg bg-white px-2 py-1 text-xs font-semibold text-slate-700 shadow-sm">
-                      {formatShortDate(e.date)}
+                      {formatShortDate(event.date)}
                     </div>
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-medium text-slate-900">{e.title}</p>
-                      <p className="truncate text-xs text-slate-500">{e.type}</p>
+                      <p className="truncate text-sm font-medium text-slate-900">{event.title}</p>
+                      <p className="truncate text-xs text-slate-500">{event.type}</p>
                     </div>
                   </div>
                 ))}
