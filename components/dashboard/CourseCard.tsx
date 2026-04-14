@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, memo, useCallback } from "react";
+import React, { memo, useCallback, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
@@ -24,7 +24,7 @@ interface CourseCardProps {
 const CourseCard: React.FC<CourseCardProps> = memo(({ course, delay }) => {
   const [imageError, setImageError] = useState(false);
   const { data: session } = useSession();
-  const fallbackImage = "/images/ipdvs-logo.png";
+  const fallbackImage = "/images/subjects/default.svg";
 
   const gradients = [
     "from-indigo-500 to-purple-600",
@@ -40,83 +40,86 @@ const CourseCard: React.FC<CourseCardProps> = memo(({ course, delay }) => {
     return Math.abs(hash) % gradients.length;
   };
 
-  const courseMeta = course.code
-    ? course.year && course.division
-      ? `${course.code} • ${course.year}° ${course.division}`
-      : course.year
-        ? `${course.code} • ${course.year}°`
-        : course.code
-    : course.year && course.division
-      ? `${course.year}° ${course.division}`
-      : course.year
-        ? `${course.year}°`
-        : "";
-
-  // Memoized error handler
   const handleImageError = useCallback(() => {
     setImageError(true);
   }, []);
 
-  // Generate URL based on user role
   const getSubjectUrl = () => {
-    const baseUrl = course.id ? course.id : course.title.toLowerCase().replace(/\s+/g, '-');
-    
-    if (session?.user?.role === 'student') {
+    const baseUrl = course.id ? course.id : course.title.toLowerCase().replace(/\s+/g, "-");
+
+    if (session?.user?.role === "student") {
       return `/campus/student/subjects/${baseUrl}`;
-    } else if (session?.user?.role === 'teacher') {
-      return `/campus/teacher/subjects/${baseUrl}`;
-    } else if (session?.user?.role === 'admin') {
-      return `/campus/settings/subjects`; // Admin goes to management
     }
-    
-    return `/campus/subjects/${baseUrl}`; // Default fallback
+    if (session?.user?.role === "teacher") {
+      return `/campus/teacher/subjects/${baseUrl}`;
+    }
+    if (session?.user?.role === "admin") {
+      return `/campus/settings/subjects`;
+    }
+
+    return `/campus/subjects/${baseUrl}`;
   };
 
   return (
-    <div className="block group relative">
+    <div className="group relative block">
       <div
-        className={`course-card bg-white rounded-2xl border border-slate-200 overflow-hidden transition-all duration-300 fade-in delay-${delay} hover:shadow-lg hover:border-yellow-200`}
+        className={`course-card overflow-hidden rounded-2xl border border-slate-200 bg-white transition-all duration-300 fade-in delay-${delay} hover:border-yellow-200 hover:shadow-lg`}
       >
-        <div className={`relative h-32 bg-gradient-to-br ${gradients[getGradientIndex()]}`}>
+        <div className={`relative h-28 bg-gradient-to-br ${gradients[getGradientIndex()]}`}>
           <Image
             src={imageError ? fallbackImage : course.image}
             alt={course.title}
             fill
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            className="w-full h-full object-cover opacity-30 mix-blend-overlay"
+            className="h-full w-full object-cover opacity-35 mix-blend-overlay"
             priority={delay <= 4}
             onError={handleImageError}
             loading={delay <= 4 ? "eager" : "lazy"}
           />
 
-          <div className="absolute top-3 right-3">
-            <span className="px-3 py-1 bg-white/20 backdrop-blur-sm text-white text-xs font-medium rounded-full">
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/15 via-transparent to-transparent" />
+
+          <div className="absolute right-3 top-3">
+            <span className="rounded-full bg-white/20 px-2.5 py-1 text-[11px] font-semibold text-white backdrop-blur-sm">
               En curso
             </span>
-          </div>
-
-          <div className="absolute bottom-3 left-3 right-3">
-            <h4 className="text-white font-semibold text-lg leading-tight line-clamp-1">{course.title}</h4>
-            <p className="text-white/80 text-sm line-clamp-1">
-              {courseMeta ? `${courseMeta} • ${course.teacher}` : course.teacher}
-            </p>
           </div>
         </div>
 
         <div className="p-4">
+          <div className="min-h-[80px]">
+            <h4 className="line-clamp-2 text-lg font-semibold leading-tight text-slate-900">
+              {course.title}
+            </h4>
+            <p className="mt-1 line-clamp-1 text-sm text-slate-500">{course.teacher}</p>
+
+            <div className="mt-3 flex flex-wrap gap-2">
+              {course.code ? (
+                <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.06em] text-slate-600">
+                  {course.code}
+                </span>
+              ) : null}
+              {course.year ? (
+                <span className="rounded-full border border-yellow-100 bg-yellow-50 px-2.5 py-1 text-[11px] font-semibold text-yellow-700">
+                  {course.year}° año{course.division ? ` ${course.division}` : ""}
+                </span>
+              ) : null}
+            </div>
+          </div>
+
           <div className="mt-4 flex items-center gap-2">
             <Link
               href={getSubjectUrl()}
-              className="relative z-20 flex-1 py-2.5 bg-yellow-600 hover:bg-yellow-700 text-white text-sm font-semibold rounded-xl transition-colors text-center"
+              className="relative z-20 flex-1 rounded-xl bg-yellow-600 py-2.5 text-center text-sm font-semibold text-white transition-colors hover:bg-yellow-700"
             >
               Continuar
             </Link>
             <button
               type="button"
-              className="relative z-20 p-2.5 border border-slate-200 rounded-xl hover:bg-slate-50 text-slate-400"
+              className="relative z-20 rounded-xl border border-slate-200 p-2.5 text-slate-400 hover:bg-slate-50"
               aria-label="Más opciones"
             >
-              <MoreHorizontal className="w-5 h-5" />
+              <MoreHorizontal className="h-5 w-5" />
             </button>
           </div>
         </div>
@@ -125,9 +128,6 @@ const CourseCard: React.FC<CourseCardProps> = memo(({ course, delay }) => {
   );
 });
 
-// Agregar displayName para debugging
-CourseCard.displayName = 'CourseCard';
+CourseCard.displayName = "CourseCard";
 
 export default CourseCard;
-
-

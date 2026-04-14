@@ -51,10 +51,32 @@ export async function POST(
       );
     }
 
-    // Procesar datos del formulario (multipart/form-data)
-    const formData = await request.formData();
-    const submission_text = formData.get("submission_text") as string | null;
-    const file = formData.get("file") as File | null;
+    const contentType = request.headers.get("content-type") || "";
+    let submission_text: string | null = null;
+    let file: File | null = null;
+
+    if (contentType.includes("multipart/form-data")) {
+      const formData = await request.formData();
+      submission_text =
+        (formData.get("submission_text") as string | null) ??
+        (formData.get("content") as string | null);
+      file = formData.get("file") as File | null;
+    } else {
+      const body = await request.json().catch(() => ({}));
+      submission_text =
+        typeof body?.submission_text === "string"
+          ? body.submission_text
+          : typeof body?.content === "string"
+            ? body.content
+            : null;
+    }
+
+    if ((!submission_text || submission_text.trim() === "") && (!file || file.size === 0)) {
+      return NextResponse.json(
+        { error: "Debes escribir una respuesta o adjuntar un archivo" },
+        { status: 400 }
+      );
+    }
 
     let file_url = null;
     let file_name = null;
@@ -83,24 +105,52 @@ export async function POST(
       file_name = file.name;
     }
 
-    // Inserta la entrega
-    const { data: submission, error: insertError } = await supabaseAdmin
+    const payload = {
+      assignment_id: assignmentId,
+      student_id: user.id,
+      submission_text: submission_text?.trim() || null,
+      file_url,
+      file_name,
+      submitted_at: new Date().toISOString(),
+      status: "submitted",
+    };
+
+    const { data: existingSubmission, error: existingSubmissionError } = await supabaseAdmin
       .from("assignment_submissions")
-      .insert([
-        {
-          assignment_id: assignmentId,
-          student_id: user.id,
-          submission_text,
-          file_url,
-          file_name,
-          submitted_at: new Date().toISOString(),
-          status: "submitted",
-        },
-      ])
-      .select("*")
+      .select("id, file_url, file_name")
+      .eq("assignment_id", assignmentId)
+      .eq("student_id", user.id)
       .single();
 
-    if (insertError || !submission) {
+    if (existingSubmissionError && existingSubmissionError.code !== "PGRST116") {
+      return NextResponse.json(
+        { error: "Error al verificar la entrega existente" },
+        { status: 500 }
+      );
+    }
+
+    const finalPayload = {
+      ...payload,
+      file_url: file_url ?? existingSubmission?.file_url ?? null,
+      file_name: file_name ?? existingSubmission?.file_name ?? null,
+    };
+
+    const operation = existingSubmission
+      ? supabaseAdmin
+          .from("assignment_submissions")
+          .update(finalPayload)
+          .eq("id", existingSubmission.id)
+          .select("*")
+          .single()
+      : supabaseAdmin
+          .from("assignment_submissions")
+          .insert([finalPayload])
+          .select("*")
+          .single();
+
+    const { data: submission, error: submitError } = await operation;
+
+    if (submitError || !submission) {
       return NextResponse.json(
         { error: "Error al guardar la entrega" },
         { status: 500 }

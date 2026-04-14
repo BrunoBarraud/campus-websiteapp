@@ -24,6 +24,7 @@ interface Unit {
   description: string;
   order_index: number;
   created_at: string;
+  sections?: Section[];
 }
 
 interface Section {
@@ -67,63 +68,9 @@ const UnitAccordionStudent: React.FC<UnitAccordionProps> = ({
       if (!Array.isArray(data)) data = [];
       data.sort((a: Unit, b: Unit) => a.order_index - b.order_index);
       setUnits(data);
-
-      const sectionsArr = await Promise.all(
-        data.map(async (unit: Unit) => {
-          try {
-            // Cargar secciones regulares
-            const secRes = await fetch(
-              `/api/student/subjects/${subjectId}/units/${unit.id}/contents`
-            );
-            let secData = await secRes.json();
-            if (secData && secData.sections) {
-              secData = secData.sections;
-            }
-            if (!Array.isArray(secData)) secData = [];
-
-            // Cargar foros de esta unidad
-            try {
-              console.log(`[Student] Cargando foros para unidad ${unit.id}...`);
-              const forumsRes = await fetch(`/api/forums?unit_id=${unit.id}`);
-              console.log(`[Student] Respuesta de foros:`, forumsRes.status);
-              
-              if (forumsRes.ok) {
-                const forumsData = await forumsRes.json();
-                console.log(`[Student] Foros recibidos para unidad ${unit.id}:`, forumsData);
-                
-                if (Array.isArray(forumsData) && forumsData.length > 0) {
-                  const forumSections = forumsData.map((forum: any) => ({
-                    id: `forum-${forum.id}`,
-                    forum_id: forum.id,
-                    title: forum.title,
-                    content_type: 'forum',
-                    content: forum.description || '',
-                    created_at: forum.created_at,
-                    creator_name: forum.creator?.name || 'Profesor',
-                    questions_count: forum.questions_count || 0,
-                    is_closed: forum.is_locked || false
-                  }));
-                  console.log(`[Student] Agregando ${forumSections.length} foros a la unidad`);
-                  secData = [...secData, ...forumSections];
-                } else {
-                  console.log(`[Student] No hay foros para la unidad ${unit.id}`);
-                }
-              } else {
-                const errorText = await forumsRes.text();
-                console.error(`[Student] Error al cargar foros (${forumsRes.status}):`, errorText);
-              }
-            } catch (forumError) {
-              console.error('[Student] Error cargando foros para unidad:', unit.id, forumError);
-            }
-
-            return [unit.id, secData] as [string, Section[]];
-          } catch {
-            return [unit.id, []] as [string, Section[]];
-          }
-        })
+      const sectionsObj: Record<string, Section[]> = Object.fromEntries(
+        data.map((unit: Unit) => [unit.id, Array.isArray(unit.sections) ? unit.sections : []])
       );
-      const sectionsObj: Record<string, Section[]> =
-        Object.fromEntries(sectionsArr);
       setSections(sectionsObj);
     } catch {
       setError("Error al cargar unidades o secciones.");
@@ -179,7 +126,7 @@ const UnitAccordionStudent: React.FC<UnitAccordionProps> = ({
   }
 
   return (
-    <div className="space-y-4 sm:space-y-8 pb-24 lg:pb-0">
+    <div className="space-y-4 pb-24 lg:pb-0">
       {/* Mensaje de error */}
       {error && (
         <div className="bg-red-100 text-red-700 px-4 py-2 rounded mb-4 text-center">
@@ -188,7 +135,7 @@ const UnitAccordionStudent: React.FC<UnitAccordionProps> = ({
       )}
 
       {/* Unidades */}
-      <div className="space-y-4 sm:space-y-6">
+      <div className="space-y-4">
         {units.length === 0 && (
           <div className="text-center py-8 sm:py-12 text-gray-500">
             <i className="fas fa-book-open text-2xl sm:text-3xl mb-2"></i>
@@ -198,14 +145,14 @@ const UnitAccordionStudent: React.FC<UnitAccordionProps> = ({
         {units.map((unit) => (
           <div
             key={unit.id}
-            className={`bg-white rounded-xl sm:rounded-2xl border transition-all duration-300 overflow-hidden ${
+            className={`overflow-hidden rounded-2xl border transition-all duration-300 ${
               expandedUnit === unit.id
-                ? "shadow-lg border-indigo-200 ring-1 ring-indigo-50"
-                : "shadow-sm border-slate-200 hover:border-slate-300"
+                ? "border-indigo-200 bg-white shadow-lg ring-1 ring-indigo-50"
+                : "border-slate-200 bg-white shadow-sm hover:border-slate-300"
             }`}
           >
             <button
-              className="w-full flex items-center justify-between p-4 sm:p-6 text-left bg-white hover:bg-slate-50/80 transition-colors group"
+              className="group flex w-full items-center justify-between bg-white px-4 py-4 text-left transition-colors hover:bg-slate-50/80 sm:px-5"
               onClick={() => handleExpand(unit.id)}
               aria-expanded={expandedUnit === unit.id}
               aria-controls={`unit-panel-${unit.id}`}
@@ -223,6 +170,9 @@ const UnitAccordionStudent: React.FC<UnitAccordionProps> = ({
                   <BookOpen className="w-5 h-5 sm:w-6 sm:h-6" />
                 </div>
                 <div className="min-w-0 flex-1">
+                  <div className="mb-2 inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                    Unidad {unit.unit_number}
+                  </div>
                   <h3
                     className={`text-base sm:text-lg font-bold transition-colors ${
                       expandedUnit === unit.id ? "text-indigo-900" : "text-slate-700"
@@ -252,7 +202,7 @@ const UnitAccordionStudent: React.FC<UnitAccordionProps> = ({
                   : "max-h-0 opacity-0"
               } transition-all duration-300 overflow-hidden`}
             >
-              <div className="border-t border-slate-100 bg-slate-50/50 p-4 sm:p-6 space-y-4 sm:space-y-6">
+              <div className="space-y-4 border-t border-slate-100 bg-slate-50/60 p-4 sm:p-5">
                 {Array.isArray(sections[unit.id]) &&
                 sections[unit.id].length > 0 ? (
                   sections[unit.id]
@@ -264,19 +214,20 @@ const UnitAccordionStudent: React.FC<UnitAccordionProps> = ({
                     .map((section) => (
                       <div
                         key={section.id}
-                        className="flex flex-col md:flex-row items-start md:items-center justify-between bg-white p-4 sm:p-5 rounded-xl border border-slate-200 hover:border-indigo-300 hover:shadow-md hover:shadow-indigo-100/50 transition-all duration-200 group/item"
+                        className="group/item flex flex-col justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-4 transition-all duration-200 hover:border-indigo-300 hover:shadow-md hover:shadow-indigo-100/50 md:flex-row md:items-center"
                       >
-                        <div className="flex items-center gap-3 sm:gap-4 mb-3 md:mb-0 w-full md:w-auto">
-                          <div className="p-2 sm:p-2.5 bg-slate-50 rounded-xl border border-slate-100 group-hover/item:bg-indigo-50 group-hover/item:border-indigo-100 transition-colors flex-shrink-0">
+                        <div className="mb-1 flex w-full items-center gap-3 sm:gap-4 md:mb-0 md:w-auto">
+                          <div className="flex-shrink-0 rounded-2xl border border-slate-100 bg-slate-50 p-2.5 transition-colors group-hover/item:border-indigo-100 group-hover/item:bg-indigo-50">
                             {getSectionIcon(section)}
                           </div>
                           <div className="min-w-0 flex-1">
-                            <p className="font-semibold text-slate-700 group-hover/item:text-indigo-700 transition-colors truncate text-sm sm:text-base">
+                            <div className="mb-1 inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                              {getSectionTypeLabel(section)}
+                            </div>
+                            <p className="truncate text-sm font-semibold text-slate-700 transition-colors group-hover/item:text-indigo-700 sm:text-base">
                               {section.title}
                             </p>
-                            <p className="text-xs text-slate-400 font-medium mt-0.5 flex items-center gap-2">
-                              {getSectionTypeLabel(section).toUpperCase()}
-                              <span className="w-1 h-1 rounded-full bg-slate-300"></span>
+                            <p className="mt-1 flex items-center gap-2 text-xs font-medium text-slate-400">
                               {section.content_type === "assignment" && section.due_date
                                 ? `Vence: ${new Date(section.due_date).toLocaleDateString("es-AR")}`
                                 : section.content_type === "link"
@@ -288,7 +239,7 @@ const UnitAccordionStudent: React.FC<UnitAccordionProps> = ({
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end pl-[52px] md:pl-0">
+                        <div className="flex w-full items-center justify-between gap-3 pl-[50px] md:w-auto md:justify-end md:pl-0">
                           {section.content_type === "assignment" ? (
                             <span className="flex items-center text-xs font-medium text-amber-700 bg-amber-100 px-2.5 py-1 rounded-full border border-amber-200">
                               {section.due_date && new Date(section.due_date) < new Date() ? (

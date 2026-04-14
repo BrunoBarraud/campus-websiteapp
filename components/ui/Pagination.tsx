@@ -66,8 +66,8 @@ const Pagination: React.FC<PaginationProps> = ({
   const pageNumbers = getPageNumbers();
 
   return (
-    <div className="flex flex-col gap-4 border-t border-slate-200 bg-slate-50/80 px-4 py-4 backdrop-blur-sm lg:flex-row lg:items-center lg:justify-between">
-      <div className="flex flex-col gap-3 text-sm text-slate-600 sm:flex-row sm:items-center">
+    <div className="flex flex-col gap-3 border-t border-slate-200 bg-slate-50/80 px-4 py-3 backdrop-blur-sm lg:flex-row lg:items-center lg:justify-between">
+      <div className="flex flex-col gap-2.5 text-sm text-slate-600 sm:flex-row sm:items-center">
         <span>
           Mostrando <span className="font-medium">{startItem}</span> a{' '}
           <span className="font-medium">{endItem}</span> de{' '}
@@ -80,7 +80,7 @@ const Pagination: React.FC<PaginationProps> = ({
             value={itemsPerPage}
             onChange={(e) => onItemsPerPageChange(Number(e.target.value))}
             disabled={isLoading}
-            className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-4 focus:ring-yellow-200 disabled:opacity-50"
+            className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm shadow-sm focus:outline-none focus:ring-4 focus:ring-yellow-200 disabled:opacity-50"
           >
             <option value={5}>5</option>
             <option value={10}>10</option>
@@ -95,7 +95,7 @@ const Pagination: React.FC<PaginationProps> = ({
         <button
           onClick={() => onPageChange(1)}
           disabled={!hasPrevPage || isLoading}
-          className="flex h-10 w-10 items-center justify-center rounded-xl border border-transparent text-slate-400 transition-colors hover:border-slate-200 hover:bg-white hover:text-slate-600 disabled:cursor-not-allowed disabled:opacity-50"
+          className="flex h-9 w-9 items-center justify-center rounded-xl border border-transparent text-slate-400 transition-colors hover:border-slate-200 hover:bg-white hover:text-slate-600 disabled:cursor-not-allowed disabled:opacity-50"
           title="Primera página"
         >
           <FiChevronsLeft size={16} />
@@ -104,7 +104,7 @@ const Pagination: React.FC<PaginationProps> = ({
         <button
           onClick={() => onPageChange(currentPage - 1)}
           disabled={!hasPrevPage || isLoading}
-          className="flex h-10 w-10 items-center justify-center rounded-xl border border-transparent text-slate-400 transition-colors hover:border-slate-200 hover:bg-white hover:text-slate-600 disabled:cursor-not-allowed disabled:opacity-50"
+          className="flex h-9 w-9 items-center justify-center rounded-xl border border-transparent text-slate-400 transition-colors hover:border-slate-200 hover:bg-white hover:text-slate-600 disabled:cursor-not-allowed disabled:opacity-50"
           title="Página anterior"
         >
           <FiChevronLeft size={16} />
@@ -132,7 +132,7 @@ const Pagination: React.FC<PaginationProps> = ({
         <button
           onClick={() => onPageChange(currentPage + 1)}
           disabled={!hasNextPage || isLoading}
-          className="flex h-10 w-10 items-center justify-center rounded-xl border border-transparent text-slate-400 transition-colors hover:border-slate-200 hover:bg-white hover:text-slate-600 disabled:cursor-not-allowed disabled:opacity-50"
+          className="flex h-9 w-9 items-center justify-center rounded-xl border border-transparent text-slate-400 transition-colors hover:border-slate-200 hover:bg-white hover:text-slate-600 disabled:cursor-not-allowed disabled:opacity-50"
           title="Página siguiente"
         >
           <FiChevronRight size={16} />
@@ -141,7 +141,7 @@ const Pagination: React.FC<PaginationProps> = ({
         <button
           onClick={() => onPageChange(totalPages)}
           disabled={!hasNextPage || isLoading}
-          className="flex h-10 w-10 items-center justify-center rounded-xl border border-transparent text-slate-400 transition-colors hover:border-slate-200 hover:bg-white hover:text-slate-600 disabled:cursor-not-allowed disabled:opacity-50"
+          className="flex h-9 w-9 items-center justify-center rounded-xl border border-transparent text-slate-400 transition-colors hover:border-slate-200 hover:bg-white hover:text-slate-600 disabled:cursor-not-allowed disabled:opacity-50"
           title="Última página"
         >
           <FiChevronsRight size={16} />
@@ -162,7 +162,7 @@ const Pagination: React.FC<PaginationProps> = ({
             }
           }}
           disabled={isLoading}
-          className="w-16 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-4 focus:ring-yellow-200 disabled:opacity-50"
+          className="w-16 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm shadow-sm focus:outline-none focus:ring-4 focus:ring-yellow-200 disabled:opacity-50"
         />
         <span className="text-sm text-slate-600">de {totalPages}</span>
       </div>

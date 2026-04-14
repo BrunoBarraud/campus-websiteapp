@@ -6,6 +6,7 @@ import { useRouter, useParams } from "next/navigation";
 import LoadingSpinner from "../../../../../components/ui/LoadingSpinner";
 import UnitAccordionStudent from "@/components/student/UnitAccordionStudent";
 import SubjectHeroCard from "@/components/subjects/SubjectHeroCard";
+import { CalendarDays, ListChecks, MessageSquare } from "lucide-react";
 
 interface Subject {
   id: string;
@@ -158,6 +159,62 @@ export default function StudentSubjectDetailPage() {
       />
 
       <div className="max-w-4xl mx-auto mt-4 sm:mt-8">
+        <div className="mb-6 rounded-[1.6rem] border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+          <div className="mb-3">
+            <h3 className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">
+              Accesos rapidos
+            </h3>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <button
+            type="button"
+            onClick={() => router.push(`/campus/student/subjects/${subjectId}/assignments`)}
+            className="rounded-xl border border-slate-200 bg-white p-4 text-left shadow-sm transition hover:border-indigo-200 hover:bg-indigo-50/40"
+          >
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-semibold text-slate-900">Tus tareas</p>
+                <p className="text-xs text-slate-500 mt-1">Ver pendientes, entregadas y calificadas</p>
+              </div>
+              <ListChecks className="w-5 h-5 text-indigo-600" />
+            </div>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => router.push(`/campus/student/subjects/${subjectId}/forums`)}
+            className="rounded-xl border border-slate-200 bg-white p-4 text-left shadow-sm transition hover:border-indigo-200 hover:bg-indigo-50/40"
+          >
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-semibold text-slate-900">Foros</p>
+                <p className="text-xs text-slate-500 mt-1">Hacer preguntas y seguir respuestas del curso</p>
+              </div>
+              <MessageSquare className="w-5 h-5 text-indigo-600" />
+            </div>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => router.push("/campus/calendar")}
+            className="rounded-xl border border-slate-200 bg-white p-4 text-left shadow-sm transition hover:border-indigo-200 hover:bg-indigo-50/40"
+          >
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-semibold text-slate-900">Calendario</p>
+                <p className="text-xs text-slate-500 mt-1">Consultar eventos y vencimientos del campus</p>
+              </div>
+              <CalendarDays className="w-5 h-5 text-indigo-600" />
+            </div>
+          </button>
+        </div>
+        </div>
+
+        <div className="mb-3">
+          <h3 className="text-lg font-semibold text-slate-900">Unidades y materiales</h3>
+          <p className="text-sm text-slate-500">Revisa contenido, foros y tareas disponibles de la materia.</p>
+        </div>
+
         <UnitAccordionStudent subjectId={subjectId} subjectName={subject?.name || ""} />
       </div>
     </div>

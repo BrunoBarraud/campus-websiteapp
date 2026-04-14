@@ -1,9 +1,15 @@
-// 📤 API para entregas de tareas de estudiantes (versión simplificada sin archivos)
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/app/lib/supabaseClient";
 import { requireRole } from "@/app/lib/auth";
 
-// GET - Obtener entregas de una tarea (para profesores) o la entrega del estudiante
+const normalizeSubmission = (submission: any) => {
+  if (!submission) return submission;
+  return {
+    ...submission,
+    content: submission.submission_text ?? "",
+  };
+};
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string; assignmentId: string }> }
@@ -13,7 +19,6 @@ export async function GET(
     const { assignmentId } = await params;
 
     if (currentUser.role === "student") {
-      // Estudiantes solo pueden ver su propia entrega
       const { data: submission, error } = await supabaseAdmin
         .from("assignment_submissions")
         .select(
@@ -21,9 +26,13 @@ export async function GET(
           id,
           assignment_id,
           student_id,
-          content,
+          submission_text,
           file_url,
-          file_name
+          file_name,
+          submitted_at,
+          score,
+          feedback,
+          status
         `
         )
         .eq("assignment_id", assignmentId)
@@ -31,54 +40,49 @@ export async function GET(
         .single();
 
       if (error && error.code !== "PGRST116") {
-        console.error("Error fetching student submission:", error);
         return NextResponse.json(
           { error: "Error al obtener la entrega" },
           { status: 500 }
         );
       }
 
-      return NextResponse.json(submission || null);
-    } else {
-      // Profesores y admin pueden ver todas las entregas
-      const { data: submissions, error } = await supabaseAdmin
-        .from("assignment_submissions")
-        .select(
-          `
-          id,
-          assignment_id,
-          student_id,
-          content,
-          file_url,
-          file_name,
-          submitted_at,
-          score,
-          feedback,
-          status,
-          student:users!assignment_submissions_student_id_fkey(id, name, email, avatar_url)
-        `
-        )
-        .eq("assignment_id", assignmentId);
-
-      if (error) {
-        console.error("Error fetching submissions:", error);
-        return NextResponse.json(
-          { error: "Error al obtener las entregas" },
-          { status: 500 }
-        );
-      }
-
-      return NextResponse.json(submissions || []);
+      return NextResponse.json(normalizeSubmission(submission || null));
     }
+
+    const { data: submissions, error } = await supabaseAdmin
+      .from("assignment_submissions")
+      .select(
+        `
+        id,
+        assignment_id,
+        student_id,
+        submission_text,
+        file_url,
+        file_name,
+        submitted_at,
+        score,
+        feedback,
+        status,
+        student:users!assignment_submissions_student_id_fkey(id, name, email, avatar_url)
+      `
+      )
+      .eq("assignment_id", assignmentId);
+
+    if (error) {
+      return NextResponse.json(
+        { error: "Error al obtener las entregas" },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json((submissions || []).map(normalizeSubmission));
   } catch (error) {
-    console.error("Error in GET submissions:", error);
     const errorMessage =
       error instanceof Error ? error.message : "Error interno del servidor";
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
 
-// POST - Crear entrega de estudiante
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string; assignmentId: string }> }
@@ -87,10 +91,9 @@ export async function POST(
     const currentUser = await requireRole(["student"]);
     const { assignmentId } = await params;
 
-    // Verificar que la tarea existe y está activa
     const { data: assignment, error: assignmentError } = await supabaseAdmin
       .from("assignments")
-      .select("id, due_date, is_active, max_score")
+      .select("id, due_date, is_active")
       .eq("id", assignmentId)
       .single();
 
@@ -101,41 +104,42 @@ export async function POST(
       );
     }
 
-    // Verificar si ya existe una entrega
-    const { data: existingSubmission } = await supabaseAdmin
-      .from("assignment_submissions")
-      .select("id")
-      .eq("assignment_id", assignmentId)
-      .eq("student_id", currentUser.id)
-      .single();
+    const { data: existingSubmission, error: existingSubmissionError } =
+      await supabaseAdmin
+        .from("assignment_submissions")
+        .select("id, file_url, file_name")
+        .eq("assignment_id", assignmentId)
+        .eq("student_id", currentUser.id)
+        .single();
 
-    // Determinar el tipo de contenido y manejarlo apropiadamente
-    const contentType = request.headers.get("content-type");
-    let content: string | null = null;
-    let file: File | null = null;
-
-    if (contentType?.includes("multipart/form-data")) {
-      // Manejar FormData con archivos
-      console.log("🔧 Processing FormData request");
-      const formData = await request.formData();
-      content = formData.get("content") as string;
-      file = formData.get("file") as File;
-
-      console.log("📄 Content from FormData:", content);
-      console.log(
-        "📎 File from FormData:",
-        file ? `${file.name} (${file.size} bytes)` : "No file"
+    if (existingSubmissionError && existingSubmissionError.code !== "PGRST116") {
+      return NextResponse.json(
+        { error: "Error al verificar la entrega existente" },
+        { status: 500 }
       );
-    } else {
-      // Manejar JSON (solo texto)
-      console.log("📝 Processing JSON request");
-      const body = await request.json();
-      content = body.content;
-      console.log("📄 Content from JSON:", content);
     }
 
-    // Validar que hay contenido de texto O un archivo válido
-    if ((!content || content.trim() === "") && (!file || file.size === 0)) {
+    const contentType = request.headers.get("content-type") || "";
+    let submissionText: string | null = null;
+    let file: File | null = null;
+
+    if (contentType.includes("multipart/form-data")) {
+      const formData = await request.formData();
+      submissionText =
+        (formData.get("submission_text") as string | null) ??
+        (formData.get("content") as string | null);
+      file = formData.get("file") as File | null;
+    } else {
+      const body = await request.json().catch(() => ({}));
+      submissionText =
+        typeof body?.submission_text === "string"
+          ? body.submission_text
+          : typeof body?.content === "string"
+            ? body.content
+            : null;
+    }
+
+    if ((!submissionText || submissionText.trim() === "") && (!file || file.size === 0)) {
       return NextResponse.json(
         { error: "Debes proporcionar contenido de texto o un archivo" },
         { status: 400 }
@@ -145,7 +149,6 @@ export async function POST(
     let fileUrl: string | null = null;
     let fileName: string | null = null;
 
-    // Subir archivo a Supabase Storage si existe
     if (file && file.size > 0) {
       try {
         const fileExtension = file.name.split(".").pop();
@@ -157,16 +160,14 @@ export async function POST(
         const arrayBuffer = await file.arrayBuffer();
         const buffer = new Uint8Array(arrayBuffer);
 
-        const { data: uploadData, error: uploadError } =
-          await supabaseAdmin.storage
-            .from("submission-files")
-            .upload(filePath, buffer, {
-              contentType: file.type,
-              upsert: false,
-            });
+        const { data: uploadData, error: uploadError } = await supabaseAdmin.storage
+          .from("submission-files")
+          .upload(filePath, buffer, {
+            contentType: file.type,
+            upsert: false,
+          });
 
         if (uploadError) {
-          console.error("Error uploading file:", uploadError);
           return NextResponse.json(
             { error: "Error al subir el archivo" },
             { status: 500 }
@@ -179,8 +180,7 @@ export async function POST(
 
         fileUrl = urlData.publicUrl;
         fileName = file.name;
-      } catch (uploadError) {
-        console.error("Error processing file:", uploadError);
+      } catch {
         return NextResponse.json(
           { error: "Error al procesar el archivo" },
           { status: 500 }
@@ -191,59 +191,43 @@ export async function POST(
     const submissionData = {
       assignment_id: assignmentId,
       student_id: currentUser.id,
-      content: content || "",
-      file_url: fileUrl,
-      file_name: fileName,
+      submission_text: submissionText?.trim() || "",
+      file_url: fileUrl ?? existingSubmission?.file_url ?? null,
+      file_name: fileName ?? existingSubmission?.file_name ?? null,
+      submitted_at: new Date().toISOString(),
+      status: "submitted",
     };
-    let result;
 
-    if (existingSubmission) {
-      // Actualizar entrega existente
-      const { data, error } = await supabaseAdmin
-        .from("assignment_submissions")
-        .update(submissionData)
-        .eq("id", existingSubmission.id)
-        .select("*")
-        .single();
+    const operation = existingSubmission
+      ? supabaseAdmin
+          .from("assignment_submissions")
+          .update(submissionData)
+          .eq("id", existingSubmission.id)
+          .select("*")
+          .single()
+      : supabaseAdmin
+          .from("assignment_submissions")
+          .insert([submissionData])
+          .select("*")
+          .single();
 
-      if (error) {
-        console.error("Error updating submission:", error);
-        return NextResponse.json(
-          { error: "Error al actualizar la entrega" },
-          { status: 500 }
-        );
-      }
+    const { data, error } = await operation;
 
-      result = data;
-    } else {
-      // Crear nueva entrega
-      const { data, error } = await supabaseAdmin
-        .from("assignment_submissions")
-        .insert([submissionData])
-        .select("*")
-        .single();
-
-      if (error) {
-        console.error("Error creating submission:", error);
-        return NextResponse.json(
-          { error: "Error al crear la entrega" },
-          { status: 500 }
-        );
-      }
-
-      result = data;
+    if (error || !data) {
+      return NextResponse.json(
+        { error: "Error al guardar la entrega" },
+        { status: 500 }
+      );
     }
 
-    return NextResponse.json(result, { status: 201 });
+    return NextResponse.json(normalizeSubmission(data), { status: 201 });
   } catch (error) {
-    console.error("Error in POST submissions:", error);
     const errorMessage =
       error instanceof Error ? error.message : "Error interno del servidor";
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
 
-// PUT - Calificar entrega (solo profesores y admin)
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string; assignmentId: string }> }
@@ -251,7 +235,6 @@ export async function PUT(
   try {
     await requireRole(["admin", "teacher"]);
     const { assignmentId } = await params;
-
     const { submission_id, score, feedback } = await request.json();
 
     if (!submission_id) {
@@ -261,7 +244,6 @@ export async function PUT(
       );
     }
 
-    // Obtener información de la tarea para validación
     const { data: assignmentInfo, error: assignmentInfoError } =
       await supabaseAdmin
         .from("assignments")
@@ -276,7 +258,6 @@ export async function PUT(
       );
     }
 
-    // Verificar que la entrega existe
     const { data: submission, error: submissionError } = await supabaseAdmin
       .from("assignment_submissions")
       .select("id, assignment_id")
@@ -291,20 +272,18 @@ export async function PUT(
       );
     }
 
-    // Validar calificación
     const maxScore = assignmentInfo.max_score;
     if (score !== null && maxScore && (score < 0 || score > maxScore)) {
       return NextResponse.json(
-        { error: `La calificación debe estar entre 0 y ${maxScore}` },
+        { error: `La calificaciÃ³n debe estar entre 0 y ${maxScore}` },
         { status: 400 }
       );
     }
 
-    // Actualizar calificación
     const { data, error } = await supabaseAdmin
       .from("assignment_submissions")
       .update({
-        score: score,
+        score,
         feedback: feedback || null,
       })
       .eq("id", submission_id)
@@ -313,7 +292,7 @@ export async function PUT(
         id,
         assignment_id,
         student_id,
-        content,
+        submission_text,
         submitted_at,
         score,
         feedback,
@@ -323,16 +302,14 @@ export async function PUT(
       .single();
 
     if (error) {
-      console.error("Error grading submission:", error);
       return NextResponse.json(
         { error: "Error al calificar la entrega" },
         { status: 500 }
       );
     }
 
-    return NextResponse.json(data);
+    return NextResponse.json(normalizeSubmission(data));
   } catch (error) {
-    console.error("Error in PUT submissions:", error);
     const errorMessage =
       error instanceof Error ? error.message : "Error interno del servidor";
     return NextResponse.json({ error: errorMessage }, { status: 500 });

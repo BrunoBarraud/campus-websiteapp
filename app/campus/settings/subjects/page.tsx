@@ -341,7 +341,7 @@ function EditSubjectModal({
               src={formData.image_url}
               alt="Imagen materia"
               style={{ width: 80, height: 80, objectFit: "cover", borderRadius: 8, border: "1px solid #e5e7eb" }}
-              onError={(e: any) => (e.currentTarget.src = "https://via.placeholder.com/80x80/f3f4f6/9ca3af?text=?")}
+              onError={(e: any) => (e.currentTarget.src = "/images/subjects/default.svg")}
             />
           ) : (
             <div style={{ width: 80, height: 80, borderRadius: 8, background: "#f8fafc", display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid #e5e7eb" }}>
@@ -844,7 +844,7 @@ export default function SubjectsManagementPage() {
                               className="w-8 h-8 sm:w-10 sm:h-10 rounded-md object-cover mr-2 sm:mr-3"
                               onError={(e) => {
                                 e.currentTarget.src =
-                                  "https://via.placeholder.com/40x40/f3f4f6/9ca3af?text=?";
+                                  "/images/subjects/default.svg";
                               }}
                             />
                           )}

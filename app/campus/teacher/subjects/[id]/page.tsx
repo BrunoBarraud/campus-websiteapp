@@ -6,7 +6,7 @@ import { useRouter, useParams } from "next/navigation";
 import UnitAccordionTeacher from "../../../../../components/teacher/UnitAccordionTeacher";
 import SubjectImageEditor from "../../../../../components/dashboard/SubjectImageEditor";
 import SubjectHeroCard from "@/components/subjects/SubjectHeroCard";
-import { BarChart3, FileUp, MessageSquare, Plus, Users } from "lucide-react";
+import { BarChart3, FileUp, MessageSquare, Plus, Users, ListChecks, ArrowRight } from "lucide-react";
 interface Subject {
   id: string;
   name: string;
@@ -225,7 +225,7 @@ export default function TeacherSubjectPage() {
       />
 
       <div className="max-w-4xl mx-auto">
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-6 md:p-8 mb-6 sm:mb-8">
+        <div className="mb-6 rounded-[1.6rem] border border-slate-200 bg-white p-4 shadow-sm sm:mb-8 sm:p-6 md:p-8">
           <div className="flex flex-col lg:flex-row justify-between lg:items-start gap-4 mb-6">
             <div>
               <div className="flex items-center gap-2 mb-1 flex-wrap">
@@ -293,6 +293,64 @@ export default function TeacherSubjectPage() {
                 <p className="text-xs text-slate-500 uppercase font-bold tracking-wide">Participación</p>
               </div>
             </div>
+          </div>
+
+          <div className="mt-6 border-t border-slate-100 pt-5">
+            <div className="mb-3">
+              <h3 className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">
+                Accesos rapidos
+              </h3>
+            </div>
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+            <button
+              type="button"
+              onClick={() => router.push(`/campus/teacher/subjects/${subjectId}/assignments`)}
+              className="rounded-xl border border-slate-200 bg-white px-4 py-4 text-left transition hover:border-indigo-200 hover:bg-indigo-50/50"
+            >
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-semibold text-slate-900">Gestionar tareas</p>
+                  <p className="text-xs text-slate-500 mt-1">Crear, editar y revisar entregas</p>
+                </div>
+                <ListChecks className="w-5 h-5 text-indigo-600" />
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => router.push(`/campus/teacher/subjects/${subjectId}/forums`)}
+              className="rounded-xl border border-slate-200 bg-white px-4 py-4 text-left transition hover:border-indigo-200 hover:bg-indigo-50/50"
+            >
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-semibold text-slate-900">Foros y avisos</p>
+                  <p className="text-xs text-slate-500 mt-1">Responder dudas y abrir debates</p>
+                </div>
+                <MessageSquare className="w-5 h-5 text-indigo-600" />
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => router.push(`/campus/teacher/subjects/${subjectId}/students`)}
+              className="rounded-xl border border-slate-200 bg-white px-4 py-4 text-left transition hover:border-indigo-200 hover:bg-indigo-50/50"
+            >
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-semibold text-slate-900">Ver alumnos</p>
+                  <p className="text-xs text-slate-500 mt-1">Acceder rÃ¡pido al curso y sus entregas</p>
+                </div>
+                <ArrowRight className="w-5 h-5 text-indigo-600" />
+              </div>
+            </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <div>
+            <h3 className="text-lg font-semibold text-slate-900">Unidades y contenido</h3>
+            <p className="text-sm text-slate-500">Organiza materiales, tareas y foros por unidad.</p>
           </div>
         </div>
 

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/app/lib/supabaseClient";
 import { requireRole } from "@/app/lib/auth";
+import { getUnitSections } from "@/app/lib/subjects/unitSections";
 
 export async function GET(
   request: Request,
@@ -40,16 +41,10 @@ export async function GET(
       );
     }
 
-    // Para cada unidad, busca sus contenidos
     const unitsWithContents = await Promise.all(
       (units || []).map(async (unit) => {
-        const { data: contents } = await supabaseAdmin
-          .from("subject_content")
-          .select("*")
-          .eq("unit_id", unit.id)
-          .order("created_at", { ascending: true });
-
-        return { ...unit, contents: contents || [] };
+        const sections = await getUnitSections(unit.id, { contentActiveOnly: true });
+        return { ...unit, sections };
       })
     );
 

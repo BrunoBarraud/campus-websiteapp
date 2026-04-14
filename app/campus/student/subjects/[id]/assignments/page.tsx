@@ -67,6 +67,9 @@ export default function StudentAssignmentsPage({
   });
   const [uploading, setUploading] = useState(false);
   const [subjectId, setSubjectId] = useState<string>("");
+  const [activeFilter, setActiveFilter] = useState<
+    "all" | "pending" | "submitted" | "graded" | "overdue"
+  >("pending");
 
   useEffect(() => {
     const loadParams = async () => {
@@ -86,17 +89,10 @@ export default function StudentAssignmentsPage({
       );
       if (response.ok) {
         const data = await response.json();
-        // Filtro de tareas
-        const filtered = (
+        const normalized = (
           Array.isArray(data) ? data : data.assignments || []
-        ).filter((a: Assignment) => {
-          const dueDate = a.due_date ? new Date(a.due_date).getTime() : null;
-          const now = new Date().getTime();
-          const isActive = a.is_active;
-          const condition = isActive && (a.submission || (dueDate && dueDate >= now));
-          return condition;
-        });
-        setAssignments(filtered);
+        ).filter((a: Assignment) => a?.is_active);
+        setAssignments(normalized);
       } else {
         toast.error("Error al cargar las tareas.");
         console.error("Error fetching assignments");
@@ -227,6 +223,30 @@ export default function StudentAssignmentsPage({
   const gradedCount = assignments.filter(
     (a) => a.submission && a.submission.score !== null && a.submission.score !== undefined
   ).length;
+  const overdueCount = assignments.filter((a) => !a.submission && isOverdue(a.due_date)).length;
+
+  const filteredAssignments = assignments.filter((assignment) => {
+    const graded =
+      assignment.submission &&
+      assignment.submission.score !== null &&
+      assignment.submission.score !== undefined;
+    const submitted = Boolean(assignment.submission);
+    const overdue = !assignment.submission && isOverdue(assignment.due_date);
+    const pending = !assignment.submission && !overdue;
+
+    switch (activeFilter) {
+      case "pending":
+        return pending;
+      case "submitted":
+        return submitted && !graded;
+      case "graded":
+        return graded;
+      case "overdue":
+        return overdue;
+      default:
+        return true;
+    }
+  });
 
   return (
     <div className="min-h-screen bg-slate-100 p-3 sm:p-4 md:p-8">
@@ -268,6 +288,33 @@ export default function StudentAssignmentsPage({
           </div>
         </div>
 
+        <div className="flex flex-wrap gap-2">
+          {[
+            { key: "pending", label: "Pendientes", count: pendingCount },
+            { key: "submitted", label: "Entregadas", count: Math.max(0, submittedCount - gradedCount) },
+            { key: "graded", label: "Calificadas", count: gradedCount },
+            { key: "overdue", label: "Vencidas", count: overdueCount },
+            { key: "all", label: "Todas", count: assignments.length },
+          ].map((filter) => (
+            <button
+              key={filter.key}
+              type="button"
+              onClick={() =>
+                setActiveFilter(
+                  filter.key as "all" | "pending" | "submitted" | "graded" | "overdue"
+                )
+              }
+              className={`rounded-full border px-3 py-2 text-sm font-semibold transition ${
+                activeFilter === filter.key
+                  ? "border-indigo-200 bg-indigo-50 text-indigo-700"
+                  : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50"
+              }`}
+            >
+              {filter.label} ({filter.count})
+            </button>
+          ))}
+        </div>
+
         {assignments.length === 0 ? (
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-8 md:p-10 text-center">
             <div className="w-16 h-16 sm:w-20 sm:h-20 bg-slate-50 rounded-full flex items-center justify-center mb-4 shadow-inner mx-auto">
@@ -277,8 +324,18 @@ export default function StudentAssignmentsPage({
             <p className="text-slate-500 mt-1 text-sm sm:text-base">No hay tareas disponibles para esta materia.</p>
           </div>
         ) : (
+          filteredAssignments.length === 0 ? (
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-8 text-center">
+              <h3 className="text-base sm:text-lg font-bold text-slate-700">
+                No hay tareas en esta vista
+              </h3>
+              <p className="mt-1 text-sm sm:text-base text-slate-500">
+                Probá cambiando el filtro para revisar otro estado de tus entregas.
+              </p>
+            </div>
+          ) : (
           <div className="space-y-3 sm:space-y-4">
-            {assignments.map((assignment) => {
+            {filteredAssignments.map((assignment) => {
               const status = getAssignmentStatus(assignment);
               const overdue = isOverdue(assignment.due_date) && !assignment.submission;
 
@@ -461,6 +518,7 @@ export default function StudentAssignmentsPage({
               );
             })}
           </div>
+          )
         )}
       </div>
     </div>
