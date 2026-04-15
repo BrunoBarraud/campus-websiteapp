@@ -206,7 +206,7 @@ export default function TeacherSubjectPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50/50 p-3 sm:p-4 md:p-8 font-sans text-slate-800">
+    <div className="dashboard-page dashboard-stack font-sans text-slate-800">
       <SubjectHeroCard
         title={subject.name}
         teacher={session?.user?.name || null}
@@ -224,9 +224,9 @@ export default function TeacherSubjectPage() {
         }
       />
 
-      <div className="max-w-4xl mx-auto">
-        <div className="mb-6 rounded-[1.6rem] border border-slate-200 bg-white p-4 shadow-sm sm:mb-8 sm:p-6 md:p-8">
-          <div className="flex flex-col lg:flex-row justify-between lg:items-start gap-4 mb-6">
+      <div className="mx-auto w-full max-w-4xl">
+        <section className="app-panel">
+          <div className="mb-5 flex flex-col justify-between gap-4 lg:flex-row lg:items-start">
             <div>
               <div className="flex items-center gap-2 mb-1 flex-wrap">
                 <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-slate-900">{subject.name}</h2>
@@ -237,16 +237,16 @@ export default function TeacherSubjectPage() {
               <p className="text-slate-500 text-sm">Panel de Docente</p>
             </div>
 
-            <div className="flex gap-2 flex-wrap justify-start lg:justify-end">
+            <div className="flex flex-wrap justify-start gap-2 lg:justify-end">
               <button
-                className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-3 sm:px-4 py-2 rounded-lg text-sm font-semibold transition-colors shadow-sm"
+                className="flex items-center gap-2 rounded-xl bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-indigo-700 sm:px-4"
                 type="button"
                 onClick={() => window.dispatchEvent(new Event("teacher-open-add-unit"))}
               >
                 <Plus className="w-4 h-4" /> <span className="hidden sm:inline">Nueva Unidad</span><span className="sm:hidden">Unidad</span>
               </button>
               <a
-                className="flex items-center gap-2 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 px-3 sm:px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
+                className="flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 sm:px-4"
                 href={`/campus/teacher/subjects/${subjectId}/forums`}
               >
                 <MessageSquare className="w-4 h-4" /> <span className="hidden sm:inline">Avisos</span><span className="sm:hidden">Avisos</span>
@@ -254,10 +254,10 @@ export default function TeacherSubjectPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
             <a
               href={`/campus/teacher/subjects/${subjectId}/students`}
-              className="bg-slate-50 p-4 rounded-xl border border-slate-100 flex items-center gap-4 hover:bg-blue-50 hover:border-blue-200 transition-colors cursor-pointer"
+              className="app-panel-muted flex cursor-pointer items-center gap-4 p-4 transition-colors hover:border-blue-200 hover:bg-blue-50"
             >
               <div className="p-3 bg-blue-100 text-blue-600 rounded-lg">
                 <Users className="w-6 h-6" />
@@ -268,7 +268,7 @@ export default function TeacherSubjectPage() {
               </div>
             </a>
 
-            <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 flex items-center gap-4">
+            <div className="app-panel-muted flex items-center gap-4 p-4">
               <div className="p-3 bg-amber-100 text-amber-600 rounded-lg">
                 <FileUp className="w-6 h-6" />
               </div>
@@ -278,7 +278,7 @@ export default function TeacherSubjectPage() {
               </div>
             </div>
 
-            <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 flex items-center gap-4">
+            <div className="app-panel-muted flex items-center gap-4 p-4">
               <div className="p-3 bg-emerald-100 text-emerald-600 rounded-lg">
                 <BarChart3 className="w-6 h-6" />
               </div>
@@ -295,7 +295,7 @@ export default function TeacherSubjectPage() {
             </div>
           </div>
 
-          <div className="mt-6 border-t border-slate-100 pt-5">
+          <div className="mt-5 border-t border-slate-100 pt-4">
             <div className="mb-3">
               <h3 className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">
                 Accesos rapidos
@@ -305,7 +305,7 @@ export default function TeacherSubjectPage() {
             <button
               type="button"
               onClick={() => router.push(`/campus/teacher/subjects/${subjectId}/assignments`)}
-              className="rounded-xl border border-slate-200 bg-white px-4 py-4 text-left transition hover:border-indigo-200 hover:bg-indigo-50/50"
+               className="rounded-xl border border-slate-200 bg-white px-4 py-3.5 text-left transition hover:border-indigo-200 hover:bg-indigo-50/50"
             >
               <div className="flex items-center justify-between gap-3">
                 <div>
@@ -319,7 +319,7 @@ export default function TeacherSubjectPage() {
             <button
               type="button"
               onClick={() => router.push(`/campus/teacher/subjects/${subjectId}/forums`)}
-              className="rounded-xl border border-slate-200 bg-white px-4 py-4 text-left transition hover:border-indigo-200 hover:bg-indigo-50/50"
+               className="rounded-xl border border-slate-200 bg-white px-4 py-3.5 text-left transition hover:border-indigo-200 hover:bg-indigo-50/50"
             >
               <div className="flex items-center justify-between gap-3">
                 <div>
@@ -333,19 +333,19 @@ export default function TeacherSubjectPage() {
             <button
               type="button"
               onClick={() => router.push(`/campus/teacher/subjects/${subjectId}/students`)}
-              className="rounded-xl border border-slate-200 bg-white px-4 py-4 text-left transition hover:border-indigo-200 hover:bg-indigo-50/50"
+               className="rounded-xl border border-slate-200 bg-white px-4 py-3.5 text-left transition hover:border-indigo-200 hover:bg-indigo-50/50"
             >
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <p className="text-sm font-semibold text-slate-900">Ver alumnos</p>
-                  <p className="text-xs text-slate-500 mt-1">Acceder rÃ¡pido al curso y sus entregas</p>
+                  <p className="text-xs text-slate-500 mt-1">Acceder rápido al curso y sus entregas</p>
                 </div>
                 <ArrowRight className="w-5 h-5 text-indigo-600" />
               </div>
             </button>
             </div>
           </div>
-        </div>
+        </section>
 
         <div className="mb-3 flex items-center justify-between gap-3">
           <div>

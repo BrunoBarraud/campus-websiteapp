@@ -168,7 +168,7 @@ const MateriasView = () => {
   }
 
   return (
-    <div className="space-y-6">
+      <div className="dashboard-stack">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -191,7 +191,7 @@ const MateriasView = () => {
       </div>
 
       {/* Filtros */}
-      <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col sm:flex-row gap-4 items-center justify-between">
+      <div className="app-panel flex flex-col items-center justify-between gap-4 sm:flex-row">
         <div className="relative flex-1 w-full">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input
@@ -226,7 +226,7 @@ const MateriasView = () => {
       </div>
 
       {/* Tabla */}
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+      <div className="app-panel overflow-hidden p-0">
         <table className="w-full text-sm text-left">
           <thead className="bg-gray-50 text-gray-500 font-medium">
             <tr>
@@ -334,7 +334,7 @@ const UsuariosView = () => {
   }
 
   return (
-    <div className="space-y-6">
+      <div className="dashboard-stack">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -357,7 +357,7 @@ const UsuariosView = () => {
       </div>
 
       {/* Filtros */}
-      <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col lg:flex-row gap-4 justify-between items-center">
+      <div className="app-panel flex flex-col items-center justify-between gap-4 lg:flex-row">
         <div className="flex flex-1 gap-3 w-full lg:w-auto">
           <div className="relative flex-1 lg:max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -389,7 +389,7 @@ const UsuariosView = () => {
       </div>
 
       {/* Tabla */}
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+      <div className="app-panel overflow-hidden p-0">
         <table className="w-full text-sm text-left">
           <thead className="bg-gray-50 text-gray-500 font-medium">
             <tr>
@@ -470,17 +470,17 @@ export default function AdminManagementPage() {
 
   if (status === 'loading') {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="dashboard-page flex min-h-[60vh] items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6 lg:p-8">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <div className="dashboard-page dashboard-stack">
+      <div className="mx-auto w-full max-w-7xl space-y-6">
         {/* Switcher */}
-        <div className="bg-white p-1.5 rounded-lg inline-flex border border-gray-200 shadow-sm">
+        <div className="inline-flex rounded-xl border border-gray-200 bg-white p-1.5 shadow-sm">
           <button
             onClick={() => setView('usuarios')}
             className={`px-4 py-2 text-sm rounded-md font-medium transition-all ${

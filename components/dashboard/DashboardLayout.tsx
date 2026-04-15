@@ -127,7 +127,6 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
     <div className="h-full overflow-hidden bg-white">
       <div className="flex h-full flex-col">
         <div className="border-b border-slate-200 px-5 py-4">
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">Campus</p>
           <h1 className="mt-1.5 text-base font-semibold text-slate-900">Panel principal</h1>
           <p className="mt-1 text-sm text-slate-500">Accesos, navegación y herramientas del campus.</p>
         </div>
@@ -146,9 +145,6 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
         <div className="border-t border-slate-200 p-4">
           <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
             <p className="text-sm font-semibold text-slate-900">{session?.user?.name || "Usuario"}</p>
-            <p className="mt-1 text-xs uppercase tracking-[0.16em] text-slate-400">
-              {session?.user?.role || "campus"}
-            </p>
           </div>
 
           <button
@@ -187,15 +183,15 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
         </div>
       )}
 
-      <div className="mx-auto flex min-h-screen w-full max-w-[1600px] items-stretch">
-        <aside className="hidden lg:block lg:w-[292px] lg:shrink-0 xl:w-[304px]">
-          <div className="sticky top-0 h-screen overflow-hidden border-r border-slate-200 bg-white">
+      <div className="flex min-h-screen w-full items-stretch">
+        <aside className="hidden lg:block lg:w-[292px] lg:shrink-0 lg:self-start xl:w-[304px]">
+          <div className="dashboard-sidebar sticky top-0 h-[100dvh] overflow-hidden border-r border-slate-200 bg-white">
             <Sidebar />
           </div>
         </aside>
 
         <main className="dashboard-main min-w-0 flex-1">
-          <div className="min-h-screen px-3 pb-24 pt-3 sm:px-4 sm:pt-4 md:px-5 md:pt-5 lg:px-6 lg:pb-6 xl:px-7">
+          <div className="min-h-[100dvh] w-full px-3 pb-24 pt-3 sm:px-4 sm:pt-4 md:px-5 md:pt-5 lg:px-6 lg:pb-6 xl:px-7">
             {children}
           </div>
         </main>

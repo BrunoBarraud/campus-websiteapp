@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
+import { Camera, ImagePlus, Link2, Upload } from "lucide-react";
+import SimpleModal from "@/components/common/SimpleModal";
 
 interface Props {
   subjectId: string;
@@ -30,16 +32,17 @@ export default function SubjectImageEditor({ subjectId, currentImage, canEdit, o
     setOpen(false);
   };
 
-  // Fetch current subject, then PUT with updated image_url (server-side validation requires full payload)
   async function updateImage(newUrl: string) {
     setLoading(true);
     setError(null);
+
     try {
       const getRes = await fetch(`/api/subjects/${subjectId}`, { credentials: "include" });
       if (!getRes.ok) throw new Error("No se pudo obtener la materia");
+
       const payload = await getRes.json();
       const data = payload?.data;
-      if (!data) throw new Error("Datos de materia inválidos");
+      if (!data) throw new Error("Datos de materia invalidos");
 
       const body = {
         name: data.name,
@@ -48,22 +51,20 @@ export default function SubjectImageEditor({ subjectId, currentImage, canEdit, o
         year: data.year,
         division: data.division || null,
         teacher_id: data.teacher_id || null,
-        image_url: newUrl
+        image_url: newUrl,
       };
 
       const putRes = await fetch(`/api/subjects/${subjectId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify(body)
+        body: JSON.stringify(body),
       });
 
       const result = await putRes.json();
-      if (!putRes.ok) throw new Error(result?.error || 'Error actualizando imagen');
+      if (!putRes.ok) throw new Error(result?.error || "Error actualizando imagen");
 
-      if (onUpdated) {
-        onUpdated(newUrl);
-      }
+      onUpdated?.(newUrl);
       close();
     } catch (err: any) {
       setError(err?.message || String(err));
@@ -73,25 +74,30 @@ export default function SubjectImageEditor({ subjectId, currentImage, canEdit, o
   }
 
   async function handleUpload() {
-    if (!file) return setError('Selecciona un archivo');
+    if (!file) {
+      setError("Selecciona un archivo");
+      return;
+    }
+
     setLoading(true);
     setError(null);
+
     try {
       const fd = new FormData();
-      fd.append('file', file);
-      fd.append('type', 'subject_image');
-      fd.append('subjectId', subjectId);
+      fd.append("file", file);
+      fd.append("type", "subject_image");
+      fd.append("subjectId", subjectId);
 
-      const uploadRes = await fetch('/api/upload', {
-        method: 'POST',
+      const uploadRes = await fetch("/api/upload", {
+        method: "POST",
         body: fd,
-        credentials: 'include'
+        credentials: "include",
       });
       const uploadJson = await uploadRes.json();
-      if (!uploadRes.ok) throw new Error(uploadJson?.error || 'Error subiendo archivo');
+      if (!uploadRes.ok) throw new Error(uploadJson?.error || "Error subiendo archivo");
 
       const fileUrl = uploadJson?.url;
-      if (!fileUrl) throw new Error('No se recibió URL del upload');
+      if (!fileUrl) throw new Error("No se recibio URL del upload");
 
       await updateImage(fileUrl);
     } catch (err: any) {
@@ -105,59 +111,101 @@ export default function SubjectImageEditor({ subjectId, currentImage, canEdit, o
     <div>
       <button
         type="button"
-        aria-label="Editar imagen"
-        title="Editar imagen"
+        aria-label="Editar portada"
+        title="Editar portada"
         onPointerDown={(e) => {
-          // Prevent parent Link navigation before it can trigger
           e.stopPropagation();
           e.preventDefault();
         }}
         onClick={(e) => {
-          // Prevent parent Link navigation when clicked
           e.stopPropagation();
           e.preventDefault();
           setOpen(true);
         }}
-        className="p-1 rounded-full bg-surface/80 hover:bg-[var(--muted)] shadow-sm border border-border"
+        className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/12 px-3 py-2 text-sm font-semibold text-white shadow-sm backdrop-blur-md transition hover:bg-white/20"
       >
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4z" />
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09c0-.58-.37-1.09-.92-1.41a1.65 1.65 0 00-1.82.33l-.06.06A2 2 0 012.31 18.9l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09c.58 0 1.09-.37 1.41-.92.27-.46.19-1.03-.21-1.42l-.06-.06A2 2 0 017.1 2.31l.06.06c.38.38.96.48 1.42.21.55-.33 1.16-.52 1.81-.52H12c.65 0 1.26.19 1.81.52.46.27 1.04.17 1.42-.21l.06-.06a2 2 0 013.02 0l-.06.06c.38.38.48.96.21 1.42-.33.55-.52 1.16-.52 1.81V9c0 .65.19 1.26.52 1.81.27.46.17 1.04-.21 1.42l-.06.06z" />
-        </svg>
+        <Camera className="h-4 w-4" />
+        <span className="hidden sm:inline">Editar portada</span>
       </button>
 
-      {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/40" onClick={close} />
-          <div className="relative bg-surface border border-border rounded-lg shadow-lg max-w-md w-full p-4">
-            <h3 className="font-semibold mb-2">Editar imagen de la materia</h3>
-            <p className="text-sm text-gray-600 mb-3">Puedes pegar una URL o subir una imagen desde tu equipo (JPG/PNG/GIF, máximo 10MB).</p>
+      <SimpleModal isOpen={open} onClose={close} title="Editar imagen de la materia">
+        <div className="space-y-6">
+          <p className="text-sm text-slate-600">
+            Pega una URL o subi una imagen desde tu equipo. Formatos recomendados: JPG, PNG o GIF.
+          </p>
 
-            <div className="mb-3">
-              <label className="block text-xs text-gray-600 mb-1">Pegar URL</label>
-              <input className="w-full border border-border bg-surface text-[var(--foreground)] px-2 py-1 rounded focus:outline-none focus:ring-2 focus:ring-[var(--primary)]" value={url} onChange={e => setUrl(e.target.value)} placeholder={currentImage || '/images/subjects/default.svg'} />
-              <div className="flex justify-end mt-2">
-                <button disabled={loading} onClick={() => updateImage(url)} className="px-3 py-1 rounded disabled:opacity-60 bg-[var(--primary)] text-[var(--primary-foreground)] hover:opacity-90">Guardar URL</button>
-              </div>
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+            <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-800">
+              <Link2 className="h-4 w-4 text-indigo-600" />
+              <span>Usar imagen por URL</span>
             </div>
-
-            <div className="mb-3">
-              <label className="block text-xs text-gray-600 mb-1">O subir archivo</label>
-              <input type="file" accept="image/*" onChange={e => setFile(e.target.files ? e.target.files[0] : null)} />
-              <div className="flex justify-end mt-2">
-                <button disabled={loading} onClick={handleUpload} className="px-3 py-1 rounded disabled:opacity-60 bg-[var(--accent)] text-[var(--accent-foreground)] hover:opacity-90">Subir y usar</button>
-              </div>
-            </div>
-
-            {error && <p className="text-sm text-[var(--accent)] mb-2">{error}</p>}
-
-            <div className="flex justify-between">
-              <button onClick={close} className="px-3 py-1 border border-border rounded hover:bg-[var(--muted)]">Cancelar</button>
-              <button onClick={close} className="px-3 py-1 border border-border rounded hover:bg-[var(--muted)]">Cerrar</button>
+            <label htmlFor="subject-image-url" className="mb-2 block text-xs font-medium uppercase tracking-wide text-slate-500">
+              Pegar URL
+            </label>
+            <input
+              id="subject-image-url"
+              name="subject-image-url"
+              className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-indigo-300 focus:ring-4 focus:ring-indigo-100"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              placeholder={currentImage || "/images/subjects/default.svg"}
+            />
+            <div className="mt-3 flex justify-end">
+              <button
+                type="button"
+                disabled={loading || !url.trim()}
+                onClick={() => updateImage(url.trim())}
+                className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <ImagePlus className="h-4 w-4" />
+                Guardar URL
+              </button>
             </div>
           </div>
+
+          <div className="rounded-2xl border border-slate-200 bg-white p-4">
+            <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-800">
+              <Upload className="h-4 w-4 text-emerald-600" />
+              <span>Subir desde tu equipo</span>
+            </div>
+            <label htmlFor="subject-image-file" className="mb-2 block text-xs font-medium uppercase tracking-wide text-slate-500">
+              Seleccionar archivo
+            </label>
+            <input
+              id="subject-image-file"
+              name="subject-image-file"
+              type="file"
+              accept="image/*"
+              onChange={(e) => setFile(e.target.files ? e.target.files[0] : null)}
+              className="block w-full text-sm text-slate-600 file:mr-3 file:rounded-xl file:border-0 file:bg-emerald-50 file:px-4 file:py-2.5 file:font-semibold file:text-emerald-700 hover:file:bg-emerald-100"
+            />
+            {file && <p className="mt-2 text-sm text-slate-500">Archivo elegido: {file.name}</p>}
+            <div className="mt-3 flex justify-end">
+              <button
+                type="button"
+                disabled={loading || !file}
+                onClick={handleUpload}
+                className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <Upload className="h-4 w-4" />
+                Subir y usar
+              </button>
+            </div>
+          </div>
+
+          {error && <p className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</p>}
+
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={close}
+              className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+            >
+              Cancelar
+            </button>
+          </div>
         </div>
-      )}
+      </SimpleModal>
     </div>
   );
 }

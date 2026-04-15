@@ -141,7 +141,7 @@ export default function StudentSubjectDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50/50 p-3 sm:p-4 md:p-8 lg:p-12 font-sans text-slate-800">
+    <div className="dashboard-page dashboard-stack font-sans text-slate-800">
       <SubjectHeroCard
         title={subject?.name || "Materia"}
         teacher={null}
@@ -158,18 +158,18 @@ export default function StudentSubjectDetailPage() {
         }
       />
 
-      <div className="max-w-4xl mx-auto mt-4 sm:mt-8">
-        <div className="mb-6 rounded-[1.6rem] border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+      <div className="mx-auto mt-1 w-full max-w-4xl sm:mt-2">
+        <section className="app-panel">
           <div className="mb-3">
             <h3 className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">
               Accesos rapidos
             </h3>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
           <button
             type="button"
             onClick={() => router.push(`/campus/student/subjects/${subjectId}/assignments`)}
-            className="rounded-xl border border-slate-200 bg-white p-4 text-left shadow-sm transition hover:border-indigo-200 hover:bg-indigo-50/40"
+            className="rounded-xl border border-slate-200 bg-white p-3.5 text-left shadow-sm transition hover:border-indigo-200 hover:bg-indigo-50/40"
           >
             <div className="flex items-center justify-between gap-3">
               <div>
@@ -183,7 +183,7 @@ export default function StudentSubjectDetailPage() {
           <button
             type="button"
             onClick={() => router.push(`/campus/student/subjects/${subjectId}/forums`)}
-            className="rounded-xl border border-slate-200 bg-white p-4 text-left shadow-sm transition hover:border-indigo-200 hover:bg-indigo-50/40"
+            className="rounded-xl border border-slate-200 bg-white p-3.5 text-left shadow-sm transition hover:border-indigo-200 hover:bg-indigo-50/40"
           >
             <div className="flex items-center justify-between gap-3">
               <div>
@@ -197,7 +197,7 @@ export default function StudentSubjectDetailPage() {
           <button
             type="button"
             onClick={() => router.push("/campus/calendar")}
-            className="rounded-xl border border-slate-200 bg-white p-4 text-left shadow-sm transition hover:border-indigo-200 hover:bg-indigo-50/40"
+            className="rounded-xl border border-slate-200 bg-white p-3.5 text-left shadow-sm transition hover:border-indigo-200 hover:bg-indigo-50/40"
           >
             <div className="flex items-center justify-between gap-3">
               <div>
@@ -207,7 +207,7 @@ export default function StudentSubjectDetailPage() {
               <CalendarDays className="w-5 h-5 text-indigo-600" />
             </div>
           </button>
-        </div>
+        </section>
         </div>
 
         <div className="mb-3">

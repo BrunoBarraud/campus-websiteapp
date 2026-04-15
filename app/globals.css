@@ -113,10 +113,13 @@ input:focus, select:focus, textarea:focus {
 
 .dashboard-main {
   min-width: 0;
+  width: 100%;
+  flex: 1 1 auto;
 }
 
 .dashboard-sidebar {
-  height: 100%;
+  height: 100dvh;
+  align-self: flex-start;
 }
 
 .dashboard-page {
