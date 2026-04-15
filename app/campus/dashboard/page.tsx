@@ -293,12 +293,24 @@ const DashboardPage = () => {
             </div>
 
             <div className="flex w-full flex-col gap-2 sm:flex-row lg:w-auto">
-              <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 shadow-sm focus-within:ring-2 focus-within:ring-yellow-300">
+              <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 shadow-sm transition focus-within:border-yellow-300 focus-within:ring-2 focus-within:ring-yellow-300">
                 <Search className="h-4 w-4 text-slate-400" />
                 <input
                   type="text"
+                  id="dashboard-subject-search"
+                  name="dashboard-subject-search"
+                  aria-label="Buscar materias"
+                  autoComplete="off"
                   placeholder="Buscar materias..."
-                  className="w-full min-w-0 border-none bg-transparent text-sm text-slate-800 outline-none focus:ring-0"
+                  className="h-auto w-full min-w-0 appearance-none !border-0 !bg-transparent p-0 text-sm text-slate-800 !shadow-none outline-none placeholder-slate-400 ring-0 focus:!border-0 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 sm:w-48 lg:w-64"
+                  style={{
+                    border: "none",
+                    background: "transparent",
+                    boxShadow: "none",
+                    outline: "none",
+                    WebkitAppearance: "none",
+                    MozAppearance: "none",
+                  }}
                   value={searchTerm}
                   onChange={(event) => setSearchTerm(event.target.value)}
                 />

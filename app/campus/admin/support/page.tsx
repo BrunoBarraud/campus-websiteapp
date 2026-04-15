@@ -178,15 +178,15 @@ export default function AdminSupportPage() {
 
   if (status === 'loading' || loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="dashboard-page flex min-h-[60vh] items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-600"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-6xl mx-auto">
+    <div className="dashboard-page dashboard-stack">
+      <div className="mx-auto w-full max-w-6xl">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Centro de Soporte</h1>
@@ -196,7 +196,7 @@ export default function AdminSupportPage() {
         </div>
 
         {/* Modo Mantenimiento */}
-        <div className={`mb-8 p-6 rounded-2xl border ${maintenance.enabled ? 'bg-red-50 border-red-200' : 'bg-white border-gray-200'}`}>
+        <div className={`app-panel ${maintenance.enabled ? 'bg-red-50 border-red-200' : ''}`}>
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-start gap-4">
               <div className={`p-3 rounded-xl ${maintenance.enabled ? 'bg-red-100' : 'bg-gray-100'}`}>
@@ -284,13 +284,13 @@ export default function AdminSupportPage() {
 
         {/* Lista de tickets */}
         {filteredTickets.length === 0 ? (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
+          <div className="app-panel p-12 text-center">
             <MessageSquare className="w-16 h-16 text-gray-300 mx-auto mb-4" />
             <h2 className="text-xl font-semibold text-gray-700 mb-2">No hay tickets</h2>
             <p className="text-gray-500">No hay tickets en esta categoría.</p>
           </div>
         ) : (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="app-panel overflow-hidden p-0">
             <div className="divide-y divide-gray-100">
               {filteredTickets.map((ticket) => (
                 <div 

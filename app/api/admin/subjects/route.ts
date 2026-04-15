@@ -34,6 +34,7 @@ export async function GET(request: Request) {
           email
         )
       `)
+      .eq('school_id', currentUser.school_id)
       .order('year')
       .order('division')
       .order('name');
@@ -76,7 +77,7 @@ export async function GET(request: Request) {
 // POST - Crear nueva materia (Solo administradores)
 export async function POST(request: Request) {
   try {
-    await requireRole(['admin']);
+    const currentUser = await requireRole(['admin']);
 
     const {
       name,
@@ -145,6 +146,7 @@ export async function POST(request: Request) {
         division: division || null,
         teacher_id: teacher_id || null,
         image_url: image_url || null,
+        school_id: currentUser.school_id,
         is_active: true
       }])
       .select(`

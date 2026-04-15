@@ -60,7 +60,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
 
   if (status === "loading" || loading) {
     return (
-      <div className="min-h-screen bg-gray-50 mt-[12vh] flex items-center justify-center">
+      <div className="dashboard-page flex min-h-[60vh] items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
           <p className="mt-4 text-gray-600">
@@ -72,10 +72,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 mt-[12vh]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="dashboard-page dashboard-stack">
+      <div className="dashboard-header px-5 py-5 sm:px-6">
         {/* Header */}
-        <div className="mb-8">
+        <div>
           <h1 className="text-3xl font-bold text-gray-900">
             Panel de Administración
           </h1>
@@ -85,7 +85,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
         </div>
 
         {/* Navigation Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
           <div
             onClick={() => router.push("/campus/admin/management")}
             className="bg-white p-6 rounded-lg shadow hover:shadow-md transition-shadow cursor-pointer border border-gray-200 hover:border-blue-300"
@@ -172,7 +172,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
         </div>
 
         {/* Estadísticas */}
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="mt-6 app-panel">
           <h2 className="text-xl font-semibold text-gray-900 mb-6">
             📊 Estadísticas del Sistema
           </h2>
