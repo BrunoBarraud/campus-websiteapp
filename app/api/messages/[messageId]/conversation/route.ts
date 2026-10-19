@@ -1,12 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/app/lib/supabaseClient";
+import { requireSession, isConversationParticipant } from "@/app/lib/auth/routeGuards";
+import { createAccessDeniedResponse } from "@/app/lib/auth/adminCheck";
 
 // GET: Obtener todos los mensajes de una conversación
 export async function GET(request: NextRequest, context: { params: Promise<{ messageId: string }> }) {
+  const guard = await requireSession();
+  if (!guard.ok) return guard.response;
+
   // messageId aquí es realmente conversationId
   const { messageId: conversationId } = await context.params;
+  if (!(await isConversationParticipant(guard.user, conversationId))) {
+    return createAccessDeniedResponse("No tienes acceso a esta conversación");
+  }
+
   const { searchParams } = new URL(request.url);
-  const limit = parseInt(searchParams.get("limit") || "30");
+  const limit = Math.min(Math.max(parseInt(searchParams.get("limit") || "30") || 30, 1), 100);
   const offset = parseInt(searchParams.get("offset") || "0");
 
   const { data, error } = await supabaseAdmin
@@ -24,8 +33,15 @@ export async function GET(request: NextRequest, context: { params: Promise<{ mes
 
 // POST: Enviar mensaje a una conversación
 export async function POST(request: NextRequest, context: { params: Promise<{ messageId: string }> }) {
+  const guard = await requireSession();
+  if (!guard.ok) return guard.response;
+
   // messageId aquí es realmente conversationId
   const { messageId: conversationId } = await context.params;
+  if (!(await isConversationParticipant(guard.user, conversationId))) {
+    return createAccessDeniedResponse("No tienes acceso a esta conversación");
+  }
+
   const body = await request.json();
 
   const { content, message_type = "text", file_url, file_name, file_type, file_size, audio_url, emoji, replied_to_id } = body;
@@ -38,6 +54,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ me
     .from("messages")
     .insert({
       conversation_id: conversationId,
+      sender_id: guard.user.id,
       content,
       message_type,
       file_url,

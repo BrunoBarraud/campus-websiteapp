@@ -54,28 +54,47 @@ export function validateCsrfToken(req: NextRequest): boolean {
   return !!cookieToken && !!headerToken && cookieToken === headerToken;
 }
 
+const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
+
+/**
+ * Verifica que una solicitud que modifica estado provenga del mismo origen.
+ * Los navegadores siempre envían `Origin` (o al menos `Referer`) en POST/PUT/PATCH/DELETE,
+ * por lo que una solicitud cross-site queda bloqueada sin requerir cambios en el cliente.
+ * Las solicitudes sin ninguno de los dos headers no provienen de un navegador
+ * (no son vectores de CSRF) y se dejan pasar: la autorización la hace cada route handler.
+ */
+export function validateSameOrigin(req: NextRequest): boolean {
+  const host = req.headers.get('x-forwarded-host') || req.headers.get('host');
+  const source = req.headers.get('origin') || req.headers.get('referer');
+
+  if (!source) return true;
+  if (!host || source === 'null') return false;
+
+  try {
+    return new URL(source).host === host;
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Middleware para protección CSRF
- * - Para solicitudes GET, establece un token CSRF
- * - Para otras solicitudes (POST, PUT, DELETE), valida el token CSRF
+ * - Para métodos seguros (GET/HEAD/OPTIONS) no hace nada
+ * - Para el resto (POST, PUT, PATCH, DELETE) exige mismo origen (Origin/Referer == Host)
  */
 export function csrfMiddleware(req: NextRequest): NextResponse {
-  // Para solicitudes GET, simplemente establecer el token CSRF
-  if (req.method === 'GET') {
-    return setCsrfToken(req);
+  if (SAFE_METHODS.has(req.method)) {
+    return NextResponse.next();
   }
-  
-  // Para otras solicitudes, validar el token CSRF
-  if (!validateCsrfToken(req)) {
-    // Si la validación falla, devolver un error 403 Forbidden
-    return new NextResponse(JSON.stringify({ error: 'Invalid CSRF token' }), {
+
+  if (!validateSameOrigin(req)) {
+    return new NextResponse(JSON.stringify({ error: 'Invalid request origin' }), {
       status: 403,
       headers: {
         'Content-Type': 'application/json',
       },
     });
   }
-  
-  // Si la validación es exitosa, continuar con la solicitud
+
   return NextResponse.next();
 }

@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { requireSession, canManageSubject } from '@/app/lib/auth/routeGuards';
+import { createAccessDeniedResponse } from '@/app/lib/auth/adminCheck';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -8,6 +10,9 @@ const supabase = createClient(
 
 export async function POST(request: NextRequest) {
   try {
+    const guard = await requireSession(['admin', 'teacher']);
+    if (!guard.ok) return guard.response;
+
     console.log('Recibiendo upload de documento...');
     
     const formData = await request.formData();
@@ -34,6 +39,14 @@ export async function POST(request: NextRequest) {
         success: false,
         error: 'Faltan campos requeridos: title, file'
       }, { status: 400 });
+    }
+
+    if (!subjectId && guard.user.role !== 'admin') {
+      return createAccessDeniedResponse('Solo un administrador puede subir documentos sin materia');
+    }
+
+    if (subjectId && !(await canManageSubject(guard.user, subjectId))) {
+      return createAccessDeniedResponse('No tienes permisos para gestionar esta materia');
     }
 
     // Por ahora, solo simular la URL del archivo (más corta)
@@ -70,7 +83,7 @@ export async function POST(request: NextRequest) {
         subject_id: subjectId || null,
         unit_id: unitId || null,
         is_public: isPublic,
-        uploaded_by: '75fae443-7b6d-4a97-bff8-a93052f10305' // ID del admin por defecto
+        uploaded_by: guard.user.id
       })
       .select('*')
       .single();

@@ -75,6 +75,8 @@ const CourseCard: React.FC<CourseCardProps> = memo(({ course, delay }) => {
             priority={delay <= 4}
             onError={handleImageError}
             loading={delay <= 4 ? "eager" : "lazy"}
+            // Las imágenes subidas se sirven con sesión (URL firmada); el optimizador no envía cookies
+            unoptimized={!imageError && course.image.startsWith("/api/upload")}
           />
 
           <div className="absolute inset-0 bg-gradient-to-t from-slate-950/15 via-transparent to-transparent" />

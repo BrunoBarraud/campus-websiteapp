@@ -2,6 +2,7 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/app/lib/supabaseClient";
 import { cookies } from "next/headers";
+import { checkAdminAccess } from "@/app/lib/auth/adminCheck";
 
 export async function GET(request: Request) {
   try {
@@ -74,9 +75,14 @@ export async function GET(request: Request) {
   }
 }
 
-// POST - Crear nueva materia (temporal sin autenticación para testing)
+// POST - Crear nueva materia (solo admins)
 export async function POST(request: Request) {
   try {
+    const adminCheck = await checkAdminAccess();
+    if (!adminCheck.hasAccess) {
+      return adminCheck.response;
+    }
+
     console.log("📝 POST: Creando nueva materia");
 
     const { name, code, description, year, division, teacher_id, image_url } =

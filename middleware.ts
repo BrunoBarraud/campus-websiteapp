@@ -1,14 +1,14 @@
 import { auth } from "@/auth";
 import { NextRequest, NextResponse } from "next/server";
 import type { NextFetchEvent } from "next/server";
-import { csrfMiddleware } from "./lib/middleware/csrf";
-import { loginRateLimitMiddleware, apiRateLimitMiddleware } from "./lib/middleware/rate-limit";
-import { SCHOOLS } from "./lib/schools";
+import { csrfMiddleware } from "./app/lib/middleware/csrf";
+import { loginRateLimitMiddleware, apiRateLimitMiddleware } from "./app/lib/middleware/rate-limit";
+import { SCHOOLS } from "./app/lib/schools";
 
 const SCHOOL_COOKIE_NAME = "campus_school";
 
 // Middleware principal que aplica seguridad y autenticación
-export default auth(function middleware(req: NextRequest, _event: NextFetchEvent) {
+const authMiddleware = auth(function handler(req: NextRequest, _event: NextFetchEvent) {
   const schoolParam = req.nextUrl.searchParams.get("school");
   const shouldSetSchoolCookie = !!(schoolParam && SCHOOLS[schoolParam]);
 
@@ -45,12 +45,11 @@ export default auth(function middleware(req: NextRequest, _event: NextFetchEvent
     }
   }
 
-  // Para rutas de API y formularios, aplicar protección CSRF
+  // Para rutas de API y formularios, aplicar protección CSRF (verificación de Origin)
   if ((req.nextUrl.pathname.startsWith('/api') || req.nextUrl.pathname.includes('/auth/')) && !isPublicRoute) {
-    // Solo aplicar CSRF a métodos no GET
-    if (req.method !== 'GET') {
-      const csrfResponse = csrfMiddleware(req);
-      return attachSchoolCookie(csrfResponse);
+    const csrfResponse = csrfMiddleware(req);
+    if (csrfResponse.status === 403) {
+      return csrfResponse;
     }
   }
 
@@ -75,7 +74,19 @@ export default auth(function middleware(req: NextRequest, _event: NextFetchEvent
   return attachSchoolCookie(NextResponse.next());
 });
 
+type MiddlewareHandler = (req: NextRequest, event: NextFetchEvent) => Promise<Response>;
+
+// Con la configuración lazy de NextAuth (`NextAuth(async (req) => ...)`), `auth(handler)`
+// devuelve una Promise del handler envuelto, no el handler. Por eso `export default auth(...)`
+// exportaba una Promise y Next no reconocía el middleware.
+export async function middleware(req: NextRequest, event: NextFetchEvent) {
+  const run = await (authMiddleware as unknown as Promise<MiddlewareHandler>);
+  return run(req, event);
+}
+
 export const config = {
+  // `auth` usa supabase-js, bcrypt y crypto: requiere el runtime de Node (no Edge)
+  runtime: 'nodejs',
   matcher: [
     '/',
     '/campus/:path*',

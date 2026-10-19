@@ -2,10 +2,16 @@
 import { NextResponse } from 'next/server';
 import { userService } from '@/app/lib/services';
 import { CreateUserForm } from '@/app/lib/types';
+import { checkAdminAccess } from '@/app/lib/auth/adminCheck';
 
 // GET - Obtener todos los usuarios (solo admins)
 export async function GET(request: Request) {
   try {
+    const adminCheck = await checkAdminAccess();
+    if (!adminCheck.hasAccess) {
+      return adminCheck.response;
+    }
+
     const { searchParams } = new URL(request.url);
     const role = searchParams.get('role');
     const year = searchParams.get('year');
@@ -41,6 +47,11 @@ export async function GET(request: Request) {
 // POST - Crear nuevo usuario (solo admins)
 export async function POST(request: Request) {
   try {
+    const adminCheck = await checkAdminAccess();
+    if (!adminCheck.hasAccess) {
+      return adminCheck.response;
+    }
+
     const userData: CreateUserForm = await request.json();
 
     // Validar datos requeridos

@@ -102,7 +102,7 @@ export function loginRateLimitMiddleware(req: NextRequest): NextResponse {
  */
 export function apiRateLimitMiddleware(req: NextRequest): NextResponse {
   return rateLimitMiddleware(req, {
-    maxRequests: 50,
+    maxRequests: 300,
     windowSizeInSeconds: 60,
     message: 'Demasiadas solicitudes a la API. Por favor, inténtelo de nuevo más tarde.',
   });

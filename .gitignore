@@ -48,3 +48,6 @@ yarn-error.log*
 next-env.d.ts
 
 /app/generated/prisma
+
+# archivos subidos por usuarios (se guardan en Supabase Storage, bucket privado "uploads")
+/public/uploads/

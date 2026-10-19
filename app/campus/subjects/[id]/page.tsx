@@ -67,11 +67,11 @@ export default function SubjectDetailPage() {
 
         // Obtener documentos de las unidades
         const documentsResponse = await fetch(
-          `/api/debug-documents?subjectId=${subjectId}`
+          `/api/subjects/${subjectId}/documents`
         );
         if (documentsResponse.ok) {
           const documentsData = await documentsResponse.json();
-          const unitDocuments = documentsData.unit_documents || [];
+          const unitDocuments = Array.isArray(documentsData) ? documentsData : [];
 
           // Asociar documentos a las unidades
           const unitsWithDocuments = unitsData.map((unit: SubjectUnit) => ({
